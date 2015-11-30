@@ -1,0 +1,3 @@
+[submodule "XLib"]
+	path = XLib
+	url = https://github.com/rbmkp4800/XLib.git
