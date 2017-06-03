@@ -1,0 +1,12 @@
+fix UI VS screen position computation
+add color support for UI monospaced font
+
+XERDevice.UploadEngine.uploadTexture
+	refactor
+
+XERDevice.UploadEngine.uploadBuffer:
+	implement state transitions
+	implement composing single device buffer from parts (upload VB and IB in signle run)
+
+rewrite VS transform matrix retrieval
+	compare performances of root constants vs constant in VB per instance
