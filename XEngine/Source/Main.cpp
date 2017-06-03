@@ -24,10 +24,12 @@ private:
 	XERScene xerScene;
 	XEREffect xerPlainEffect;
 	XEREffect xerPlainSkinnedEffect;
+
 	XERGeometry xerPlaneGeometry;
 	XERGeometry xerCubeGeometry;
 	//XERGeometry xerMonsterGeometry;
 	XERGeometry xerMonsterSkinnedGeometry;
+	XERGeometry xerSphereGeometry;
 
 	XERGeometryInstanceId cubesCircleIds[10];
 
@@ -69,25 +71,29 @@ private:
 		XERGeometryGenerator::Cube(&xerDevice, &xerCubeGeometry);
 		//XERGeometryGenerator::Monster(&xerDevice, &xerMonsterGeometry);
 		XERGeometryGenerator::MonsterSkinned(&xerDevice, &xerMonsterSkinnedGeometry);
+		XERGeometryGenerator::Sphere(5, &xerDevice, &xerSphereGeometry);
+
 		planeGeometryInstanceId = xerScene.createGeometryInstance(&xerPlaneGeometry, &xerPlainEffect, Matrix3x4::Translation(0.0f, -2.0f, 0.0f) * Matrix3x4::Scale(10.0f, 10.0f, 10.0f));
+		xerScene.createGeometryInstance(&xerSphereGeometry, &xerPlainEffect, Matrix3x4::Identity());
+
 		//cubeGeometryInstanceId = xerScene.createGeometryInstance(&xerCubeGeometry, &xerPlainEffect, Matrix3x4::Identity());
 		//monsterGeometryInstanceId = xerScene.createGeometryInstance(&xerMonsterSkinnedGeometry, &xerPlainSkinnedEffect, Matrix3x4::Identity());
 
-		for (uint32 i = 0; i < 60000; i++)
+		for (uint32 i = 0; i < 6000; i++)
 		{
-			xerScene.createGeometryInstance(&xerCubeGeometry, &xerPlainEffect,
+			xerScene.createGeometryInstance(&xerSphereGeometry, &xerPlainEffect,
 				Matrix3x4::Translation(Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f)) *
 				Matrix3x4::Scale(0.05f, 0.05f, 0.05f) *
 				Matrix3x4::RotationX(Random::Global.getF32(0.0f, 3.14f)) * Matrix3x4::RotationY(Random::Global.getF32(0.0f, 3.14f)));
 		}
 
-		for each (XERGeometryInstanceId& id in cubesCircleIds)
-			id = xerScene.createGeometryInstance(&xerCubeGeometry, &xerPlainEffect, Matrix3x4::Identity());
+		/*for each (XERGeometryInstanceId& id in cubesCircleIds)
+			id = xerScene.createGeometryInstance(&xerCubeGeometry, &xerPlainEffect, Matrix3x4::Identity());*/
 
 		light1Id = xerScene.createLight(float32x3(3.0f, 0.0f, 0.0f), 0x0000FF_rgb, 4.0f);
 		light2Id = xerScene.createLight(float32x3(0.0f, 10.0f, 2.0f), 0xFF4040_rgb, 6.0f);
 		light3Id = xerScene.createLight(float32x3(8.0f, 11.0f, 10.0f), 0xFFFFFF_rgb, 30.0f);
-		light4Id = xerScene.createLight(float32x3(5.0f, -11.0f, -10.0f), 0x00FFFF_rgb, 30.0f);
+		light4Id = xerScene.createLight(float32x3(-10.0f, -11.0f, -10.0f), 0x00FFFF_rgb, 30.0f);
 
 		camera.position = { 0.0f, -1.0f, -5.0f };
 
@@ -184,7 +190,7 @@ public:
 		time += coef;
 		//xerScene.setGeometryInstanceTransform(monsterGeometryInstanceId, Matrix3x4::RotationY(time));
 
-		static float32 angleDelta = Math::PiF32 * 2.0f / float32(countof(cubesCircleIds));
+		/*static float32 angleDelta = Math::PiF32 * 2.0f / float32(countof(cubesCircleIds));
 		for (uint32 i = 0; i < countof(cubesCircleIds); i++)
 		{
 			Matrix3x4 transform =
@@ -192,7 +198,7 @@ public:
 				Matrix3x4::Translation(2.0f, 0.0f, 0.0f) *
 				Matrix3x4::Scale(0.3f, 0.3f, 0.3f);
 			xerScene.setGeometryInstanceTransform(cubesCircleIds[i], transform);
-		}
+		}*/
 
 		//camera.position = { -1.25275731f, -0.933473468f, 1.04755759f };
 		//camera.forward = { 0.531684399f, 0.807557702f, 0.255268931f };
