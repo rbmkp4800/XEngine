@@ -116,7 +116,7 @@ bool XERContext::initialize(XERDevice* device)
 }*/
 
 void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
-	XERDebugWireframeMode debugWireframeMode)
+	XERDebugWireframeMode debugWireframeMode, XERDrawTimers* timers)
 {
 	uint32x2 targetSize = { 0, 0 };
 	{
@@ -153,6 +153,8 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 
 	d3dCommandAllocator->Reset();
 	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
+
+	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, 0);
 
 	d3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, float32(targetSize.x), float32(targetSize.y)));
@@ -210,10 +212,25 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 
 	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
+	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, 1);
+	d3dCommandList->ResolveQueryData(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP,
+		0, 2, device->d3dReadbackBuffer, 0);
+
 	d3dCommandList->Close();
 
 	ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
 	device->graphicsGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
+
+	{
+		uint64 *mappedTimestamps = nullptr;
+		device->d3dReadbackBuffer->Map(0, &D3D12Range(), (void**)&mappedTimestamps);
+
+		float32 totalTime = float32(mappedTimestamps[1] - mappedTimestamps[0]) * device->gpuTickPeriod;
+		if (timers)
+			timers->totalTime = totalTime;
+
+		device->d3dReadbackBuffer->Unmap(0, nullptr);
+	}
 }
 
 void XERContext::draw(XERTargetBuffer* target, XERUIGeometryRenderer* renderer)

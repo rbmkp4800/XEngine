@@ -193,6 +193,7 @@ bool XERDevice::initialize()
 		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dUIFontPSO.uuid(), d3dUIFontPSO.voidInitRef());
 	}
 
+	// Default drawing ICS
 	{
 		D3D12_INDIRECT_ARGUMENT_DESC indirectArgumentDescs[] =
 		{
@@ -206,10 +207,22 @@ bool XERDevice::initialize()
 			d3dDefaultDrawingICS.uuid(), d3dDefaultDrawingICS.voidInitRef());
 	}
 
+	// queries
+	{
+		// TODO: refactor
+		d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_READBACK), D3D12_HEAP_FLAG_NONE,
+			&D3D12ResourceDesc_Buffer(256), D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+			d3dReadbackBuffer.uuid(), d3dReadbackBuffer.voidInitRef());
+		d3dDevice->CreateQueryHeap(&D3D12QueryHeapDesc(D3D12_QUERY_HEAP_TYPE_TIMESTAMP, 16),
+			d3dTimestampQueryHeap.uuid(), d3dTimestampQueryHeap.voidInitRef());
+	}
+
 	rtvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, rtvDescriptorsLimit, false);
 	dsvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, dsvDescriptorsLimit, false);
 	srvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, srvDescriptorsLimit, true);
 	uploadEngine.initalize(d3dDevice);
+
+	gpuTickPeriod = 1.0f / float32(graphicsGPUQueue.getTimestampFrequency());
 
 	return true;
 }
@@ -242,6 +255,13 @@ void XERDevice::GPUQueue::execute(ID3D12CommandList** d3dCommandLists, uint32 co
 {
 	d3dCommandQueue->ExecuteCommandLists(count, d3dCommandLists);
 	synchronize();
+}
+
+uint64 XERDevice::GPUQueue::getTimestampFrequency()
+{
+	UINT64 frequency = 0;
+	d3dCommandQueue->GetTimestampFrequency(&frequency);
+	return frequency;
 }
 
 // UploadEngine =============================================================================//

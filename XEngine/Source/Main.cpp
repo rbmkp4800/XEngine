@@ -71,7 +71,7 @@ private:
 		XERGeometryGenerator::Cube(&xerDevice, &xerCubeGeometry);
 		//XERGeometryGenerator::Monster(&xerDevice, &xerMonsterGeometry);
 		XERGeometryGenerator::MonsterSkinned(&xerDevice, &xerMonsterSkinnedGeometry);
-		XERGeometryGenerator::Sphere(5, &xerDevice, &xerSphereGeometry);
+		XERGeometryGenerator::Sphere(4, &xerDevice, &xerSphereGeometry);
 
 		planeGeometryInstanceId = xerScene.createGeometryInstance(&xerPlaneGeometry, &xerPlainEffect, Matrix3x4::Translation(0.0f, -2.0f, 0.0f) * Matrix3x4::Scale(10.0f, 10.0f, 10.0f));
 		xerScene.createGeometryInstance(&xerSphereGeometry, &xerPlainEffect, Matrix3x4::Identity());
@@ -79,7 +79,7 @@ private:
 		//cubeGeometryInstanceId = xerScene.createGeometryInstance(&xerCubeGeometry, &xerPlainEffect, Matrix3x4::Identity());
 		//monsterGeometryInstanceId = xerScene.createGeometryInstance(&xerMonsterSkinnedGeometry, &xerPlainSkinnedEffect, Matrix3x4::Identity());
 
-		for (uint32 i = 0; i < 6000; i++)
+		for (uint32 i = 0; i < 60000; i++)
 		{
 			xerScene.createGeometryInstance(&xerSphereGeometry, &xerPlainEffect,
 				Matrix3x4::Translation(Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f)) *
@@ -203,22 +203,24 @@ public:
 		//camera.position = { -1.25275731f, -0.933473468f, 1.04755759f };
 		//camera.forward = { 0.531684399f, 0.807557702f, 0.255268931f };
 
+		XERTargetBuffer *xerTarget = xerWindowTarget.getCurrentTargetBuffer();
+
+		XERDrawTimers xerTimers = {};
+		xerContext.draw(xerTarget, &xerScene, camera,
+			controls.wireframe ? XERDebugWireframeMode::Enabled : XERDebugWireframeMode::Disabled,
+			&xerTimers);
+
 		xerUIRenderer.beginDraw(&xerContext);
 		xerUIRenderer.setFont(&xerFont);
 		{
-			float32 frameTime = Timer::GetTimeDelta_UpdateRecord(lastFrameTimerRecord) * 1000.0f;
-			frameTimeSum += frameTime;
-			frameCount++;
-
 			char buffer[256];
-			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\nFrame time %4.1f ms (avg %5.2f)\nWORK IN PROGRESS",
-				xerDevice.getName(), frameTime, frameTimeSum / float32(frameCount));
+			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\nFrame time %5.2f ms\nWORK IN PROGRESS",
+				xerDevice.getName(), xerTimers.totalTime * 1000.0f);
+
 			xerUIRenderer.drawText(float32x2(10.0f, 10.0f), buffer);
 		}
 		xerUIRenderer.endDraw();
 
-		XERTargetBuffer *xerTarget = xerWindowTarget.getCurrentTargetBuffer();
-		xerContext.draw(xerTarget, &xerScene, camera, controls.wireframe ? XERDebugWireframeMode::Enabled : XERDebugWireframeMode::Disabled);
 		xerContext.draw(xerTarget, &xerUIRenderer);
 		xerWindowTarget.present(false);
 	}

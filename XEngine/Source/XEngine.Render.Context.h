@@ -26,6 +26,11 @@ namespace XEngine
 		Enabled = 1,
 	};
 
+	struct XERDrawTimers
+	{
+		float32 totalTime;
+	};
+
 	namespace Internal
 	{
 		struct CameraTransformCB;
@@ -52,7 +57,8 @@ namespace XEngine
 	public:
 		bool initialize(XERDevice* device);
 
-		void draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera, XERDebugWireframeMode debugWireframeMode);
+		void draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
+			XERDebugWireframeMode debugWireframeMode, XERDrawTimers* timers = nullptr);
 		void draw(XERTargetBuffer* target, XERUIGeometryRenderer* renderer);
 
 		inline XERDevice* getDevice() { return device; }

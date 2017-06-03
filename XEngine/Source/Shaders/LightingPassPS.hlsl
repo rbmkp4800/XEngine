@@ -65,5 +65,5 @@ float4 main(PSInput input) : SV_Target
 			pow(saturate(dot(lightVector, reflectVector)) * isFacingLightCoef, specularPower);
 	}
 
-	return float4(diffuseColor.xyz * (diffuse + specular), 1.0f);
+	return float4(diffuseColor.xyz * (0.3f + diffuse + specular), 1.0f);
 }

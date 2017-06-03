@@ -463,3 +463,12 @@ inline D3D12_TEXTURE_COPY_LOCATION D3D12TextureCopyLocation(ID3D12Resource *d3dR
 	location.SubresourceIndex = subresourceIndex;
 	return location;
 }
+
+inline D3D12_QUERY_HEAP_DESC D3D12QueryHeapDesc(D3D12_QUERY_HEAP_TYPE type, UINT count)
+{
+	D3D12_QUERY_HEAP_DESC desc = {};
+	desc.Type = type;
+	desc.Count = count;
+	desc.NodeMask = 0;
+	return desc;
+}

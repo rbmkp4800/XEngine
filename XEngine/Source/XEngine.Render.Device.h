@@ -20,6 +20,8 @@ struct ID3D12DescriptorHeap;
 struct ID3D12PipelineState;
 struct ID3D12RootSignature;
 struct ID3D12CommandSignature;
+struct ID3D12Resource;
+struct ID3D12QueryHeap;
 
 namespace XEngine
 {
@@ -57,6 +59,7 @@ namespace XEngine
 
 		public:
 			void execute(ID3D12CommandList** d3dCommandLists, uint32 count);
+			uint64 getTimestampFrequency();
 			inline ID3D12CommandQueue* getD3DCommandQueue() { return d3dCommandQueue; }
 		};
 
@@ -112,6 +115,9 @@ namespace XEngine
 
 		COMPtr<ID3D12CommandSignature> d3dDefaultDrawingICS;
 
+		COMPtr<ID3D12Resource> d3dReadbackBuffer;
+		COMPtr<ID3D12QueryHeap> d3dTimestampQueryHeap;
+
 		DescriptorHeap rtvHeap;
 		DescriptorHeap dsvHeap;
 		DescriptorHeap srvHeap;
@@ -120,6 +126,7 @@ namespace XEngine
 		UploadEngine uploadEngine;
 
 		char name[32];
+		float32 gpuTickPeriod;
 
 	public:
 		bool initialize();
