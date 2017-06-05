@@ -18,6 +18,13 @@ static constexpr uint32 initTempTargetBufferWidth = 1920;
 static constexpr uint32 initTempTargetBufferHeight = 1080;
 static constexpr uint32 tempBufferSize = 0x100000;
 
+static constexpr uint32 timestampId_frameBegin = 0;
+static constexpr uint32 timestampId_objectsPassComplete = 1;
+static constexpr uint32 timestampId_occlusionCullingComplete = 2;
+static constexpr uint32 timestampId_lightingPassComplete = 3;
+static constexpr uint32 timestampId_frameEnd = timestampId_lightingPassComplete;
+static constexpr uint32 timestampsCount = timestampId_frameEnd + 1;
+
 namespace XEngine::Internal
 {
 	struct CameraTransformCB
@@ -159,7 +166,7 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 	d3dCommandAllocator->Reset();
 	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
 
-	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, 0);
+	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_frameBegin);
 
 	d3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, float32(targetSize.x), float32(targetSize.y)));
@@ -177,15 +184,21 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 		d3dCommandList->OMSetRenderTargets(2, &rtvDescriptorsHandle, TRUE, &dsvDescriptorHandle);
 
 		{
-			const float32 clearColor[4] = { };
+			const float32 clearColor[4] = {};
 			d3dCommandList->ClearRenderTargetView(rtvDescriptorsHandle, clearColor, 0, nullptr);
 			d3dCommandList->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 		}
 
 		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dCameraTransformCB->GetGPUVirtualAddress());
 
-		scene->fillD3DCommandList_draw(d3dCommandList, d3dTempBuffer, tempBufferSize);
+		scene->fillD3DCommandList_draw(d3dCommandList);
 	}
+
+	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_objectsPassComplete);
+
+	scene->fillD3DCommandList_runOcclusionCulling(d3dCommandList, d3dTempBuffer, tempBufferSize);
+
+	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_occlusionCullingComplete);
 
 	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
@@ -217,22 +230,30 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 
 	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, 1);
+	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_lightingPassComplete);
+
 	d3dCommandList->ResolveQueryData(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP,
-		0, 2, device->d3dReadbackBuffer, 0);
+		0, timestampsCount, device->d3dReadbackBuffer, 0);
 
 	d3dCommandList->Close();
 
 	ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
 	device->graphicsGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
 
+	if (timers)
 	{
-		uint64 *mappedTimestamps = nullptr;
-		device->d3dReadbackBuffer->Map(0, &D3D12Range(), (void**)&mappedTimestamps);
+		uint64 *timestamps = nullptr;
+		device->d3dReadbackBuffer->Map(0, &D3D12Range(), (void**)&timestamps);
 
-		float32 totalTime = float32(mappedTimestamps[1] - mappedTimestamps[0]) * device->gpuTickPeriod;
-		if (timers)
-			timers->totalTime = totalTime;
+		uint64 totalDelta = timestamps[timestampId_frameEnd] - timestamps[timestampId_frameBegin];
+		uint64 objectPassDelta = timestamps[timestampId_objectsPassComplete] - timestamps[timestampId_frameBegin];
+		uint64 occlusionCullingDelta = timestamps[timestampId_occlusionCullingComplete] - timestamps[timestampId_objectsPassComplete];
+		uint64 lightingPassDelta = timestamps[timestampId_lightingPassComplete] - timestamps[timestampId_occlusionCullingComplete];
+
+		timers->totalTime = float32(totalDelta) * device->gpuTickPeriod;
+		timers->objectsPassTime = float32(objectPassDelta) * device->gpuTickPeriod;
+		timers->occlusionCullingTime = float32(occlusionCullingDelta) * device->gpuTickPeriod;
+		timers->lightingPassTime = float32(lightingPassDelta) * device->gpuTickPeriod;
 
 		device->d3dReadbackBuffer->Unmap(0, nullptr);
 	}

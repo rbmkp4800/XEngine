@@ -122,8 +122,7 @@ void XERScene::setGeometryInstanceTransform(XERGeometryInstanceId id, const Matr
 	mappedTransformsBuffer[id] = transform;
 }
 
-void XERScene::fillD3DCommandList_draw(ID3D12GraphicsCommandList* d3dCommandList,
-	ID3D12Resource *d3dTempBuffer, uint32 tempBufferSize)
+void XERScene::fillD3DCommandList_draw(ID3D12GraphicsCommandList* d3dCommandList)
 {
 	d3dCommandList->IASetVertexBuffers(1, 1,
 		&D3D12VertexBufferView(d3dTransformsBuffer->GetGPUVirtualAddress(),
@@ -137,7 +136,11 @@ void XERScene::fillD3DCommandList_draw(ID3D12GraphicsCommandList* d3dCommandList
 		d3dCommandList->ExecuteIndirect(device->d3dDefaultDrawingICS,
 			effectData.commandCount, effectData.d3dCommandsBuffer, 0, nullptr, 0);
 	}
+}
 
+void XERScene::fillD3DCommandList_runOcclusionCulling(ID3D12GraphicsCommandList* d3dCommandList,
+	ID3D12Resource *d3dTempBuffer, uint32 tempBufferSize)
+{
 	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(d3dTempBuffer,
 		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 

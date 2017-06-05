@@ -214,8 +214,9 @@ public:
 		xerUIRenderer.setFont(&xerFont);
 		{
 			char buffer[256];
-			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\nFrame time %5.2f ms\nWORK IN PROGRESS",
-				xerDevice.getName(), xerTimers.totalTime * 1000.0f);
+			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\nTotal frame time %5.2f ms\nOP %5.2f ms\nOC %5.2f ms\nLP %5.2f ms\nWORK IN PROGRESS",
+				xerDevice.getName(), xerTimers.totalTime * 1000.0f, xerTimers.objectsPassTime * 1000.0f,
+				xerTimers.occlusionCullingTime * 1000.0f, xerTimers.lightingPassTime * 1000.0f);
 
 			xerUIRenderer.drawText(float32x2(10.0f, 10.0f), buffer);
 		}

@@ -29,6 +29,10 @@ namespace XEngine
 	struct XERDrawTimers
 	{
 		float32 totalTime;
+
+		float32 objectsPassTime;
+		float32 occlusionCullingTime;
+		float32 lightingPassTime;
 	};
 
 	namespace Internal
