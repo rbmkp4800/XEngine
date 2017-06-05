@@ -31,7 +31,6 @@ namespace XEngine
 
 	namespace Internal
 	{
-		struct GPUDefaultDrawingIndirectCommand;
 		struct GPUGeometryInstanceDesc;
 	}
 
@@ -44,7 +43,6 @@ namespace XEngine
 		{
 			XEREffect *effect = nullptr;
 			COMPtr<ID3D12Resource> d3dCommandsBuffer;
-			Internal::GPUDefaultDrawingIndirectCommand *mappedCommandsBuffer = nullptr;
 			uint32 commandsBufferSize = 0;
 			uint32 commandCount = 0;
 		};
@@ -65,7 +63,9 @@ namespace XEngine
 		LightDesc lights[8];
 		uint32 lightCount = 0;
 
-		void fillD3DCommandList(ID3D12GraphicsCommandList* d3dCommandList, bool applyEffects = true);
+		void fillD3DCommandList_draw(ID3D12GraphicsCommandList* d3dCommandList,
+			ID3D12Resource *d3dTempBuffer, uint32 tempBufferSize);
+		void fillD3DCommandList_drawWithoutEffects(ID3D12GraphicsCommandList* d3dCommandList);
 
 	public:
 		void initialize(XERDevice* device);

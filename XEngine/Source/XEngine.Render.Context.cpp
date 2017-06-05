@@ -16,13 +16,14 @@ using namespace XEngine::Internal;
 
 static constexpr uint32 initTempTargetBufferWidth = 1920;
 static constexpr uint32 initTempTargetBufferHeight = 1080;
+static constexpr uint32 tempBufferSize = 0x100000;
 
 namespace XEngine::Internal
 {
 	struct CameraTransformCB
 	{
-		Matrix4x4 view;
 		Matrix4x4 viewProjection;
+		Matrix4x4 view;
 	};
 
 	struct LightingPassCB
@@ -86,6 +87,10 @@ bool XERContext::initialize(XERDevice* device)
 			DXGI_FORMAT_R24_UNORM_X8_TYPELESS), device->srvHeap.getCPUHandle(srvDescriptors + 2));
 	}
 
+	d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+		&D3D12ResourceDesc_Buffer(tempBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, d3dTempBuffer.uuid(), d3dTempBuffer.voidInitRef());
+
 	// creating constant buffers
 	{
 		d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
@@ -130,8 +135,8 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 		float32 aspect = float32(targetSize.x) / float32(targetSize.y);
 		Matrix4x4 view = camera.getViewMatrix();
 		Matrix4x4 viewProjection = view * camera.getProjectionMatrix(aspect);
-		mappedCameraTransformCB->view = view;
 		mappedCameraTransformCB->viewProjection = viewProjection;
+		mappedCameraTransformCB->view = view;
 
 		mappedLightingPassCB->zNear = camera.zNear;
 		mappedLightingPassCB->zFar = camera.zFar;
@@ -178,8 +183,8 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 		}
 
 		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dCameraTransformCB->GetGPUVirtualAddress());
-		
-		scene->fillD3DCommandList(d3dCommandList);
+
+		scene->fillD3DCommandList_draw(d3dCommandList, d3dTempBuffer, tempBufferSize);
 	}
 
 	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
@@ -207,7 +212,7 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dCameraTransformCB->GetGPUVirtualAddress());
 
 		d3dCommandList->SetPipelineState(device->d3dDebugWireframePSO);
-		scene->fillD3DCommandList(d3dCommandList, false);
+		scene->fillD3DCommandList_drawWithoutEffects(d3dCommandList);
 	}
 
 	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));

@@ -74,13 +74,15 @@ bool XERDevice::initialize()
 	{
 		D3D12_DESCRIPTOR_RANGE ranges[] =
 		{
-			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
 		};
 
 		D3D12_ROOT_PARAMETER rootParameters[] =
 		{
 			D3D12RootParameter_CBV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
+			D3D12RootParameter_SRV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
+			D3D12RootParameter_UAV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
 		D3D12_STATIC_SAMPLER_DESC staticSapmplers[] =
@@ -94,6 +96,23 @@ bool XERDevice::initialize()
 			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
 		d3dDevice->CreateRootSignature(0, d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
 			d3dDefaultGraphicsRS.uuid(), d3dDefaultGraphicsRS.voidInitRef());
+	}
+
+	// default compute RS
+	{
+		D3D12_ROOT_PARAMETER rootParameters[] =
+		{
+			D3D12RootParameter_Const(1, 0, 0),
+			D3D12RootParameter_SRV(0, 0),
+			D3D12RootParameter_UAV(0, 0),
+		};
+
+		COMPtr<ID3DBlob> d3dSignature, d3dError;
+		D3D12SerializeRootSignature(&D3D12RootSignatureDesc(countof(rootParameters), rootParameters,
+			0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_NONE), D3D_ROOT_SIGNATURE_VERSION_1,
+			d3dSignature.initRef(), d3dError.initRef());
+		d3dDevice->CreateRootSignature(0, d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
+			d3dDefaultComputeRS.uuid(), d3dDefaultComputeRS.voidInitRef());
 	}
 
 	// lighting pass RS
@@ -193,6 +212,44 @@ bool XERDevice::initialize()
 		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dUIFontPSO.uuid(), d3dUIFontPSO.voidInitRef());
 	}
 
+	// OC BBox draw PSO
+	{
+		// TODO: change RS to disable input assembler
+
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dDefaultGraphicsRS;
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::OCxBBoxVS.data, Shaders::OCxBBoxVS.size);
+		psoDesc.PS = D3D12ShaderBytecode(Shaders::OCxBBoxPS.data, Shaders::OCxBBoxPS.size);
+		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
+		psoDesc.DepthStencilState = D3D12DepthStencilDesc_DisableWrite();
+		psoDesc.InputLayout = D3D12InputLayoutDesc();
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 0;
+		psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		psoDesc.SampleDesc.Count = 1;
+		psoDesc.SampleDesc.Quality = 0;
+
+		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dOCxBBoxDrawPSO.uuid(), d3dOCxBBoxDrawPSO.voidInitRef());
+	}
+
+	// Clear default UAV PSO
+	{
+		D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dDefaultComputeRS;
+		psoDesc.CS = D3D12ShaderBytecode(Shaders::ClearDefaultUAVxCS.data, Shaders::ClearDefaultUAVxCS.size);
+		d3dDevice->CreateComputePipelineState(&psoDesc, d3dClearDefaultUAVxPSO.uuid(), d3dClearDefaultUAVxPSO.voidInitRef());
+	}
+
+	// OC ICL Update PSO
+	{
+		D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dDefaultComputeRS;
+		psoDesc.CS = D3D12ShaderBytecode(Shaders::OCxICLUpdateCS.data, Shaders::OCxICLUpdateCS.size);
+		d3dDevice->CreateComputePipelineState(&psoDesc, d3dOCxICLUpdatePSO.uuid(), d3dOCxICLUpdatePSO.voidInitRef());
+	}
+
 	// Default drawing ICS
 	{
 		D3D12_INDIRECT_ARGUMENT_DESC indirectArgumentDescs[] =
@@ -202,7 +259,7 @@ bool XERDevice::initialize()
 			D3D12IndirectArgumentDesc_DrawIndexed(),
 		};
 
-		d3dDevice->CreateCommandSignature(&D3D12CommandSignatureDesc(sizeof(GPUDefaultDrawingIndirectCommand),
+		d3dDevice->CreateCommandSignature(&D3D12CommandSignatureDesc(sizeof(GPUDefaultDrawingIC),
 			countof(indirectArgumentDescs), indirectArgumentDescs), nullptr,//d3dDefaultGraphicsRS,
 			d3dDefaultDrawingICS.uuid(), d3dDefaultDrawingICS.voidInitRef());
 	}

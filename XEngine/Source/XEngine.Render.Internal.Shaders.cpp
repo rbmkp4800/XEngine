@@ -5,6 +5,11 @@
 #include "Shaders\Compiled\LightingPassVS.cso.h"
 #include "Shaders\Compiled\LightingPassPS.cso.h"
 
+#include "Shaders\Compiled\ClearDefaultUAVxCS.cso.h"
+#include "Shaders\Compiled\OCxBBoxVS.cso.h"
+#include "Shaders\Compiled\OCxBBoxPS.cso.h"
+#include "Shaders\Compiled\OCxICLUpdateCS.cso.h"
+
 #include "Shaders\Compiled\DebugPositionOnlyVS.cso.h"
 #include "Shaders\Compiled\DebugWhitePS.cso.h"
 
@@ -22,6 +27,11 @@ using namespace XEngine::Internal;
 
 ShaderData Shaders::LightingPassPS = { LightingPassPSData, sizeof(LightingPassPSData) };
 ShaderData Shaders::LightingPassVS = { LightingPassVSData, sizeof(LightingPassVSData) };
+
+ShaderData Shaders::ClearDefaultUAVxCS = { ClearDefaultUAVxCSData, sizeof(ClearDefaultUAVxCSData) };
+ShaderData Shaders::OCxBBoxVS = { OCxBBoxVSData, sizeof(OCxBBoxVSData) };
+ShaderData Shaders::OCxBBoxPS = { OCxBBoxPSData, sizeof(OCxBBoxPSData) };
+ShaderData Shaders::OCxICLUpdateCS = { OCxICLUpdateCSData, sizeof(OCxICLUpdateCSData) };
 
 ShaderData Shaders::DebugPositionOnlyVS = { DebugPositionOnlyVSData, sizeof(DebugPositionOnlyVSData) };
 ShaderData Shaders::DebugWhitePS = { DebugWhitePSData, sizeof(DebugWhitePSData) };

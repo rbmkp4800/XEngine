@@ -79,7 +79,7 @@ private:
 		//cubeGeometryInstanceId = xerScene.createGeometryInstance(&xerCubeGeometry, &xerPlainEffect, Matrix3x4::Identity());
 		//monsterGeometryInstanceId = xerScene.createGeometryInstance(&xerMonsterSkinnedGeometry, &xerPlainSkinnedEffect, Matrix3x4::Identity());
 
-		for (uint32 i = 0; i < 60000; i++)
+		for (uint32 i = 0; i < 6000; i++)
 		{
 			xerScene.createGeometryInstance(&xerSphereGeometry, &xerPlainEffect,
 				Matrix3x4::Translation(Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f)) *

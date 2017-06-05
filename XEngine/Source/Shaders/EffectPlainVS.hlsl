@@ -1,7 +1,7 @@
 cbuffer Constants : register(b0)
 {
-	float4x4 view;
 	float4x4 viewProjection;
+	float4x4 view;
 };
 
 StructuredBuffer<float4x3> transformsBuffer : register(t0);

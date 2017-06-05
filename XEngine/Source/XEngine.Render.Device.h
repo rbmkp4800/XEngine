@@ -107,11 +107,17 @@ namespace XEngine
 		COMPtr<ID3D12Device> d3dDevice;
 
 		COMPtr<ID3D12RootSignature> d3dDefaultGraphicsRS;
+		COMPtr<ID3D12RootSignature> d3dDefaultComputeRS;
 		COMPtr<ID3D12RootSignature> d3dLightingPassRS;
 
 		COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
 		COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;
 		COMPtr<ID3D12PipelineState> d3dUIFontPSO;
+
+		COMPtr<ID3D12PipelineState> d3dClearDefaultUAVxPSO;
+
+		COMPtr<ID3D12PipelineState> d3dOCxBBoxDrawPSO;
+		COMPtr<ID3D12PipelineState> d3dOCxICLUpdatePSO;
 
 		COMPtr<ID3D12CommandSignature> d3dDefaultDrawingICS;
 

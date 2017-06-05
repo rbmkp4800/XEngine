@@ -40,7 +40,7 @@ void XERScene::initialize(XERDevice* device)
 	d3dTransformsBuffer->Map(0, &D3D12Range(), to<void**>(&mappedTransformsBuffer));
 }
 
-XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry, XEREffect* effect, const Matrix3x4& _transform)
+XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry, XEREffect* effect, const Matrix3x4& transform)
 {
 	EffectData *effectData = nullptr;
 
@@ -64,19 +64,19 @@ XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry, XE
 		effectData->commandsBufferSize = initialCommandsBufferSize;
 		effectData->commandCount = 0;
 
-		device->d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-			&D3D12ResourceDesc_Buffer(effectData->commandsBufferSize * sizeof(GPUDefaultDrawingIndirectCommand)),
-			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		device->d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+			&D3D12ResourceDesc_Buffer(effectData->commandsBufferSize * sizeof(GPUDefaultDrawingIC),
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
 			effectData->d3dCommandsBuffer.uuid(), effectData->d3dCommandsBuffer.voidInitRef());
-		effectData->d3dCommandsBuffer->Map(0, &D3D12Range(), to<void**>(&effectData->mappedCommandsBuffer));
 	}
 	
-	GPUDefaultDrawingIndirectCommand &command = effectData->mappedCommandsBuffer[effectData->commandCount];
-	Matrix3x4 &transform = mappedTransformsBuffer[geometryInstanceCount];
+	mappedTransformsBuffer[geometryInstanceCount] = transform;
 
+	XERGeometryInstanceId id = geometryInstanceCount;
 	D3D12_GPU_VIRTUAL_ADDRESS geometryBufferAddress = geometry->d3dBuffer->GetGPUVirtualAddress();
 	uint32 vertexBufferSize = geometry->vertexCount * geometry->vertexStride;
 
+	GPUDefaultDrawingIC command;
 	command.vertexBufferView.BufferLocation = geometryBufferAddress;
 	command.vertexBufferView.SizeInBytes = vertexBufferSize;
 	command.vertexBufferView.StrideInBytes = geometry->vertexStride;
@@ -87,13 +87,15 @@ XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry, XE
 	command.drawIndexedArguments.InstanceCount = 1;
 	command.drawIndexedArguments.StartIndexLocation = 0;
 	command.drawIndexedArguments.BaseVertexLocation = 0;
-	command.drawIndexedArguments.StartInstanceLocation = geometryInstanceCount;
-	transform = _transform;
+	command.drawIndexedArguments.StartInstanceLocation = id;
+	command.geometryInstanceId = id;
 
-	effectData->commandCount++;
+	device->uploadEngine.uploadBuffer(effectData->d3dCommandsBuffer,
+		effectData->commandCount * sizeof(GPUDefaultDrawingIC),
+		&command, sizeof(GPUDefaultDrawingIC));
 
-	XERGeometryInstanceId id = geometryInstanceCount;
 	geometryInstanceCount++;
+	effectData->commandCount++;
 
 	return id;
 }
@@ -120,7 +122,8 @@ void XERScene::setGeometryInstanceTransform(XERGeometryInstanceId id, const Matr
 	mappedTransformsBuffer[id] = transform;
 }
 
-void XERScene::fillD3DCommandList(ID3D12GraphicsCommandList* d3dCommandList, bool applyEffects)
+void XERScene::fillD3DCommandList_draw(ID3D12GraphicsCommandList* d3dCommandList,
+	ID3D12Resource *d3dTempBuffer, uint32 tempBufferSize)
 {
 	d3dCommandList->IASetVertexBuffers(1, 1,
 		&D3D12VertexBufferView(d3dTransformsBuffer->GetGPUVirtualAddress(),
@@ -129,9 +132,50 @@ void XERScene::fillD3DCommandList(ID3D12GraphicsCommandList* d3dCommandList, boo
 	for (uint32 i = 0; i < effectCount; i++)
 	{
 		EffectData &effectData = effectsDataList[i];
-		
-		if (applyEffects)
-			d3dCommandList->SetPipelineState(effectData.effect->d3dPipelineState);
+
+		d3dCommandList->SetPipelineState(effectData.effect->d3dPipelineState);
+		d3dCommandList->ExecuteIndirect(device->d3dDefaultDrawingICS,
+			effectData.commandCount, effectData.d3dCommandsBuffer, 0, nullptr, 0);
+	}
+
+	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(d3dTempBuffer,
+		D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+
+	d3dCommandList->SetComputeRootSignature(device->d3dDefaultComputeRS);
+	d3dCommandList->SetComputeRootUnorderedAccessView(2, d3dTempBuffer->GetGPUVirtualAddress());
+	d3dCommandList->SetPipelineState(device->d3dClearDefaultUAVxPSO);
+	d3dCommandList->Dispatch(tempBufferSize / (sizeof(uint32) * 1024), 1, 1);	// TODO: refactor that 1024
+
+	d3dCommandList->SetGraphicsRootShaderResourceView(1, d3dTransformsBuffer->GetGPUVirtualAddress());
+	d3dCommandList->SetGraphicsRootUnorderedAccessView(3, d3dTempBuffer->GetGPUVirtualAddress());
+	d3dCommandList->SetPipelineState(device->d3dOCxBBoxDrawPSO);
+	d3dCommandList->DrawInstanced(geometryInstanceCount * 36, 1, 0, 0);
+
+	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(d3dTempBuffer,
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ));
+
+	for (uint32 i = 0; i < effectCount; i++)
+	{
+		EffectData &effectData = effectsDataList[i];
+
+		d3dCommandList->SetPipelineState(device->d3dOCxICLUpdatePSO);
+		d3dCommandList->SetComputeRoot32BitConstant(0, effectData.commandCount, 0);
+		d3dCommandList->SetComputeRootShaderResourceView(1, d3dTempBuffer->GetGPUVirtualAddress());
+		d3dCommandList->SetComputeRootUnorderedAccessView(2, effectData.d3dCommandsBuffer->GetGPUVirtualAddress());
+
+		d3dCommandList->Dispatch((effectData.commandCount - 1) / 1024 + 1, 1, 1);
+	}
+}
+
+void XERScene::fillD3DCommandList_drawWithoutEffects(ID3D12GraphicsCommandList* d3dCommandList)
+{
+	d3dCommandList->IASetVertexBuffers(1, 1,
+		&D3D12VertexBufferView(d3dTransformsBuffer->GetGPUVirtualAddress(),
+		geometryInstanceCount * sizeof(Matrix3x4), sizeof(Matrix3x4)));
+
+	for (uint32 i = 0; i < effectCount; i++)
+	{
+		EffectData &effectData = effectsDataList[i];
 		d3dCommandList->ExecuteIndirect(device->d3dDefaultDrawingICS,
 			effectData.commandCount, effectData.d3dCommandsBuffer, 0, nullptr, 0);
 	}

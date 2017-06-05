@@ -49,6 +49,8 @@ namespace XEngine
 		uint32 rtvDescriptors = 0, srvDescriptors = 0;	// +0 diffuse, +1 normal
 		uint32 dsvDescriptor = 0;
 
+		COMPtr<ID3D12Resource> d3dTempBuffer;
+
 		COMPtr<ID3D12Resource> d3dCameraTransformCB;
 		COMPtr<ID3D12Resource> d3dLightingPassCB;
 		Internal::CameraTransformCB *mappedCameraTransformCB = nullptr;
