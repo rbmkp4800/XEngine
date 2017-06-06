@@ -3,6 +3,7 @@
 
 #include <XLib.Util.h>
 #include <XLib.Heap.h>
+#include <XLib.Vectors.Arithmetics.h>
 
 #include "XEngine.Render.UI.h"
 #include "XEngine.Render.Device.h"
@@ -57,8 +58,9 @@ void XERUIGeometryRenderer::drawText(float32x2 position, const char* text, uint3
 	uint8 lastCharCode = firstCharCode + font->charTableSize - 1;
 	uint32 charTableSize = font->charTableSize;
 
-	float32 charWidth = float32(font->charWidth);
-	float32 charHeight = float32(font->charHeight);
+	position *= ndcScaleCoef;
+	position += float32x2(-1.0f, 1.0f);
+	float32x2 charSize = float32x2(font->charWidth, font->charHeight) * ndcScaleCoef;
 	float32 leftBorder = position.x;
 
 	VertexUIFont *vertices = to<VertexUIFont*>(mappedVertexBuffer) + usedVertexCount;
@@ -72,22 +74,22 @@ void XERUIGeometryRenderer::drawText(float32x2 position, const char* text, uint3
 		if (character == '\n')
 		{
 			position.x = leftBorder;
-			position.y += charHeight;
+			position.y += charSize.y;
 		}
 		else if (character == ' ' || character < firstCharCode || character >= lastCharCode)
 		{
-			position.x += charWidth;
+			position.x += charSize.x;
 		}
 		else
 		{
 			character -= firstCharCode;
-			float32 bottom = position.y + charHeight;
+			float32 bottom = position.y + charSize.y;
 
 			uint16 charTextureLeft = uint16(0xFFFF * character / charTableSize);
 			VertexUIFont leftTop = { position, { charTextureLeft, 0 } };
 			VertexUIFont leftBottom = { { position.x, bottom }, { charTextureLeft, 0xFFFF } };
 
-			position.x += charWidth;
+			position.x += charSize.x;
 			uint16 charTextureRight = uint16(0xFFFF * (character + 1) / charTableSize);
 			VertexUIFont rightTop = { position,{ charTextureRight, 0 } };
 			VertexUIFont rightBottom = { { position.x, bottom },{ charTextureRight, 0xFFFF } };

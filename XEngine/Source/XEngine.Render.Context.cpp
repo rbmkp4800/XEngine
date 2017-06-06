@@ -114,21 +114,8 @@ bool XERContext::initialize(XERDevice* device)
 	return true;
 }
 
-/*void XERContext::waitForQueue()
-{
-	d3dCommandQueue->Signal(d3dFence, fenceValue);
-
-	if (d3dFence->GetCompletedValue() < fenceValue)
-	{
-		d3dFence->SetEventOnCompletion(fenceValue, syncEvent.getHandle());
-		syncEvent.wait();
-	}
-
-	fenceValue++;
-}*/
-
 void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
-	XERDebugWireframeMode debugWireframeMode, XERDrawTimers* timers)
+	XERDebugWireframeMode debugWireframeMode, bool updateOcclusionCulling, XERDrawTimers* timers)
 {
 	uint32x2 targetSize = { 0, 0 };
 	{
@@ -196,7 +183,8 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_objectsPassComplete);
 
-	scene->fillD3DCommandList_runOcclusionCulling(d3dCommandList, d3dTempBuffer, tempBufferSize);
+	if (updateOcclusionCulling)
+		scene->fillD3DCommandList_runOcclusionCulling(d3dCommandList, d3dTempBuffer, tempBufferSize);
 
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_occlusionCullingComplete);
 
@@ -204,7 +192,7 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 
 	// lighting pass
 	{
-		D3D12_CPU_DESCRIPTOR_HANDLE targetRTVDescriptorHandle = device->rtvHeap.getCPUHandle(target->rtvDescritptor);
+		D3D12_CPU_DESCRIPTOR_HANDLE targetRTVDescriptorHandle = device->rtvHeap.getCPUHandle(target->rtvDescriptor);
 		d3dCommandList->OMSetRenderTargets(1, &targetRTVDescriptorHandle, FALSE, nullptr);
 
 		{
@@ -281,7 +269,7 @@ void XERContext::draw(XERTargetBuffer* target, XERUIGeometryRenderer* renderer)
 
 	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	D3D12_CPU_DESCRIPTOR_HANDLE targetRTVDescriptorHandle = device->rtvHeap.getCPUHandle(target->rtvDescritptor);
+	D3D12_CPU_DESCRIPTOR_HANDLE targetRTVDescriptorHandle = device->rtvHeap.getCPUHandle(target->rtvDescriptor);
 	d3dCommandList->OMSetRenderTargets(1, &targetRTVDescriptorHandle, FALSE, nullptr);
 
 	renderer->fillD3DCommandList(d3dCommandList);

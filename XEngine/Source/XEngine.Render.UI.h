@@ -45,6 +45,7 @@ namespace XEngine
 		COMPtr<ID3D12Resource> d3dVertexBuffer;
 		void* mappedVertexBuffer = nullptr;
 
+		float32x2 ndcScaleCoef;
 		XERMonospacedFont *font;
 		uint32 usedVertexCount = 0;
 
@@ -58,7 +59,13 @@ namespace XEngine
 		void beginDraw(XERContext* _context);
 		void endDraw();
 
-		inline void setFont(XERMonospacedFont* _font) { font = _font; }
 		void drawText(float32x2 position, const char* text, uint32 length = uint32(-1));
+
+		inline void setFont(XERMonospacedFont* _font) { font = _font; }
+		inline void setTargetSize(uint32 width, uint32 height)
+		{
+			ndcScaleCoef.x = 1.0f / float32(width / 2);
+			ndcScaleCoef.y = -1.0f / float32(height / 2);
+		}
 	};
 }

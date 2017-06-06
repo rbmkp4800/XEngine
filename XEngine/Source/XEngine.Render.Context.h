@@ -64,7 +64,8 @@ namespace XEngine
 		bool initialize(XERDevice* device);
 
 		void draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
-			XERDebugWireframeMode debugWireframeMode, XERDrawTimers* timers = nullptr);
+			XERDebugWireframeMode debugWireframeMode, bool updateOcclusionCulling,
+			XERDrawTimers* timers = nullptr);
 		void draw(XERTargetBuffer* target, XERUIGeometryRenderer* renderer);
 
 		inline XERDevice* getDevice() { return device; }

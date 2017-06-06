@@ -38,14 +38,13 @@ private:
 	XERGeometryInstanceId monsterGeometryInstanceId;
 	XERLightId light1Id, light2Id, light3Id, light4Id;
 
-	//float32x3 cameraPosition = { 0.0f, 0.0f, -10.0f };
-	//float32x2 cameraRotation = { 0.0f, 0.0f };
 	XERCamera camera;
 	float32x2 cameraRotation = { 0.0f, 0.0f };
 	sint16x2 mouseLastPos = { 0, 0 };
 	bool captureMouseToCameraRotation = false;
 
 	struct { bool left, right, up, down, forward, backward, wireframe, narrowFOV, coefUp, coefDown; } controls = {};
+	bool ocUpdatesEnabled = false;
 
 	float32 time = 0.0f;
 	float32 coef = 0.01f;
@@ -99,6 +98,11 @@ private:
 
 		lastFrameTimerRecord = Timer::GetRecord();
 	}
+	virtual void onResize(ResizingArgs& args) override
+	{
+		xerWindowTarget.resize(args.width, args.height);
+		xerUIRenderer.setTargetSize(args.width, args.height);
+	}
 	virtual void onKeyboard(VirtualKey key, bool state) override
 	{
 		switch (key)
@@ -130,13 +134,18 @@ private:
 			{
 				frameTimeSum = 0.0f;
 				frameCount = 0;
-				break;
 			}
+			break;
+
+		case VirtualKey('U'):
+			if (state)
+				ocUpdatesEnabled = !ocUpdatesEnabled;
+			break;
 		}
 	}
 	virtual void onMouseButton(MouseState& mouseState, MouseButton button, bool state) override
 	{
-		if (button == MouseButton::Right)
+		if (button == MouseButton::Left)
 		{
 			captureMouseToCameraRotation = state;
 			if (state)
@@ -208,15 +217,18 @@ public:
 		XERDrawTimers xerTimers = {};
 		xerContext.draw(xerTarget, &xerScene, camera,
 			controls.wireframe ? XERDebugWireframeMode::Enabled : XERDebugWireframeMode::Disabled,
-			&xerTimers);
+			ocUpdatesEnabled, &xerTimers);
 
 		xerUIRenderer.beginDraw(&xerContext);
 		xerUIRenderer.setFont(&xerFont);
 		{
 			char buffer[256];
-			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\nTotal frame time %5.2f ms\nOP %5.2f ms\nOC %5.2f ms\nLP %5.2f ms\nWORK IN PROGRESS",
+			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\n"\
+				"Total frame time %5.2f ms\nOP %5.2f ms\nOC %5.2f ms\n"\
+				"LP %5.2f ms\nOC updates %s\nWORK IN PROGRESS",
 				xerDevice.getName(), xerTimers.totalTime * 1000.0f, xerTimers.objectsPassTime * 1000.0f,
-				xerTimers.occlusionCullingTime * 1000.0f, xerTimers.lightingPassTime * 1000.0f);
+				xerTimers.occlusionCullingTime * 1000.0f, xerTimers.lightingPassTime * 1000.0f,
+				ocUpdatesEnabled ? "enabled" : "disabled");
 
 			xerUIRenderer.drawText(float32x2(10.0f, 10.0f), buffer);
 		}
