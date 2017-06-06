@@ -200,7 +200,7 @@ bool XERDevice::initialize()
 		psoDesc.PS = D3D12ShaderBytecode(Shaders::UIFontPS.data, Shaders::UIFontPS.size);
 		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
 		psoDesc.SampleMask = UINT_MAX;
-		psoDesc.RasterizerState = D3D12RasterizerDesc(D3D12_CULL_MODE_NONE); // TODO: changle to default
+		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
 		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Disable();
 		psoDesc.InputLayout = D3D12InputLayoutDesc(inputElementDescs, countof(inputElementDescs));
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;

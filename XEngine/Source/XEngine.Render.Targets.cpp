@@ -40,6 +40,11 @@ void XERWindowTarget::initialize(XERDevice* device, void* hWnd, uint32 width, ui
 
 void XERWindowTarget::resize(uint32 width, uint32 height)
 {
+	DXGI_SWAP_CHAIN_DESC desc = {};
+	dxgiSwapChain->GetDesc(&desc);
+	if (width == desc.BufferDesc.Width && height == desc.BufferDesc.Height)
+		return;
+
 	for each (XERTargetBuffer& buffer in buffers)
 		buffer.d3dTexture.destroy();
 
