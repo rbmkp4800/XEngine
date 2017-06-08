@@ -133,7 +133,7 @@ void XERMonospacedFont::initializeA1(XERDevice* device, uint8* bitmapA1,
 	uint32 textureWidth = uint32(charWidth) * uint32(charTableSize);
 
 	uint32 bitmapSize = textureWidth * charHeight;
-	uint8 *bitmap = Heap::Allocate<uint8>(bitmapSize);
+	HeapPtr<uint8> bitmap(bitmapSize);
 	for (uint32 i = 0; i < bitmapSize; i++)
 		bitmap[i] = (bitmapA1[i / 8] >> (i % 8)) & 1 ? 0xFF : 0;
 
@@ -144,6 +144,4 @@ void XERMonospacedFont::initializeA1(XERDevice* device, uint8* bitmapA1,
 	srvDescriptor = device->srvHeap.allocateDescriptors(1);
 	device->d3dDevice->CreateShaderResourceView(d3dTexture, nullptr, device->srvHeap.getCPUHandle(srvDescriptor));
 	device->uploadEngine.uploadTexture(d3dTexture, bitmap, textureWidth, charHeight);
-
-	Heap::Release(bitmap);
 }
