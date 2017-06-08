@@ -54,6 +54,7 @@ namespace XEngine
 		uint32 dsvDescriptor = 0;
 
 		COMPtr<ID3D12Resource> d3dTempBuffer;
+		uint32 tempRTVDescriptorsBase;
 
 		COMPtr<ID3D12Resource> d3dCameraTransformCB;
 		COMPtr<ID3D12Resource> d3dLightingPassCB;

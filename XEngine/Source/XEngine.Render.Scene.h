@@ -66,7 +66,7 @@ namespace XEngine
 		void fillD3DCommandList_draw(ID3D12GraphicsCommandList* d3dCommandList);
 		void fillD3DCommandList_drawWithoutEffects(ID3D12GraphicsCommandList* d3dCommandList);
 		void fillD3DCommandList_runOcclusionCulling(ID3D12GraphicsCommandList* d3dCommandList,
-			ID3D12Resource *d3dTempBuffer, uint32 tempBufferSize);
+			ID3D12Resource *d3dTempBuffer, uint32 tempBufferSize, uint32 tempRTVDescriptorsBase);
 
 	public:
 		void initialize(XERDevice* device);

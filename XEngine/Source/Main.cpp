@@ -78,11 +78,11 @@ private:
 		//cubeGeometryInstanceId = xerScene.createGeometryInstance(&xerCubeGeometry, &xerPlainEffect, Matrix3x4::Identity());
 		//monsterGeometryInstanceId = xerScene.createGeometryInstance(&xerMonsterSkinnedGeometry, &xerPlainSkinnedEffect, Matrix3x4::Identity());
 
-		for (uint32 i = 0; i < 6000; i++)
+		for (uint32 i = 0; i < 50; i++)
 		{
 			xerScene.createGeometryInstance(&xerSphereGeometry, &xerPlainEffect,
 				Matrix3x4::Translation(Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f)) *
-				Matrix3x4::Scale(0.05f, 0.05f, 0.05f) *
+				Matrix3x4::Scale(0.5f, 0.5f, 0.5f) *
 				Matrix3x4::RotationX(Random::Global.getF32(0.0f, 3.14f)) * Matrix3x4::RotationY(Random::Global.getF32(0.0f, 3.14f)));
 		}
 
@@ -137,10 +137,39 @@ private:
 			}
 			break;
 
-		case VirtualKey('U'):
+		case VirtualKey('O'):
 			if (state)
 				ocUpdatesEnabled = !ocUpdatesEnabled;
 			break;
+
+		case VirtualKey('U'):
+			if (state && !ocUpdatesEnabled)
+			{
+				ocUpdatesEnabled = true;
+				update();
+				ocUpdatesEnabled = false;
+			}
+			break;
+
+		case VirtualKey('T'):
+			if (state)
+			{
+				float32x3 lastPosition = camera.position;
+				float32x2 lastRotation = cameraRotation;
+
+				camera.position = { 0.0f, -3.0f, -10.0f };
+				cameraRotation = { 1.0f, 0.0f };
+				update();
+				Thread::Sleep(1000);
+				cameraRotation = { 0.0f, 0.0f };
+				update();
+				Thread::Sleep(1000);
+				update();
+				Thread::Sleep(1000);
+
+				camera.position = lastPosition;
+				cameraRotation = lastRotation;
+			}
 		}
 	}
 	virtual void onMouseButton(MouseState& mouseState, MouseButton button, bool state) override
@@ -235,7 +264,7 @@ public:
 		xerUIRenderer.endDraw();
 
 		xerContext.draw(xerTarget, &xerUIRenderer);
-		xerWindowTarget.present(false);
+		xerWindowTarget.present(true);
 	}
 };
 

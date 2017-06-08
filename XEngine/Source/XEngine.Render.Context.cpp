@@ -97,6 +97,7 @@ bool XERContext::initialize(XERDevice* device)
 	d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
 		&D3D12ResourceDesc_Buffer(tempBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
 		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, d3dTempBuffer.uuid(), d3dTempBuffer.voidInitRef());
+	tempRTVDescriptorsBase = device->srvHeap.allocateDescriptors(1);
 
 	// creating constant buffers
 	{
@@ -184,7 +185,7 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_objectsPassComplete);
 
 	if (updateOcclusionCulling)
-		scene->fillD3DCommandList_runOcclusionCulling(d3dCommandList, d3dTempBuffer, tempBufferSize);
+		scene->fillD3DCommandList_runOcclusionCulling(d3dCommandList, d3dTempBuffer, tempBufferSize, tempRTVDescriptorsBase);
 
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_occlusionCullingComplete);
 

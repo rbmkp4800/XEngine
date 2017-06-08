@@ -100,11 +100,17 @@ bool XERDevice::initialize()
 
 	// default compute RS
 	{
+		D3D12_DESCRIPTOR_RANGE ranges[] =
+		{
+			{ D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+		};
+
 		D3D12_ROOT_PARAMETER rootParameters[] =
 		{
 			D3D12RootParameter_Const(1, 0, 0),
 			D3D12RootParameter_SRV(0, 0),
 			D3D12RootParameter_UAV(0, 0),
+			D3D12RootParameter_Table(countof(ranges), ranges),
 		};
 
 		COMPtr<ID3DBlob> d3dSignature, d3dError;
