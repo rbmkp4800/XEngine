@@ -231,6 +231,18 @@ inline D3D12_DEPTH_STENCIL_DESC D3D12DepthStencilDesc_DisableWrite()
 	return desc;
 }
 
+inline D3D12_DEPTH_STENCIL_DESC D3D12DepthStencilDesc_DisableRead()
+{
+	D3D12_DEPTH_STENCIL_DESC desc = {};
+	desc.DepthEnable = TRUE;
+	desc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	desc.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
+	desc.StencilEnable = FALSE;
+	desc.StencilReadMask = D3D12_DEFAULT_STENCIL_READ_MASK;
+	desc.StencilWriteMask = D3D12_DEFAULT_STENCIL_WRITE_MASK;
+	return desc;
+}
+
 inline D3D12_RESOURCE_BARRIER D3D12ResourceBarrier_Transition(ID3D12Resource *d3dResource,
 	D3D12_RESOURCE_STATES stateBefore, D3D12_RESOURCE_STATES stateAfter,
 	UINT subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,

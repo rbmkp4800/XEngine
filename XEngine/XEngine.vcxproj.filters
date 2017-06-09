@@ -137,6 +137,7 @@
     <FxCompile Include="Source\Shaders\OCxBBoxVS.hlsl" />
     <FxCompile Include="Source\Shaders\ClearDefaultUAVxCS.hlsl" />
     <FxCompile Include="Source\Shaders\OCxICLUpdateCS.hlsl" />
+    <FxCompile Include="Source\Shaders\DepthBufferDownscalePS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Doc\xegeometry.txt" />

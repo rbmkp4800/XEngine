@@ -50,6 +50,7 @@ namespace XEngine
 		COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
 
 		COMPtr<ID3D12Resource> d3dNormalTexture, d3dDiffuseTexture, d3dDepthTexture;
+		COMPtr<ID3D12Resource> d3dDownscaledDepthTexture;
 		uint32 rtvDescriptors = 0, srvDescriptors = 0;	// +0 diffuse, +1 normal
 		uint32 dsvDescriptor = 0;
 

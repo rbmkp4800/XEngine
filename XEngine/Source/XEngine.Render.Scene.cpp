@@ -193,9 +193,9 @@ void XERScene::fillD3DCommandList_runOcclusionCulling(ID3D12GraphicsCommandList*
 		d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(d3dTempBuffer,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ));
 
-		d3dCommandList->SetPipelineState(effectData.effect->d3dPipelineState);
+		/*d3dCommandList->SetPipelineState(effectData.effect->d3dPipelineState);
 		d3dCommandList->ExecuteIndirect(device->d3dDefaultDrawingICS, appearedGeometryInstancesDrawCommandsLimit,
-			d3dTempBuffer, appearedGeometryInstancesDrawCommandsByteOffset, d3dTempBuffer, 0);
+			d3dTempBuffer, appearedGeometryInstancesDrawCommandsByteOffset, d3dTempBuffer, 0);*/
 	}
 }
 

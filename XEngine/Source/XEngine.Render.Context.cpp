@@ -79,13 +79,20 @@ bool XERContext::initialize(XERDevice* device)
 			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), D3D12_RESOURCE_STATE_DEPTH_WRITE,
 			&D3D12ClearValue_D24S8(1.0f), d3dDepthTexture.uuid(), d3dDepthTexture.voidInitRef());
 
+		d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+			&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_D32_FLOAT, initTempTargetBufferWidth / 4, initTempTargetBufferHeight / 4,
+			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			nullptr, d3dDownscaledDepthTexture.uuid(), d3dDownscaledDepthTexture.voidInitRef());
+
 		rtvDescriptors = device->rtvHeap.allocateDescriptors(2);
 		d3dDevice->CreateRenderTargetView(d3dDiffuseTexture, nullptr, device->rtvHeap.getCPUHandle(rtvDescriptors + 0));
 		d3dDevice->CreateRenderTargetView(d3dNormalTexture, nullptr, device->rtvHeap.getCPUHandle(rtvDescriptors + 1));
 
-		dsvDescriptor = device->dsvHeap.allocateDescriptors(1);
+		dsvDescriptor = device->dsvHeap.allocateDescriptors(2);
 		d3dDevice->CreateDepthStencilView(d3dDepthTexture, &D3D12DepthStencilViewDesc_Texture2D(
 			DXGI_FORMAT_D24_UNORM_S8_UINT), device->dsvHeap.getCPUHandle(dsvDescriptor));
+		d3dDevice->CreateDepthStencilView(d3dDownscaledDepthTexture, &D3D12DepthStencilViewDesc_Texture2D(
+			DXGI_FORMAT_D32_FLOAT), device->dsvHeap.getCPUHandle(dsvDescriptor + 1));
 
 		srvDescriptors = device->srvHeap.allocateDescriptors(3);
 		d3dDevice->CreateShaderResourceView(d3dDiffuseTexture, nullptr, device->srvHeap.getCPUHandle(srvDescriptors + 0));
@@ -185,7 +192,24 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_objectsPassComplete);
 
 	if (updateOcclusionCulling)
+	{
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle = device->dsvHeap.getCPUHandle(dsvDescriptor + 1);
+		d3dCommandList->OMSetRenderTargets(0, nullptr, FALSE, &dsvDescriptorHandle);
+
+		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, float32(targetSize.x / 4), float32(targetSize.y / 4)));
+		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, targetSize.x / 4, targetSize.y / 4));
+
+		d3dCommandList->SetGraphicsRootSignature(device->d3dLightingPassRS);
+		d3dCommandList->SetPipelineState(device->d3dDepthBufferDownscalePSO);
+		d3dCommandList->SetGraphicsRootDescriptorTable(1, device->srvHeap.getGPUHandle(srvDescriptors));
+		d3dCommandList->DrawInstanced(3, 1, 0, 0);
+
+		d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
 		scene->fillD3DCommandList_runOcclusionCulling(d3dCommandList, d3dTempBuffer, tempBufferSize, tempRTVDescriptorsBase);
+
+		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, float32(targetSize.x), float32(targetSize.y)));
+		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, targetSize.x, targetSize.y));
+	}
 
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_occlusionCullingComplete);
 

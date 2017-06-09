@@ -17,6 +17,7 @@ namespace XEngine::Internal
 		static ShaderData LightingPassPS;
 
 		static ShaderData ClearDefaultUAVxCS;
+		static ShaderData DepthBufferDownscalePS;
 		static ShaderData OCxBBoxVS;
 		static ShaderData OCxBBoxPS;
 		static ShaderData OCxICLUpdateCS;

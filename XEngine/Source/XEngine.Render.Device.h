@@ -115,6 +115,7 @@ namespace XEngine
 		COMPtr<ID3D12PipelineState> d3dUIFontPSO;
 
 		COMPtr<ID3D12PipelineState> d3dClearDefaultUAVxPSO;
+		COMPtr<ID3D12PipelineState> d3dDepthBufferDownscalePSO;
 
 		COMPtr<ID3D12PipelineState> d3dOCxBBoxDrawPSO;
 		COMPtr<ID3D12PipelineState> d3dOCxICLUpdatePSO;

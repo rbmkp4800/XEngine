@@ -163,6 +163,26 @@ bool XERDevice::initialize()
 		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dLightingPassPSO.uuid(), d3dLightingPassPSO.voidInitRef());
 	}
 
+	// depth buffer downscale PSO
+	{
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dLightingPassRS;
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::LightingPassVS.data, Shaders::LightingPassVS.size);
+		psoDesc.PS = D3D12ShaderBytecode(Shaders::DepthBufferDownscalePS.data, Shaders::DepthBufferDownscalePS.size);
+		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
+		psoDesc.DepthStencilState = D3D12DepthStencilDesc_DisableRead();
+		psoDesc.InputLayout = D3D12InputLayoutDesc();
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 0;
+		psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+		psoDesc.SampleDesc.Count = 1;
+		psoDesc.SampleDesc.Quality = 0;
+
+		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dDepthBufferDownscalePSO.uuid(), d3dDepthBufferDownscalePSO.voidInitRef());
+	}
+
 	// debug wireframe PSO
 	{
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -233,7 +253,7 @@ bool XERDevice::initialize()
 		psoDesc.InputLayout = D3D12InputLayoutDesc();
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		psoDesc.NumRenderTargets = 0;
-		psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 		psoDesc.SampleDesc.Count = 1;
 		psoDesc.SampleDesc.Quality = 0;
 
