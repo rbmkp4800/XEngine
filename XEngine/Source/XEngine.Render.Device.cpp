@@ -87,7 +87,7 @@ bool XERDevice::initialize()
 
 		D3D12_STATIC_SAMPLER_DESC staticSapmplers[] =
 		{
-			D3D12StaticSamplerDesc_Default(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
+			D3D12StaticSamplerDesc_DisableMIPs(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
 		COMPtr<ID3DBlob> d3dSignature, d3dError;

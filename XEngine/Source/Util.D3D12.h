@@ -368,14 +368,14 @@ inline D3D12_DEPTH_STENCIL_VIEW_DESC D3D12DepthStencilViewDesc_Texture2D(DXGI_FO
 inline D3D12_SAMPLER_DESC D3D12SamplerDesc_Default()
 {
 	D3D12_SAMPLER_DESC desc = {};
-	desc.Filter = D3D12_FILTER_ANISOTROPIC;
+	desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 	desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	desc.MipLODBias = 0.0f;
-	desc.MaxAnisotropy = 16;
-	desc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
-	desc.MinLOD = 0.0f;
+	desc.MaxAnisotropy = 1;
+	desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	desc.MinLOD = -3.402823466e+38f;
 	desc.MaxLOD = 3.402823466e+38f;
 	return desc;
 }
@@ -384,16 +384,36 @@ inline D3D12_STATIC_SAMPLER_DESC D3D12StaticSamplerDesc_Default(UINT shaderRegis
 	UINT registerSpace, D3D12_SHADER_VISIBILITY visibility)
 {
 	D3D12_STATIC_SAMPLER_DESC desc;
-	desc.Filter = D3D12_FILTER_ANISOTROPIC;
+	desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 	desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	desc.MipLODBias = 0.0f;
-	desc.MaxAnisotropy = 16;
-	desc.ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	desc.MaxAnisotropy = 1;
+	desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	desc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
+	desc.MinLOD = -3.402823466e+38f;
+	desc.MaxLOD = 3.402823466e+38f;
+	desc.ShaderRegister = shaderRegister;
+	desc.RegisterSpace = registerSpace;
+	desc.ShaderVisibility = visibility;
+	return desc;
+}
+
+inline D3D12_STATIC_SAMPLER_DESC D3D12StaticSamplerDesc_DisableMIPs(UINT shaderRegister,
+	UINT registerSpace, D3D12_SHADER_VISIBILITY visibility)
+{
+	D3D12_STATIC_SAMPLER_DESC desc;
+	desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	desc.MipLODBias = 0.0f;
+	desc.MaxAnisotropy = 1;
+	desc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 	desc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_WHITE;
 	desc.MinLOD = 0.0f;
-	desc.MaxLOD = 3.402823466e+38f;
+	desc.MaxLOD = 0.0f;
 	desc.ShaderRegister = shaderRegister;
 	desc.RegisterSpace = registerSpace;
 	desc.ShaderVisibility = visibility;

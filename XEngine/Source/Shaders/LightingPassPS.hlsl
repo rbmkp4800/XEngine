@@ -44,6 +44,9 @@ float4 main(PSInput input) : SV_Target
 	//return float4(normal, 1.0f);
 	//return float4(depth / 10.0f, depth / 10.0f, depth / 10.0f, 1.0f);
 
+    float dd = 1.0f - depth / 20.0f;
+    diffuseColor *= float4(dd, dd, dd, 1.0f);
+
 	float3 viewPosition = float3(input.positionNDC * depth * fovTg, depth);
 	viewPosition.x *= aspect;
 	float3 normalizedViewPosition = normalize(viewPosition);

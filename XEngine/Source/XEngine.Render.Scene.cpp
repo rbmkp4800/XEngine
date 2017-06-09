@@ -163,7 +163,7 @@ void XERScene::fillD3DCommandList_runOcclusionCulling(ID3D12GraphicsCommandList*
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ));
 
 	uint32 appearedGeometryInstancesDrawCommandsByteOffset =
-		alignup(sizeof(uint32) * geometryInstanceCount + sizeof(uint32), sizeof(GPUDefaultDrawingIC));
+		alignup<uint32>(sizeof(uint32) * geometryInstanceCount + sizeof(uint32), sizeof(GPUDefaultDrawingIC));
 	uint32 appearedGeometryInstancesDrawCommandsStructOffset =
 		appearedGeometryInstancesDrawCommandsByteOffset / sizeof(GPUDefaultDrawingIC);
 	uint32 appearedGeometryInstancesDrawCommandsLimit =
