@@ -30,14 +30,14 @@ float sqr(float value) { return value * value; }
 
 float4 main(PSInput input) : SV_Target
 {
-	int3 texPosition = int3(input.position.xy, 0);
+	int2 texPosition = int2(input.position.xy);
 
-	float depthNDC = depthTexture.Load(texPosition);
+	float depthNDC = depthTexture[texPosition];
 	if (depthNDC == 1.0f) clip(-1.0f);
 	float depth = (zFar * zNear) / (zFar - depthNDC * (zFar - zNear));
 
-	float4 diffuseColor = diffuseTexture.Load(texPosition);
-	float3 normal = float3(normalTexture.Load(texPosition), 0.0f);
+	float4 diffuseColor = diffuseTexture[texPosition];
+	float3 normal = float3(normalTexture[texPosition], 0.0f);
 	normal.z = -sqrt(saturate(1.0f - sqr(normal.x) - sqr(normal.y)));
 	                       // ^^^ can be less then 0 (precision)
 
