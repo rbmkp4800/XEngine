@@ -13,11 +13,12 @@ namespace XEngine::Internal
 	class Shaders abstract final
 	{
 	public:
-		static ShaderData LightingPassVS;
-		static ShaderData LightingPassPS;
-
+		static ShaderData ScreenQuadVS;
 		static ShaderData ClearDefaultUAVxCS;
 		static ShaderData DepthBufferDownscalePS;
+
+		static ShaderData LightingPassPS;
+
 		static ShaderData OCxBBoxVS;
 		static ShaderData OCxBBoxPS;
 		static ShaderData OCxICLUpdateCS;

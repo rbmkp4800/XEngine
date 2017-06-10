@@ -6,9 +6,11 @@
 #include "XEngine.Render.Context.h"
 #include "XEngine.Render.Device.h"
 #include "XEngine.Render.Scene.h"
+#include "XEngine.Render.Effect.h"
 #include "XEngine.Render.UI.h"
 #include "XEngine.Render.Targets.h"
 #include "XEngine.Render.Camera.h"
+#include "XEngine.Render.Internal.GPUStructs.h"
 
 using namespace XLib;
 using namespace XEngine;
@@ -132,7 +134,7 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 		targetSize.y = uint32(desc.Height);
 	}
 
-	// updating constant buffers
+	// updating constant buffers ============================================================//
 	{
 		float32 aspect = float32(targetSize.x) / float32(targetSize.y);
 		Matrix4x4 view = camera.getViewMatrix();
@@ -156,94 +158,180 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 		}
 		mappedLightingPassCB->lightsCount = lightCount;
 	}
+	
+	// basic initialization =================================================================//
+	{
+		d3dCommandAllocator->Reset();
+		d3dCommandList->Reset(d3dCommandAllocator, nullptr);
 
+		d3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, float32(targetSize.x), float32(targetSize.y)));
+		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, targetSize.x, targetSize.y));
 
-	d3dCommandAllocator->Reset();
-	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
+		ID3D12DescriptorHeap *d3dDescriptorHeaps[] = { device->srvHeap.getD3D12DescriptorHeap() };
+		d3dCommandList->SetDescriptorHeaps(countof(d3dDescriptorHeaps), d3dDescriptorHeaps);
+	}
 
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_frameBegin);
 
-	d3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, float32(targetSize.x), float32(targetSize.y)));
-	d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, targetSize.x, targetSize.y));
-
-	ID3D12DescriptorHeap *d3dDescriptorHeaps[] = { device->srvHeap.getD3D12DescriptorHeap() };
-	d3dCommandList->SetDescriptorHeaps(countof(d3dDescriptorHeaps), d3dDescriptorHeaps);
-
-	d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
-
-	// draw objects
+	// materials pass =======================================================================//
 	{
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device->rtvHeap.getCPUHandle(rtvDescriptors);
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle = device->dsvHeap.getCPUHandle(dsvDescriptor);
 		d3dCommandList->OMSetRenderTargets(2, &rtvDescriptorsHandle, TRUE, &dsvDescriptorHandle);
 
-		{
-			const float32 clearColor[4] = {};
-			d3dCommandList->ClearRenderTargetView(rtvDescriptorsHandle, clearColor, 0, nullptr);
-			d3dCommandList->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-		}
+		const float32 clearColor[4] = {};
+		d3dCommandList->ClearRenderTargetView(rtvDescriptorsHandle, clearColor, 0, nullptr);
+		d3dCommandList->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
+		d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
 		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dCameraTransformCB->GetGPUVirtualAddress());
 
-		scene->fillD3DCommandList_draw(d3dCommandList);
+		d3dCommandList->IASetVertexBuffers(1, 1, &D3D12VertexBufferView(scene->d3dTransformsBuffer->GetGPUVirtualAddress(),
+			scene->geometryInstanceCount * sizeof(Matrix3x4), sizeof(Matrix3x4)));
+
+		for (uint32 i = 0; i < scene->effectCount; i++)
+		{
+			XERScene::EffectData &effectData = scene->effectsDataList[i];
+
+			d3dCommandList->SetPipelineState(effectData.effect->d3dPipelineState);
+			d3dCommandList->ExecuteIndirect(device->d3dDefaultDrawingICS,
+				effectData.commandCount, effectData.d3dCommandsBuffer, 0, nullptr, 0);
+		}
 	}
 
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_objectsPassComplete);
 
+	// occlusion culling ====================================================================//
 	if (updateOcclusionCulling)
 	{
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle = device->dsvHeap.getCPUHandle(dsvDescriptor + 1);
-		d3dCommandList->OMSetRenderTargets(0, nullptr, FALSE, &dsvDescriptorHandle);
-
 		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, float32(targetSize.x / 4), float32(targetSize.y / 4)));
 		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, targetSize.x / 4, targetSize.y / 4));
 
-		d3dCommandList->SetGraphicsRootSignature(device->d3dLightingPassRS);
-		d3dCommandList->SetPipelineState(device->d3dDepthBufferDownscalePSO);
-		d3dCommandList->SetGraphicsRootDescriptorTable(1, device->srvHeap.getGPUHandle(srvDescriptors));
-		d3dCommandList->DrawInstanced(3, 1, 0, 0);
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle = device->dsvHeap.getCPUHandle(dsvDescriptor + 1);
+		d3dCommandList->OMSetRenderTargets(0, nullptr, FALSE, &dsvDescriptorHandle);
 
-		d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
-		scene->fillD3DCommandList_runOcclusionCulling(d3dCommandList, d3dTempBuffer, tempBufferSize, tempRTVDescriptorsBase);
+		// downscale depth buffer ===========================================================//
+		{
+			d3dCommandList->SetGraphicsRootSignature(device->d3dLightingPassRS);
+			d3dCommandList->SetGraphicsRootDescriptorTable(1, device->srvHeap.getGPUHandle(srvDescriptors));
+			d3dCommandList->SetPipelineState(device->d3dDepthBufferDownscalePSO);
+			d3dCommandList->DrawInstanced(3, 1, 0, 0);
+		}
+
+		// temp buffer layout
+		//   4 bytes - counter (must be aligned to D3D12_UAV_COUNTER_PLACEMENT_ALIGNMENT (4096))
+		//   4 * geometryInstanceCount bytes - visibility flags
+		//   remaining bytes - appeared geometry instances draw command list (aligned to size of command)
+
+		// drawing bboxes ===================================================================//
+		{
+			d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(d3dTempBuffer,
+				D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+
+			d3dCommandList->SetComputeRootSignature(device->d3dDefaultComputeRS);
+			d3dCommandList->SetComputeRootUnorderedAccessView(2, d3dTempBuffer->GetGPUVirtualAddress());
+			d3dCommandList->SetPipelineState(device->d3dClearDefaultUAVxPSO);
+			d3dCommandList->Dispatch(tempBufferSize / (sizeof(uint32) * 1024), 1, 1);	// TODO: refactor that 1024
+
+			d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
+			d3dCommandList->SetGraphicsRootShaderResourceView(1, scene->d3dTransformsBuffer->GetGPUVirtualAddress());
+			d3dCommandList->SetGraphicsRootUnorderedAccessView(3, d3dTempBuffer->GetGPUVirtualAddress() + sizeof(uint32));
+			d3dCommandList->SetPipelineState(device->d3dOCxBBoxDrawPSO);
+			d3dCommandList->DrawInstanced(scene->geometryInstanceCount * 36, 1, 0, 0);
+
+			d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(d3dTempBuffer,
+				D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ));
+		}
 
 		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, float32(targetSize.x), float32(targetSize.y)));
 		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, targetSize.x, targetSize.y));
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device->rtvHeap.getCPUHandle(rtvDescriptors);
+		dsvDescriptorHandle = device->dsvHeap.getCPUHandle(dsvDescriptor);
+		d3dCommandList->OMSetRenderTargets(2, &rtvDescriptorsHandle, TRUE, &dsvDescriptorHandle);
+
+		// updating command list & drawing appeared objects =================================//
+		{
+			uint32 appearedGeometryInstancesDrawCommandsByteOffset =
+				alignup<uint32>(sizeof(uint32) * scene->geometryInstanceCount + sizeof(uint32), sizeof(GPUDefaultDrawingIC));
+			uint32 appearedGeometryInstancesDrawCommandsStructOffset =
+				appearedGeometryInstancesDrawCommandsByteOffset / sizeof(GPUDefaultDrawingIC);
+			uint32 appearedGeometryInstancesDrawCommandsLimit =
+				(tempBufferSize - appearedGeometryInstancesDrawCommandsByteOffset) / sizeof(GPUDefaultDrawingIC);
+
+			device->d3dDevice->CreateUnorderedAccessView(d3dTempBuffer, d3dTempBuffer,
+				&D3D12UnorderedAccessViewDesc_Buffer(
+				appearedGeometryInstancesDrawCommandsStructOffset,
+				appearedGeometryInstancesDrawCommandsLimit,
+				sizeof(GPUDefaultDrawingIC), 0),
+				device->srvHeap.getCPUHandle(tempRTVDescriptorsBase));
+
+			for (uint32 i = 0; i < scene->effectCount; i++)
+			{
+				XERScene::EffectData &effectData = scene->effectsDataList[i];
+
+				d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(d3dTempBuffer,
+					D3D12_RESOURCE_STATE_GENERIC_READ, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+
+				// d3dDefaultComputeRS after d3dClearDefaultUAVxPSO
+				d3dCommandList->SetComputeRoot32BitConstant(0, effectData.commandCount, 0);
+				d3dCommandList->SetComputeRootShaderResourceView(1, d3dTempBuffer->GetGPUVirtualAddress() + sizeof(uint32));
+				d3dCommandList->SetComputeRootUnorderedAccessView(2, effectData.d3dCommandsBuffer->GetGPUVirtualAddress());
+				d3dCommandList->SetComputeRootDescriptorTable(3, device->srvHeap.getGPUHandle(tempRTVDescriptorsBase));
+				d3dCommandList->SetPipelineState(device->d3dOCxICLUpdatePSO);
+				d3dCommandList->Dispatch((effectData.commandCount - 1) / 1024 + 1, 1, 1);
+
+				d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(d3dTempBuffer,
+					D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_GENERIC_READ));
+
+				d3dCommandList->SetPipelineState(effectData.effect->d3dPipelineState);
+				d3dCommandList->ExecuteIndirect(device->d3dDefaultDrawingICS, appearedGeometryInstancesDrawCommandsLimit,
+					d3dTempBuffer, appearedGeometryInstancesDrawCommandsByteOffset, d3dTempBuffer, 0);
+			}
+		}
 	}
 
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_occlusionCullingComplete);
 
-	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture,
+		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	// lighting pass
+	// lighting pass ========================================================================//
 	{
 		D3D12_CPU_DESCRIPTOR_HANDLE targetRTVDescriptorHandle = device->rtvHeap.getCPUHandle(target->rtvDescriptor);
 		d3dCommandList->OMSetRenderTargets(1, &targetRTVDescriptorHandle, FALSE, nullptr);
 
-		{
-			const float32 clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-			d3dCommandList->ClearRenderTargetView(targetRTVDescriptorHandle, clearColor, 0, nullptr);
-		}
+		const float32 clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+		d3dCommandList->ClearRenderTargetView(targetRTVDescriptorHandle, clearColor, 0, nullptr);
 
 		d3dCommandList->SetGraphicsRootSignature(device->d3dLightingPassRS);
-		d3dCommandList->SetPipelineState(device->d3dLightingPassPSO);
 		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dLightingPassCB->GetGPUVirtualAddress());
 		d3dCommandList->SetGraphicsRootDescriptorTable(1, device->srvHeap.getGPUHandle(srvDescriptors));
+		d3dCommandList->SetPipelineState(device->d3dLightingPassPSO);
 		d3dCommandList->DrawInstanced(3, 1, 0, 0);
 	}
 
+	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_lightingPassComplete);
+
+	// debug geometry =======================================================================//
 	if (debugWireframeMode != XERDebugWireframeMode::Disabled)
 	{
 		d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
 		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dCameraTransformCB->GetGPUVirtualAddress());
 
 		d3dCommandList->SetPipelineState(device->d3dDebugWireframePSO);
-		scene->fillD3DCommandList_drawWithoutEffects(d3dCommandList);
+
+		for (uint32 i = 0; i < scene->effectCount; i++)
+		{
+			XERScene::EffectData &effectData = scene->effectsDataList[i];
+			d3dCommandList->ExecuteIndirect(device->d3dDefaultDrawingICS,
+				effectData.commandCount, effectData.d3dCommandsBuffer, 0, nullptr, 0);
+		}
 	}
 
-	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, timestampId_lightingPassComplete);
+	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture,
+		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	d3dCommandList->ResolveQueryData(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP,
 		0, timestampsCount, device->d3dReadbackBuffer, 0);

@@ -147,7 +147,7 @@ bool XERDevice::initialize()
 	{
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 		psoDesc.pRootSignature = d3dLightingPassRS;
-		psoDesc.VS = D3D12ShaderBytecode(Shaders::LightingPassVS.data, Shaders::LightingPassVS.size);
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
 		psoDesc.PS = D3D12ShaderBytecode(Shaders::LightingPassPS.data, Shaders::LightingPassPS.size);
 		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
 		psoDesc.SampleMask = UINT_MAX;
@@ -167,7 +167,7 @@ bool XERDevice::initialize()
 	{
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 		psoDesc.pRootSignature = d3dLightingPassRS;
-		psoDesc.VS = D3D12ShaderBytecode(Shaders::LightingPassVS.data, Shaders::LightingPassVS.size);
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
 		psoDesc.PS = D3D12ShaderBytecode(Shaders::DepthBufferDownscalePS.data, Shaders::DepthBufferDownscalePS.size);
 		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
 		psoDesc.SampleMask = UINT_MAX;
