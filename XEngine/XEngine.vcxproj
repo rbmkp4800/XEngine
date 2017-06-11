@@ -210,7 +210,7 @@
     <ClInclude Include="Source\XEngine.Render.GeometryGenerator.SampleGeometries.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.GPUStructs.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.Shaders.h" />
-    <ClInclude Include="Source\XEngine.Render.ResourceLoader.h" />
+    <ClInclude Include="Source\XEngine.ResourceLoader.h" />
     <ClInclude Include="Source\XEngine.Render.Scene.h" />
     <ClInclude Include="Source\XEngine.Render.StaticResources.DefaultFont.h" />
     <ClInclude Include="Source\XEngine.Render.Targets.h" />
@@ -225,8 +225,8 @@
     <ClCompile Include="Source\XEngine.Render.Effect.cpp" />
     <ClCompile Include="Source\XEngine.Render.Geometry.cpp" />
     <ClCompile Include="Source\XEngine.Render.GeometryGenerator.cpp" />
-    <ClCompile Include="Source\XEngine.Render.ResourceLoader.cpp" />
-    <ClCompile Include="Source\XEngine.Render.ResourceLoader.Geometry.cpp" />
+    <ClCompile Include="Source\XEngine.ResourceLoader.cpp" />
+    <ClCompile Include="Source\XEngine.ResourceLoader.Geometry.cpp" />
     <ClCompile Include="Source\XEngine.Render.Scene.cpp" />
     <ClCompile Include="Source\XEngine.Render.Internal.Shaders.cpp" />
     <ClCompile Include="Source\XEngine.Render.Targets.cpp" />

@@ -60,7 +60,7 @@ private:
 		xerWindowTarget.initialize(&xerDevice, this->getHandle(), args.width, args.height);
 
 		xerUIRenderer.initialize(&xerDevice);
-		XERResourceLoader::LoadDefaultFont(&xerDevice, &xerFont);
+		XEResourceLoader::LoadDefaultFont(&xerDevice, &xerFont);
 		
 		xerScene.initialize(&xerDevice);
 		xerPlainEffect.initializePlain(&xerDevice);
