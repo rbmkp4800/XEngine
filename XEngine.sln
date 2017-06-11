@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XEngine", "XEngine\XEngine.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XLib", "XLib\XLib.vcxproj", "{DF81A513-72E3-4B74-B866-97F3BB61D45F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XEngine.FBXImporter", "XEngine.FBXImporter\XEngine.FBXImporter.vcxproj", "{AD296485-F4CB-4B8C-9360-9812350F72D3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{DF81A513-72E3-4B74-B866-97F3BB61D45F}.Release|x64.Build.0 = Release|x64
 		{DF81A513-72E3-4B74-B866-97F3BB61D45F}.Release|x86.ActiveCfg = Release|Win32
 		{DF81A513-72E3-4B74-B866-97F3BB61D45F}.Release|x86.Build.0 = Release|Win32
+		{AD296485-F4CB-4B8C-9360-9812350F72D3}.Debug|x64.ActiveCfg = Debug|x64
+		{AD296485-F4CB-4B8C-9360-9812350F72D3}.Debug|x64.Build.0 = Debug|x64
+		{AD296485-F4CB-4B8C-9360-9812350F72D3}.Debug|x86.ActiveCfg = Debug|Win32
+		{AD296485-F4CB-4B8C-9360-9812350F72D3}.Debug|x86.Build.0 = Debug|Win32
+		{AD296485-F4CB-4B8C-9360-9812350F72D3}.Release|x64.ActiveCfg = Release|x64
+		{AD296485-F4CB-4B8C-9360-9812350F72D3}.Release|x64.Build.0 = Release|x64
+		{AD296485-F4CB-4B8C-9360-9812350F72D3}.Release|x86.ActiveCfg = Release|Win32
+		{AD296485-F4CB-4B8C-9360-9812350F72D3}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
