@@ -115,7 +115,7 @@ TokenizerResult FileTokenizer::nextToken(Token& token)
 		for (uint32 i = 1;; i++)
 		{
 			char c = reader.peekChar();
-			if (isDigit(c) || c == '.')
+			if (isDigit(c) || c == '.'  || c == 'e' || c == '+' || c == '-')
 				reader.skipCharUnsafe();
 			else
 			{

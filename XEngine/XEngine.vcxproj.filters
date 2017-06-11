@@ -119,6 +119,9 @@
     <ClInclude Include="Source\XEngine.Render.GeometryGenerator.SampleGeometries.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\XEngine.Formats.XEGeometry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Source\Shaders\LightingPassPS.hlsl" />

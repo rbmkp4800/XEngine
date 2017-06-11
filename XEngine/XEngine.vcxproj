@@ -199,6 +199,7 @@
     <ClInclude Include="Source\Util.DXGI.h" />
     <ClInclude Include="Source\XEngine.Base.h" />
     <ClInclude Include="Source\XEngine.Color.h" />
+    <ClInclude Include="Source\XEngine.Formats.XEGeometry.h" />
     <ClInclude Include="Source\XEngine.h" />
     <ClInclude Include="Source\XEngine.Render.Camera.h" />
     <ClInclude Include="Source\XEngine.Render.Context.h" />

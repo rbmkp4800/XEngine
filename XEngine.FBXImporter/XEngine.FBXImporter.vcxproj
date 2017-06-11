@@ -92,7 +92,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)XLib\Source;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)XLib\Source;$(SolutionDir)XEngine\Source;</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++latest</AdditionalOptions>
     </ClCompile>
     <Link>
@@ -107,7 +107,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)XLib\Source;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)XLib\Source;$(SolutionDir)XEngine\Source;</AdditionalIncludeDirectories>
       <AdditionalOptions>/std:c++latest</AdditionalOptions>
     </ClCompile>
     <Link>

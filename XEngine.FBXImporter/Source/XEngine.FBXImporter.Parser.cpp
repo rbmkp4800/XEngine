@@ -6,6 +6,15 @@ using namespace XEngine::FBXImporter;
 
 inline bool isAlpabet(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
 
+inline float32 tokenToFloat(const Token& token)
+{
+	if (token.code == TokenCode::Float)
+		return token.floatValue;
+	if (token.code == TokenCode::Int)
+		return float32(token.intValue);
+	return 0.0f;
+}
+
 inline bool canBeProperty(TokenCode code)
 {
 	return code == TokenCode::Int || code == TokenCode::Float ||
@@ -103,11 +112,12 @@ enum class Parser::DataProducer::NodeType : uint8
 	Vertices,
 	Indices,
 	LayerElementNormal,
+	Normals,
 };
 
 Parser::DataProducer::DataProducer()
 {
-	nodeStack.pushBack(NodeType::None);
+	nodeStack.pushBack(NodeType::Unknown);
 }
 
 inline void Parser::DataProducer::pushNode(const String& name)
@@ -116,44 +126,55 @@ inline void Parser::DataProducer::pushNode(const String& name)
 	{
 		MeshData& mesh = meshes.allocateBack();
 		mesh.name = modelName;
+
 		mesh.vertexCount = vertices.getSize();
 		mesh.indexCount = indices.getSize();
+		mesh.normalCount = normals.getSize();
+
 		mesh.vertices = vertices.takeBuffer();
 		mesh.indices = indices.takeBuffer();
+		mesh.normals = normals.takeBuffer();
 	}
 	nodeStack.popBack();
 
 	NodeType type = NodeType::Unknown;
-	if (name.equals("Objects"))
+	if (nodeStack.isEmpty())
 	{
-		if (nodeStack.isEmpty())
+		if (name.equals("Objects"))
 			type = NodeType::Objects;
 	}
-	else if (name.equals("Model"))
+	else
 	{
-		if (!nodeStack.isEmpty() && nodeStack.back() == NodeType::Objects)
-			type = NodeType::Model;
-	}
-	else if (name.equals("Vertices"))
-	{
-		if (!nodeStack.isEmpty() && nodeStack.back() == NodeType::Model_Mesh)
+		NodeType parentType = nodeStack.back();
+
+		if (parentType == NodeType::Objects)
 		{
-			vertices.clear();
-			type = NodeType::Vertices;
+			if (name.equals("Model"))
+				type = NodeType::Model;
 		}
-	}
-	else if (name.equals("PolygonVertexIndex"))
-	{
-		if (!nodeStack.isEmpty() && nodeStack.back() == NodeType::Model_Mesh)
+		else if (parentType == NodeType::Model_Mesh)
 		{
-			indices.clear();
-			type = NodeType::Indices;
+			if (name.equals("Vertices"))
+			{
+				if (vertices.isEmpty())
+					type = NodeType::Vertices;
+			}
+			else if (name.equals("PolygonVertexIndex"))
+			{
+				if (indices.isEmpty())
+					type = NodeType::Indices;
+			}
+			else if (name.equals("LayerElementNormal"))
+				type = NodeType::LayerElementNormal;
 		}
-	}
-	else if (name.equals("LayerElementNormal"))
-	{
-		if (!nodeStack.isEmpty() && nodeStack.back() == NodeType::Model_Mesh)
-			type = NodeType::LayerElementNormal;
+		else if (parentType == NodeType::LayerElementNormal)
+		{
+			if (name.equals("Normals"))
+			{
+				if (normals.isEmpty())
+					type = NodeType::Normals;
+			}
+		}
 	}
 
 	nodeStack.pushBack(type);
@@ -161,23 +182,27 @@ inline void Parser::DataProducer::pushNode(const String& name)
 }
 inline void Parser::DataProducer::pushProperty(const Token& token)
 {
-	switch (nodeStack.back())
+	NodeType type = nodeStack.back();
+	if (type == NodeType::Model)
 	{
-		case NodeType::Model:
-			if (propertyIndex == 0 && token.code == TokenCode::String)
-				modelName = token.string;
-			if (propertyIndex == 1 && token.code == TokenCode::String && token.string.equals("Mesh"))
-				nodeStack.back() = NodeType::Model_Mesh;
-			break;
+		if (propertyIndex == 0 && token.code == TokenCode::String)
+			modelName = token.string;
+		if (propertyIndex == 1 && token.code == TokenCode::String && token.string.equals("Mesh"))
+		{
+			nodeStack.back() = NodeType::Model_Mesh;
 
-		case NodeType::Vertices:
-			vertices.pushBack(token.code == TokenCode::Float ? token.floatValue : 0.0f);
-			break;
-
-		case NodeType::Indices:
-			indices.pushBack(token.code == TokenCode::Int ? token.intValue : 0);
-			break;
+			vertices.clear();
+			indices.clear();
+			normals.clear();
+		}
 	}
+	else if (type == NodeType::Vertices)
+		vertices.pushBack(tokenToFloat(token));
+	else if (type == NodeType::Indices)
+		indices.pushBack(token.code == TokenCode::Int ? token.intValue : 0);
+	else if (type == NodeType::Normals)
+		normals.pushBack(tokenToFloat(token));
+
 	propertyIndex++;
 }
 inline void Parser::DataProducer::pushSubnodesLevel()

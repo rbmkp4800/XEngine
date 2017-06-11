@@ -45,6 +45,7 @@ namespace XEngine::FBXImporter
 			String modelName;
 			XLib::Vector<float32> vertices;
 			XLib::Vector<sint32> indices;
+			XLib::Vector<float32> normals;
 
 			XLib::Vector<MeshData> meshes;
 
