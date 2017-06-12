@@ -38,8 +38,8 @@ private:
 	XERGeometryInstanceId monsterGeometryInstanceId;
 	XERLightId light1Id, light2Id, light3Id, light4Id;
 
-	XERCamera camera;
-	float32x2 cameraRotation = { 0.0f, 0.0f };
+	XERCamera xerCamera;
+	XERCameraRotation xerCameraRotation;
 	sint16x2 mouseLastPos = { 0, 0 };
 	bool captureMouseToCameraRotation = false;
 
@@ -94,7 +94,9 @@ private:
 		light3Id = xerScene.createLight(float32x3(8.0f, 11.0f, 10.0f), 0xFFFFFF_rgb, 30.0f);
 		light4Id = xerScene.createLight(float32x3(-10.0f, -11.0f, -10.0f), 0x00FFFF_rgb, 30.0f);
 
-		camera.position = { 0.0f, -1.0f, -5.0f };
+		xerCamera.position = { 0.0f, 0.0f, 0.0f };
+		xerCamera.fov = 1.0f;
+		xerCameraRotation.angles = { 0.0f, 0.0f };
 
 		lastFrameTimerRecord = Timer::GetRecord();
 	}
@@ -119,9 +121,9 @@ private:
 
 		case VirtualKey('B'):
 			if (state)
-				camera.fov = 0.1f;
+				xerCamera.fov = 0.1f;
 			else
-				camera.fov = 1.0f;
+				xerCamera.fov = 1.0f;
 			break;
 
 		case VirtualKey::Escape:
@@ -154,21 +156,21 @@ private:
 		case VirtualKey('T'):
 			if (state)
 			{
-				float32x3 lastPosition = camera.position;
-				float32x2 lastRotation = cameraRotation;
+				float32x3 lastPosition = xerCamera.position;
+				XERCameraRotation lastRotation = xerCameraRotation;
 
-				camera.position = { 0.0f, -3.0f, -10.0f };
-				cameraRotation = { 1.0f, 0.0f };
+				xerCamera.position = { 0.0f, -3.0f, -10.0f };
+				xerCameraRotation.angles = { 1.0f, 0.0f };
 				update();
 				Thread::Sleep(1000);
-				cameraRotation = { 0.0f, 0.0f };
+				xerCameraRotation.angles = { 0.0f, 0.0f };
 				update();
 				Thread::Sleep(1000);
 				update();
 				Thread::Sleep(1000);
 
-				camera.position = lastPosition;
-				cameraRotation = lastRotation;
+				xerCamera.position = lastPosition;
+				xerCameraRotation = lastRotation;
 			}
 		}
 	}
@@ -185,8 +187,8 @@ private:
 	{
 		if (captureMouseToCameraRotation)
 		{
-			cameraRotation.x += float32(state.x - mouseLastPos.x) * 0.005f;
-			cameraRotation.y += float32(state.y - mouseLastPos.y) * 0.005f;
+			xerCameraRotation.angles.x += float32(state.x - mouseLastPos.x) * 0.005f;
+			xerCameraRotation.angles.y += float32(state.y - mouseLastPos.y) * 0.005f;
 			mouseLastPos = { state.x, state.y };
 		}
 	}
@@ -194,8 +196,6 @@ private:
 public:
 	void update()
 	{
-		camera.forward = VectorMath::SphericalCoords(cameraRotation);
-
 		float32x3 translation(0.0f, 0.0f, 0.0f);
 		if (controls.forward)
 			translation.z += 0.1f;
@@ -217,7 +217,7 @@ public:
 		if (controls.coefDown)
 			coef /= 1.01f;
 
-		camera.translateInViewSpace(translation);
+		xerCameraRotation.setCameraForwardAndTranslateRotated_cameraVertical(xerCamera, translation);
 
 		//scene.setTransform(cube1, Matrix3x4::RotationY(a += 0.01f));
 		//scene.setLightPosition(light2, float32x3(0.0f, 1.5f, 1.0f) + xyz(float32x3(0.0f, 3.5f, 1.0f) * Matrix4x4::RotationX(a * 4.0f)));
@@ -244,7 +244,7 @@ public:
 		XERTargetBuffer *xerTarget = xerWindowTarget.getCurrentTargetBuffer();
 
 		XERDrawTimers xerTimers = {};
-		xerContext.draw(xerTarget, &xerScene, camera,
+		xerContext.draw(xerTarget, &xerScene, xerCamera,
 			controls.wireframe ? XERDebugWireframeMode::Enabled : XERDebugWireframeMode::Disabled,
 			ocUpdatesEnabled, &xerTimers);
 
@@ -254,10 +254,14 @@ public:
 			char buffer[256];
 			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\n"\
 				"Total frame time %5.2f ms\nOP %5.2f ms\nOC %5.2f ms\n"\
-				"LP %5.2f ms\nOC updates %s\nWORK IN PROGRESS",
+				"LP %5.2f ms\nOC updates %s\n"\
+				"Cam (%4.2f %4.2f %4.2f) -> (%4.2f %4.2f %4.2f)\n"
+				"WORK IN PROGRESS",
 				xerDevice.getName(), xerTimers.totalTime * 1000.0f, xerTimers.objectsPassTime * 1000.0f,
 				xerTimers.occlusionCullingTime * 1000.0f, xerTimers.lightingPassTime * 1000.0f,
-				ocUpdatesEnabled ? "enabled" : "disabled");
+				ocUpdatesEnabled ? "enabled" : "disabled",
+				xerCamera.position.x, xerCamera.position.y, xerCamera.position.z,
+				xerCamera.forward.x, xerCamera.forward.y, xerCamera.forward.z);
 
 			xerUIRenderer.drawText(float32x2(10.0f, 10.0f), buffer);
 		}
