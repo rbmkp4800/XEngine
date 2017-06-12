@@ -11,20 +11,20 @@
 using namespace XLib;
 using namespace XEngine;
 
-void XERGeometryGenerator::Plane(XERDevice* device, XERGeometry* geometry)
+void XERGeometryGenerator::HorizontalPlane(XERDevice* device, XERGeometry* geometry)
 {
 	static VertexBase vertices[] =
 	{
-		{ { -1.0f, 0.0f, -1.0f, },{ 0.0f, 1.0f, 0.0f } },
-		{ { 1.0f, 0.0f, 1.0f, },{ 0.0f, 1.0f, 0.0f } },
-		{ { -1.0f, 0.0f, 1.0f, },{ 0.0f, 1.0f, 0.0f } },
-		{ { 1.0f, 0.0f, -1.0f, },{ 0.0f, 1.0f, 0.0f } },
+		{ { -1.0f, -1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } },
+		{ { 1.0f, 1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } },
+		{ { -1.0f, 1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } },
+		{ { 1.0f, -1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } },
 	};
 
 	static uint32 indices[] =
 	{
-		0, 2, 1,
-		0, 1, 3,
+		0, 1, 2,
+		0, 3, 1,
 	};
 
 	geometry->initialize(device, vertices, countof(vertices), sizeof(VertexBase), indices, countof(indices));

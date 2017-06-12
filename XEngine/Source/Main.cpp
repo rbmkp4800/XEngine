@@ -66,7 +66,7 @@ private:
 		xerPlainEffect.initializePlain(&xerDevice);
 		xerPlainSkinnedEffect.initializePlainSkinned(&xerDevice);
 
-		XERGeometryGenerator::Plane(&xerDevice, &xerPlaneGeometry);
+		XERGeometryGenerator::HorizontalPlane(&xerDevice, &xerPlaneGeometry);
 		XERGeometryGenerator::Cube(&xerDevice, &xerCubeGeometry);
 		//XERGeometryGenerator::Monster(&xerDevice, &xerMonsterGeometry);
 		XERGeometryGenerator::MonsterSkinned(&xerDevice, &xerMonsterSkinnedGeometry);
