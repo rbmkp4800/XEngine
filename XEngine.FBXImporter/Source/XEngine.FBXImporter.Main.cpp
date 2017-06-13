@@ -31,6 +31,9 @@ void Program::Run()
 
 	printf("reading...\n");
 
+	uint32 fileSizeKib = tokenizer.getFileSize() / 1024;
+	uint32 progressUpdateCounter = 0;
+
 	Parser parser;
 	while (!parser.isFinalized())
 	{
@@ -47,7 +50,15 @@ void Program::Run()
 			printf("parser error %d at %d\n", parserResult, tokenizer.getCurrentLine());
 			return;
 		}
+
+		progressUpdateCounter++;
+		if (progressUpdateCounter > 100000)
+		{
+			progressUpdateCounter = 0;
+			printf("\r%4d%%", tokenizer.getFilePosition() / 1024 * 100 / fileSizeKib);
+		}
 	}
+	printf("\r      \n");
 
 	Vector<MeshData> meshes = parser.takeMeshes();
 	for (uint32 i = 0; i < meshes.getSize(); i++)

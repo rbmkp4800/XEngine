@@ -28,5 +28,7 @@ namespace XEngine::FBXImporter
 		TokenizerResult nextToken(Token& token);
 
 		inline uint32 getCurrentLine() { return lineCounter + 1; }
+		inline uint32 getFilePosition() { return reader.getFilePosition(); }
+		inline uint32 getFileSize() { return reader.getFileSize(); }
 	};
 }

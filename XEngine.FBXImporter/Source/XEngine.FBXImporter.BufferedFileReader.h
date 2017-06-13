@@ -17,6 +17,8 @@ namespace XEngine::FBXImporter
 		uint16 limit = 0;
 		bool lastBlock = false;
 
+		uint32 currentBlockIndex = uint32(-1);
+
 		void readBlock()
 		{
 			uint32 readSize = 0;
@@ -25,6 +27,8 @@ namespace XEngine::FBXImporter
 			position = 0;
 			limit = uint16(readSize);
 			lastBlock = limit < bufferSize;
+
+			currentBlockIndex++;
 		}
 
 	public:
@@ -75,5 +79,8 @@ namespace XEngine::FBXImporter
 
 		inline bool hasNotEnded() { return position < limit; }
 		inline bool hasEnded() { return position >= limit; }
+
+		inline uint32 getFilePosition() { return currentBlockIndex * bufferSize + position; }
+		inline uint32 getFileSize() { return uint32(file.getSize()); }
 	};
 }
