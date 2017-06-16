@@ -43,13 +43,13 @@ namespace XEngine::Internal
 
 		struct Light
 		{
-			float32x3 viewPosition;
+			float32x3 viewSpacePosition;
 			uint32 _padding;
 			float32x3 color;
 			float32 intensity;
 
-			inline void set(const float32x3& _viewPosition, const float32x3& _color, float32 _intensity)
-				{ viewPosition = _viewPosition; _padding = 0; color = _color; intensity = _intensity; }
+			inline void set(const float32x3& _viewSpacePosition, const float32x3& _color, float32 _intensity)
+				{ viewSpacePosition = _viewSpacePosition; _padding = 0; color = _color; intensity = _intensity; }
 		} lights[lightsLimit];
 		uint32 lightsCount;
 	};
@@ -152,9 +152,9 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 		{
 			LightDesc &desc = scene->getLightDesc(i);
 
-			float32x3 viewPosition = (desc.position * view).xyz;
+			float32x3 viewSpacePosition = (desc.position * view).xyz;
 			float32x3 color = (desc.color.toF32x4()).xyz;
-			mappedLightingPassCB->lights[i].set(viewPosition, color, desc.intensity);
+			mappedLightingPassCB->lights[i].set(viewSpacePosition, color, desc.intensity);
 		}
 		mappedLightingPassCB->lightsCount = lightCount;
 	}
