@@ -129,7 +129,7 @@ bool XERDevice::initialize()
 			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
 		};
 
-		D3D12_ROOT_PARAMETER rootParameters[]
+		D3D12_ROOT_PARAMETER rootParameters[] =
 		{
 			D3D12RootParameter_CBV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
@@ -140,6 +140,31 @@ bool XERDevice::initialize()
 			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
 		d3dDevice->CreateRootSignature(0, d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
 			d3dLightingPassRS.uuid(), d3dLightingPassRS.voidInitRef());
+	}
+
+	// UI pass RS
+	{
+		D3D12_DESCRIPTOR_RANGE ranges[] =
+		{
+			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+		};
+
+		D3D12_ROOT_PARAMETER rootParameters[] =
+		{
+			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
+		};
+
+		D3D12_STATIC_SAMPLER_DESC staticSapmplers[] =
+		{
+			D3D12StaticSamplerDesc_DisableMIPs(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
+		};
+
+		COMPtr<ID3DBlob> d3dSignature, d3dError;
+		D3D12SerializeRootSignature(&D3D12RootSignatureDesc(countof(rootParameters), rootParameters,
+			countof(staticSapmplers), staticSapmplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),
+			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
+		d3dDevice->CreateRootSignature(0, d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
+			d3dUIPassRS.uuid(), d3dUIPassRS.voidInitRef());
 	}
 
 	// pipeline states creation =============================================================//
@@ -222,7 +247,7 @@ bool XERDevice::initialize()
 		};
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-		psoDesc.pRootSignature = d3dDefaultGraphicsRS;
+		psoDesc.pRootSignature = d3dUIPassRS;
 		psoDesc.VS = D3D12ShaderBytecode(Shaders::UIFontVS.data, Shaders::UIFontVS.size);
 		psoDesc.PS = D3D12ShaderBytecode(Shaders::UIFontPS.data, Shaders::UIFontPS.size);
 		psoDesc.BlendState = D3D12BlendDesc_NoBlend();

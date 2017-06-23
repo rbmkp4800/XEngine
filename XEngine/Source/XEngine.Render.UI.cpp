@@ -22,7 +22,7 @@ void XERUIGeometryRenderer::flush()
 void XERUIGeometryRenderer::fillD3DCommandList(ID3D12GraphicsCommandList *d3dCommandList)
 {
 	d3dCommandList->SetPipelineState(device->d3dUIFontPSO);
-	d3dCommandList->SetGraphicsRootDescriptorTable(2, device->srvHeap.getGPUHandle(font->srvDescriptor));
+	d3dCommandList->SetGraphicsRootDescriptorTable(0, device->srvHeap.getGPUHandle(font->srvDescriptor));
 	d3dCommandList->IASetVertexBuffers(0, 1,
 		&D3D12VertexBufferView(d3dVertexBuffer->GetGPUVirtualAddress(),
 		usedVertexCount * sizeof(VertexUIFont), sizeof(VertexUIFont)));

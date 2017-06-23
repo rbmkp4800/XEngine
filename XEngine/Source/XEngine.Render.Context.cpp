@@ -376,7 +376,7 @@ void XERContext::draw(XERTargetBuffer* target, XERUIGeometryRenderer* renderer)
 	d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, float32(targetSize.x), float32(targetSize.y)));
 	d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, targetSize.x, targetSize.y));
 
-	d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
+	d3dCommandList->SetGraphicsRootSignature(device->d3dUIPassRS);
 	ID3D12DescriptorHeap *d3dDescriptorHeaps[] = { device->srvHeap.getD3D12DescriptorHeap() };
 	d3dCommandList->SetDescriptorHeaps(countof(d3dDescriptorHeaps), d3dDescriptorHeaps);
 

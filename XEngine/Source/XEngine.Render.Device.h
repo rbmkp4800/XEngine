@@ -110,6 +110,7 @@ namespace XEngine
 		COMPtr<ID3D12RootSignature> d3dDefaultGraphicsRS;
 		COMPtr<ID3D12RootSignature> d3dDefaultComputeRS;
 		COMPtr<ID3D12RootSignature> d3dLightingPassRS;
+		COMPtr<ID3D12RootSignature> d3dUIPassRS;
 
 		COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
 		COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;

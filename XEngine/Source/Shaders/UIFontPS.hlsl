@@ -1,4 +1,4 @@
-Texture2D<float4> defaultTexture : register(t1);
+Texture2D<float4> defaultTexture : register(t0);
 SamplerState defaultSampler : register(s0);
 
 struct PSInput
