@@ -8,5 +8,4 @@ XERDevice.UploadEngine.uploadBuffer:
 	implement state transitions
 	implement composing single device buffer from parts (upload VB and IB in signle run)
 
-rewrite VS transform matrix retrieval
-	compare performances of root constants vs constant in VB per instance
+disable mips for XERContext temp textures

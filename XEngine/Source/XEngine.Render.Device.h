@@ -24,10 +24,35 @@ struct ID3D12CommandSignature;
 struct ID3D12Resource;
 struct ID3D12QueryHeap;
 
+/*
+	effects PSO - default graphics RS
+		VS:
+			CBV: camera constants
+			Constants: instance constants
+			SRV: transforms buffer
+		PS:
+			Table: diffuse textures
+			Sampler: default sampler
+
+	lighting pass PSO - lighting pass RS
+		PS:
+			...
+
+	depth buffer downscale PSO - lighting pass RS
+
+	OC bbox draw PSO - default graphics RS
+		VS:
+			CBV: camera constants
+			SRV: transforms buffer
+		PS:
+			UAV: geometry instances visibility flags
+*/
+
 namespace XEngine
 {
 	class XEREffect;
 	class XERGeometry;
+	class XERTexture;
 	class XERScene;
 	class XERMonospacedFont;
 	class XERUIGeometryRenderer;
@@ -38,6 +63,7 @@ namespace XEngine
 	{
 		friend XEREffect;
 		friend XERGeometry;
+		friend XERTexture;
 		friend XERScene;
 		friend XERMonospacedFont;
 		friend XERUIGeometryRenderer;

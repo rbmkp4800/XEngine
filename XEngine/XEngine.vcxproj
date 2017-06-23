@@ -205,7 +205,7 @@
     <ClInclude Include="Source\XEngine.Render.Context.h" />
     <ClInclude Include="Source\XEngine.Render.Device.h" />
     <ClInclude Include="Source\XEngine.Render.Effect.h" />
-    <ClInclude Include="Source\XEngine.Render.Geometry.h" />
+    <ClInclude Include="Source\XEngine.Render.Resources.h" />
     <ClInclude Include="Source\XEngine.Render.GeometryGenerator.h" />
     <ClInclude Include="Source\XEngine.Render.GeometryGenerator.SampleGeometries.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.GPUStructs.h" />
@@ -223,7 +223,7 @@
     <ClCompile Include="Source\XEngine.Render.Context.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.cpp" />
     <ClCompile Include="Source\XEngine.Render.Effect.cpp" />
-    <ClCompile Include="Source\XEngine.Render.Geometry.cpp" />
+    <ClCompile Include="Source\XEngine.Render.Resources.cpp" />
     <ClCompile Include="Source\XEngine.Render.GeometryGenerator.cpp" />
     <ClCompile Include="Source\XEngine.ResourceLoader.cpp" />
     <ClCompile Include="Source\XEngine.ResourceLoader.Geometry.cpp" />

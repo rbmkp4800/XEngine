@@ -5,7 +5,6 @@
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
 
-struct ID3D12Device;
 struct ID3D12Resource;
 
 namespace XEngine
@@ -31,7 +30,6 @@ namespace XEngine
 	class XERGeometry : public XLib::NonCopyable
 	{
 		friend XERScene;
-		friend XERDevice;
 
 	private:
 		COMPtr<ID3D12Resource> d3dBuffer;
@@ -44,5 +42,17 @@ namespace XEngine
 	public:
 		void initialize(XERDevice* device, const void* vertices, uint32 vertexCount,
 			uint32 vertexStride, const uint32* indices, uint32 indexCount);
+	};
+
+	class XERTexture : public XLib::NonCopyable
+	{
+		friend XERScene;
+
+	private:
+		COMPtr<ID3D12Resource> d3dTexture;
+		uint32 srvDescriptor;
+
+	public:
+		void initialize(XERDevice* device, const void* data, uint32 width, uint32 height);
 	};
 }

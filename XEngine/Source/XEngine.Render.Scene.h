@@ -16,6 +16,7 @@ namespace XEngine
 {
 	class XEREffect;
 	class XERGeometry;
+	class XERTexture;
 	class XERContext;
 	class XERDevice;
 
@@ -66,7 +67,8 @@ namespace XEngine
 	public:
 		void initialize(XERDevice* device);
 
-		XERGeometryInstanceId createGeometryInstance(XERGeometry* geometry, XEREffect* effect, const XLib::Matrix3x4& transform);
+		XERGeometryInstanceId createGeometryInstance(XERGeometry* geometry, XEREffect* effect,
+			const XLib::Matrix3x4& transform, XERTexture* texture = nullptr);
 		XERLightId createLight(float32x3 position, XEColor color, float32 intensity);
 		void removeGeometryInstance(XERGeometryInstanceId id);
 		void removeLight(XERLightId id);

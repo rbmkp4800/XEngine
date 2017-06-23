@@ -23,6 +23,7 @@ private:
 
 	XERScene xerScene;
 	XEREffect xerPlainEffect;
+	XEREffect xerTexturedEffect;
 	XEREffect xerPlainSkinnedEffect;
 
 	XERGeometry xerPlaneGeometry;
@@ -30,6 +31,7 @@ private:
 	//XERGeometry xerMonsterGeometry;
 	XERGeometry xerMonsterSkinnedGeometry;
 	XERGeometry xerSphereGeometry;
+	XERTexture xerDefaultTexture;
 
 	XERGeometryInstanceId cubesCircleIds[10];
 
@@ -64,6 +66,7 @@ private:
 		
 		xerScene.initialize(&xerDevice);
 		xerPlainEffect.initializePlain(&xerDevice);
+		xerTexturedEffect.initializeTexture(&xerDevice);
 		xerPlainSkinnedEffect.initializePlainSkinned(&xerDevice);
 
 		XERGeometryGenerator::HorizontalPlane(&xerDevice, &xerPlaneGeometry);
@@ -72,7 +75,24 @@ private:
 		XERGeometryGenerator::MonsterSkinned(&xerDevice, &xerMonsterSkinnedGeometry);
 		XERGeometryGenerator::Sphere(4, &xerDevice, &xerSphereGeometry);
 
-		planeGeometryInstanceId = xerScene.createGeometryInstance(&xerPlaneGeometry, &xerPlainEffect, Matrix3x4::Translation(0.0f, -2.0f, 0.0f) * Matrix3x4::Scale(10.0f, 10.0f, 10.0f));
+		{
+			static constexpr uint32 n = 1024;
+			static uint32 tex[n][n];
+			for (uint32 i = 0; i < n; i++)
+			{
+				for (uint32 j = 0; j < n; j++)
+				{
+					uint32 v = (i ^ j);
+					tex[i][j] = v << 16 | v << 8 | v | 0x000000FF_rgba;
+				}
+			}
+
+			xerDefaultTexture.initialize(&xerDevice, tex, n, n);
+		}
+
+		planeGeometryInstanceId = xerScene.createGeometryInstance(&xerPlaneGeometry, &xerTexturedEffect,
+			Matrix3x4::Translation(0.0f, -2.0f, 0.0f) * Matrix3x4::Scale(10.0f, 10.0f, 1.0f), &xerDefaultTexture);
+
 		xerScene.createGeometryInstance(&xerSphereGeometry, &xerPlainEffect, Matrix3x4::Identity());
 
 		//cubeGeometryInstanceId = xerScene.createGeometryInstance(&xerCubeGeometry, &xerPlainEffect, Matrix3x4::Identity());

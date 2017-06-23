@@ -10,6 +10,11 @@ namespace XEngine::Internal
 	{
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW indexBufferView;
+
+		// instance constants
+		uint32 textureId;
+		//uint32 baseTransformIndex;
+
 		D3D12_DRAW_INDEXED_ARGUMENTS drawIndexedArguments;
 
 		// non command data

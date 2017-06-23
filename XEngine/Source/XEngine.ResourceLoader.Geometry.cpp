@@ -4,7 +4,7 @@
 #include "XEngine.ResourceLoader.h"
 #include "XEngine.Formats.XEGeometry.h"
 #include "XEngine.Render.Vertices.h"
-#include "XEngine.Render.Geometry.h"
+#include "XEngine.Render.Resources.h"
 
 using namespace XLib;
 using namespace XEngine;

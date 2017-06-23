@@ -186,6 +186,7 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 
 		d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
 		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dCameraTransformCB->GetGPUVirtualAddress());
+		d3dCommandList->SetGraphicsRootDescriptorTable(3, device->srvHeap.getGPUHandle(0));
 
 		d3dCommandList->IASetVertexBuffers(1, 1, &D3D12VertexBufferView(scene->d3dTransformsBuffer->GetGPUVirtualAddress(),
 			scene->geometryInstanceCount * sizeof(Matrix3x4), sizeof(Matrix3x4)));
@@ -235,8 +236,8 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 			d3dCommandList->Dispatch(tempBufferSize / (sizeof(uint32) * 1024), 1, 1);	// TODO: refactor that 1024
 
 			d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
-			d3dCommandList->SetGraphicsRootShaderResourceView(1, scene->d3dTransformsBuffer->GetGPUVirtualAddress());
-			d3dCommandList->SetGraphicsRootUnorderedAccessView(3, d3dTempBuffer->GetGPUVirtualAddress() + sizeof(uint32));
+			d3dCommandList->SetGraphicsRootShaderResourceView(2, scene->d3dTransformsBuffer->GetGPUVirtualAddress());
+			d3dCommandList->SetGraphicsRootUnorderedAccessView(4, d3dTempBuffer->GetGPUVirtualAddress() + sizeof(uint32));
 			d3dCommandList->SetPipelineState(device->d3dOCxBBoxDrawPSO);
 			d3dCommandList->DrawInstanced(scene->geometryInstanceCount * 36, 1, 0, 0);
 

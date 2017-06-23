@@ -5,7 +5,7 @@
 
 #include "XEngine.Render.GeometryGenerator.h"
 #include "XEngine.Render.GeometryGenerator.SampleGeometries.h"
-#include "XEngine.Render.Geometry.h"
+#include "XEngine.Render.Resources.h"
 #include "XEngine.Render.Vertices.h"
 
 using namespace XLib;
@@ -13,12 +13,12 @@ using namespace XEngine;
 
 void XERGeometryGenerator::HorizontalPlane(XERDevice* device, XERGeometry* geometry)
 {
-	static VertexBase vertices[] =
+	static VertexTexture vertices[] =
 	{
-		{ { -1.0f, -1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } },
-		{ { 1.0f, 1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } },
-		{ { -1.0f, 1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } },
-		{ { 1.0f, -1.0f, 0.0f },{ 0.0f, 0.0f, 1.0f } },
+		{ { -1.0f, -1.0f, 0.0f },	{ 0.0f, 0.0f, 1.0f },	{ 0.0f, 0.0f } },
+		{ { 1.0f, 1.0f, 0.0f },		{ 0.0f, 0.0f, 1.0f },	{ 1.0f, 1.0f } },
+		{ { -1.0f, 1.0f, 0.0f },	{ 0.0f, 0.0f, 1.0f },	{ 0.0f, 1.0f } },
+		{ { 1.0f, -1.0f, 0.0f },	{ 0.0f, 0.0f, 1.0f },	{ 1.0f, 0.0f } },
 	};
 
 	static uint32 indices[] =
@@ -27,7 +27,7 @@ void XERGeometryGenerator::HorizontalPlane(XERDevice* device, XERGeometry* geome
 		0, 3, 1,
 	};
 
-	geometry->initialize(device, vertices, countof(vertices), sizeof(VertexBase), indices, countof(indices));
+	geometry->initialize(device, vertices, countof(vertices), sizeof(vertices[0]), indices, countof(indices));
 }
 
 void XERGeometryGenerator::Cube(XERDevice* device, XERGeometry* geometry)

@@ -75,12 +75,13 @@ bool XERDevice::initialize()
 	{
 		D3D12_DESCRIPTOR_RANGE ranges[] =
 		{
-			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 1, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 16, 0, 1, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
 		};
 
 		D3D12_ROOT_PARAMETER rootParameters[] =
 		{
 			D3D12RootParameter_CBV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
+			D3D12RootParameter_Constants(1, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX),
 			D3D12RootParameter_SRV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
 			D3D12RootParameter_UAV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
@@ -88,7 +89,7 @@ bool XERDevice::initialize()
 
 		D3D12_STATIC_SAMPLER_DESC staticSapmplers[] =
 		{
-			D3D12StaticSamplerDesc_DisableMIPs(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
+			D3D12StaticSamplerDesc_Default(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
 		COMPtr<ID3DBlob> d3dSignature, d3dError;
@@ -108,7 +109,7 @@ bool XERDevice::initialize()
 
 		D3D12_ROOT_PARAMETER rootParameters[] =
 		{
-			D3D12RootParameter_Const(1, 0, 0),
+			D3D12RootParameter_Constants(1, 0, 0),
 			D3D12RootParameter_SRV(0, 0),
 			D3D12RootParameter_UAV(0, 0),
 			D3D12RootParameter_Table(countof(ranges), ranges),
@@ -308,11 +309,12 @@ bool XERDevice::initialize()
 		{
 			D3D12IndirectArgumentDesc_VBV(0),
 			D3D12IndirectArgumentDesc_IBV(),
+			D3D12IndirectArgumentDesc_Constants(1, 0, 1),
 			D3D12IndirectArgumentDesc_DrawIndexed(),
 		};
 
 		d3dDevice->CreateCommandSignature(&D3D12CommandSignatureDesc(sizeof(GPUDefaultDrawingIC),
-			countof(indirectArgumentDescs), indirectArgumentDescs), nullptr,//d3dDefaultGraphicsRS,
+			countof(indirectArgumentDescs), indirectArgumentDescs), d3dDefaultGraphicsRS,
 			d3dDefaultDrawingICS.uuid(), d3dDefaultDrawingICS.voidInitRef());
 	}
 

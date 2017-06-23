@@ -5,7 +5,7 @@
 
 // render core
 #include "XEngine.Render.Effect.h"
-#include "XEngine.Render.Geometry.h"
+#include "XEngine.Render.Resources.h"
 #include "XEngine.Render.Scene.h"
 #include "XEngine.Render.UI.h"
 #include "XEngine.Render.Targets.h"

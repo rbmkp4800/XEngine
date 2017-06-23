@@ -5,7 +5,7 @@
 
 #include "XEngine.Render.Scene.h"
 #include "XEngine.Render.Device.h"
-#include "XEngine.Render.Geometry.h"
+#include "XEngine.Render.Resources.h"
 #include "XEngine.Render.Internal.GPUStructs.h"
 
 using namespace XLib;
@@ -39,7 +39,8 @@ void XERScene::initialize(XERDevice* device)
 	d3dTransformsBuffer->Map(0, &D3D12Range(), to<void**>(&mappedTransformsBuffer));
 }
 
-XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry, XEREffect* effect, const Matrix3x4& transform)
+XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry, XEREffect* effect,
+	const Matrix3x4& transform, XERTexture* texture)
 {
 	EffectData *effectData = nullptr;
 
@@ -82,6 +83,7 @@ XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry, XE
 	command.indexBufferView.BufferLocation = geometryBufferAddress + vertexBufferSize;
 	command.indexBufferView.SizeInBytes = geometry->indexCount * sizeof(uint32);
 	command.indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	command.textureId = texture ? texture->srvDescriptor : uint32(-1);
 	command.drawIndexedArguments.IndexCountPerInstance = geometry->indexCount;
 	command.drawIndexedArguments.InstanceCount = 1;
 	command.drawIndexedArguments.StartIndexLocation = 0;

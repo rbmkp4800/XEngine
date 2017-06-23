@@ -321,7 +321,7 @@ inline D3D12_ROOT_PARAMETER D3D12RootParameter_Table(UINT numDescriptorRanges,
 	return param;
 }
 
-inline D3D12_ROOT_PARAMETER D3D12RootParameter_Const(UINT num32bitValues,
+inline D3D12_ROOT_PARAMETER D3D12RootParameter_Constants(UINT num32bitValues,
 	UINT shaderRegister, UINT registerSpace, D3D12_SHADER_VISIBILITY visibility = D3D12_SHADER_VISIBILITY_ALL)
 {
 	D3D12_ROOT_PARAMETER param;
@@ -455,6 +455,17 @@ inline D3D12_INDIRECT_ARGUMENT_DESC D3D12IndirectArgumentDesc_IBV()
 {
 	D3D12_INDIRECT_ARGUMENT_DESC desc;
 	desc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_INDEX_BUFFER_VIEW;
+	return desc;
+}
+
+inline D3D12_INDIRECT_ARGUMENT_DESC D3D12IndirectArgumentDesc_Constants(UINT rootParameterIndex,
+	UINT destOffsetIn32BitValues, UINT num32BitValuesToSet)
+{
+	D3D12_INDIRECT_ARGUMENT_DESC desc;
+	desc.Type = D3D12_INDIRECT_ARGUMENT_TYPE_CONSTANT;
+	desc.Constant.RootParameterIndex = rootParameterIndex;
+	desc.Constant.DestOffsetIn32BitValues = destOffsetIn32BitValues;
+	desc.Constant.Num32BitValuesToSet = num32BitValuesToSet;
 	return desc;
 }
 

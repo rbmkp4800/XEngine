@@ -4,7 +4,7 @@
 #include <XLib.Util.h>
 #include <XLib.Memory.h>
 
-#include "XEngine.Render.Geometry.h"
+#include "XEngine.Render.Resources.h"
 #include "XEngine.Render.Device.h"
 
 using namespace XLib;
@@ -25,4 +25,15 @@ void XERGeometry::initialize(XERDevice* device, const void* vertices, uint32 ver
 
 	device->uploadEngine.uploadBuffer(d3dBuffer, 0, vertices, vertexBufferSize);
 	device->uploadEngine.uploadBuffer(d3dBuffer, vertexBufferSize, indices, indexBufferSize);
+}
+
+void XERTexture::initialize(XERDevice* device, const void* data, uint32 width, uint32 height)
+{
+	device->d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height),
+		D3D12_RESOURCE_STATE_COPY_DEST, nullptr, d3dTexture.uuid(), d3dTexture.voidInitRef());
+	device->uploadEngine.uploadTexture(DXGI_FORMAT_R8G8B8A8_UNORM, d3dTexture, data, width, height);
+
+	srvDescriptor = device->srvHeap.allocateDescriptors(1);
+	device->d3dDevice->CreateShaderResourceView(d3dTexture, nullptr, device->srvHeap.getCPUHandle(srvDescriptor));
 }
