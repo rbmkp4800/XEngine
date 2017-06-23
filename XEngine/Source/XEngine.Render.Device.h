@@ -9,6 +9,7 @@
 
 enum D3D12_COMMAND_LIST_TYPE;
 enum D3D12_DESCRIPTOR_HEAP_TYPE;
+enum DXGI_FORMAT;
 struct D3D12_CPU_DESCRIPTOR_HANDLE;
 struct D3D12_GPU_DESCRIPTOR_HANDLE;
 
@@ -74,13 +75,13 @@ namespace XEngine
 			COMPtr<ID3D12GraphicsCommandList> d3dCommandList;
 			COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
 			COMPtr<ID3D12Resource> d3dUploadBuffer;
-			void *mappedUploadBuffer;
+			byte *mappedUploadBuffer;
 
 			void initalize(ID3D12Device* d3dDevice);
 
 		public:
-			void uploadTexture(ID3D12Resource* d3dTexture, const uint8* sourceBitmap, uint32 width, uint32 height);
-			void uploadBuffer(ID3D12Resource* d3dDestBuffer, uint32 destOffset, const void* sourceData, uint32 size);
+			void uploadTexture(DXGI_FORMAT format, ID3D12Resource* d3dTexture, const void* data, uint32 width, uint32 height);
+			void uploadBuffer(ID3D12Resource* d3dDestBuffer, uint32 destOffset, const void* data, uint32 size);
 		};
 
 		class DescriptorHeap
