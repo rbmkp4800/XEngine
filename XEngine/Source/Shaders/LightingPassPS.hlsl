@@ -49,25 +49,26 @@ float ComputePixelGlareIntensity(float3 vsLightPosition, float glareRadius, floa
     float intersectionNear = viewerToGlareSphereIntersectionCenterDistance - glareSphereIntersectionHalfLength;
     float intersectionFar = viewerToGlareSphereIntersectionCenterDistance + glareSphereIntersectionHalfLength;
 
-    if (intersectionNear > vsPixelPosition.z)
-        return 0.0f;
-    if (intersectionFar < zNear)
-        return 0.0f;
+	float result = 0.0f;
+	if (intersectionNear <= vsPixelPosition.z && intersectionFar >= zNear)
+	{
+		intersectionNear = max(intersectionNear, zNear);
+		intersectionFar = min(intersectionFar, vsPixelPosition.z);
+		intersectionNear -= viewerToGlareSphereIntersectionCenterDistance;
+		intersectionFar -= viewerToGlareSphereIntersectionCenterDistance;
 
-    intersectionNear = max(intersectionNear, zNear);
-    intersectionFar = min(intersectionFar, vsPixelPosition.z);
-    intersectionNear -= viewerToGlareSphereIntersectionCenterDistance;
-    intersectionFar -= viewerToGlareSphereIntersectionCenterDistance;
+		// pixel glare intensity equals integral of the light scattering at each point,
+		// where scattering inversely proportional to the square of the distance to light
+		//    integrate dx / sqr(lightToGlareSphereIntersectionCenterDistance) + sqr(x) from near to far
+		float inverse = 1.0f / lightToGlareSphereIntersectionCenterDistance;
+		float intensity = inverse * (atan(intersectionFar * inverse) - atan(intersectionNear * inverse));
 
-    // pixel glare intensity equals integral of the light scattering at each point,
-    // where scattering inversely proportional to the square of the distance to light
-    //    integrate dx / sqr(lightToGlareSphereIntersectionCenterDistance) + sqr(x) from near to far
-    float inverse = 1.0f / lightToGlareSphereIntersectionCenterDistance;
-    float intensity = inverse * (atan(intersectionFar * inverse) - atan(intersectionNear * inverse));
+		// remove step on the edge of glare circle
+		intensity *= saturate(1.0f - lightToGlareSphereIntersectionCenterDistance / glareRadius);
+		result = intensity * glareRadius;
+	}
 
-    // remove step on the edge of glare circle
-    intensity *= saturate(1.0f - lightToGlareSphereIntersectionCenterDistance / glareRadius);
-    return intensity * glareRadius;
+	return result;
 }
 
 float4 main(PSInput input) : SV_Target
