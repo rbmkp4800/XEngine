@@ -3,6 +3,8 @@ struct DefaultDrawingIndirectCommand
 	uint4 vbv;
 	uint4 ibv;
 
+	uint textureId;
+
 	// D3D12_DRAW_INDEXED_ARGUMENTS
 	uint indexCountPerInstance;
 	uint instanceCount;

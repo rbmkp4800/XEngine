@@ -4,6 +4,7 @@
 
 #include <XLib.Types.h>
 
+#pragma pack(push, 4)
 namespace XEngine::Internal
 {
 	struct GPUDefaultDrawingIC
@@ -34,3 +35,4 @@ namespace XEngine::Internal
 		uint32 geometryInstanceTransformBaseOffset;
 	};*/
 }
+#pragma pack(pop)
