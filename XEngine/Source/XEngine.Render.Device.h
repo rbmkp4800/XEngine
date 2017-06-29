@@ -157,7 +157,6 @@ namespace XEngine
 		DescriptorHeap dsvHeap;
 		DescriptorHeap srvHeap;
 		GPUQueue graphicsGPUQueue;
-		GPUQueue copyGPUQueue;
 		UploadEngine uploadEngine;
 
 		char name[32];
