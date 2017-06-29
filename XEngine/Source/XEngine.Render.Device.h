@@ -95,17 +95,25 @@ namespace XEngine
 			friend XERDevice;
 
 		private:
-			static constexpr uint32 uploadBufferSize = 0x10000;
-
 			GPUQueue copyGPUQueue;
 			COMPtr<ID3D12GraphicsCommandList> d3dCommandList;
 			COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
 			COMPtr<ID3D12Resource> d3dUploadBuffer;
-			byte *mappedUploadBuffer;
+			byte *mappedUploadBuffer = nullptr;
+
+			uint32 uploadBufferBytesUsed = 0;
+
+			COMPtr<ID3D12Resource> d3dLastBufferUploadResource;
+			uint64 lastBufferUploadDestOffset = 0;
+			uint32 lastBufferUploadSize = 0;
 
 			void initalize(ID3D12Device* d3dDevice);
+			void flushCommandList();
+			void flushLastBufferUploadToCommandList();
 
 		public:
+			void flush();
+
 			void uploadTexture(DXGI_FORMAT format, ID3D12Resource* d3dTexture, const void* data, uint32 width, uint32 height);
 			void uploadBuffer(ID3D12Resource* d3dDestBuffer, uint32 destOffset, const void* data, uint32 size);
 		};

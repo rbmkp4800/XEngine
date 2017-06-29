@@ -127,6 +127,8 @@ bool XERContext::initialize(XERDevice* device)
 void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
 	XERDebugWireframeMode debugWireframeMode, bool updateOcclusionCulling, XERDrawTimers* timers)
 {
+	device->uploadEngine.flush();
+
 	uint32x2 targetSize = { 0, 0 };
 	{
 		D3D12_RESOURCE_DESC desc = target->d3dTexture->GetDesc();

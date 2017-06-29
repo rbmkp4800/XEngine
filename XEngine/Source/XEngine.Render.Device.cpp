@@ -375,6 +375,9 @@ uint64 XERDevice::GPUQueue::getTimestampFrequency()
 
 // UploadEngine =============================================================================//
 
+static constexpr uint32 uploadBufferSize = 0x40000;
+static constexpr uint32 uploadFragmentMinSize = 0x100;
+
 void XERDevice::UploadEngine::initalize(ID3D12Device* d3dDevice)
 {
 	copyGPUQueue.initialize(d3dDevice, D3D12_COMMAND_LIST_TYPE_COPY);
@@ -386,11 +389,48 @@ void XERDevice::UploadEngine::initalize(ID3D12Device* d3dDevice)
 		D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc_Buffer(uploadBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr, d3dUploadBuffer.uuid(), d3dUploadBuffer.voidInitRef());
 	d3dUploadBuffer->Map(0, &D3D12Range(), to<void**>(&mappedUploadBuffer));
+
+	d3dCommandAllocator->Reset();
+	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
 }
 
-void XERDevice::UploadEngine::uploadTexture(DXGI_FORMAT format, ID3D12Resource* d3dTexture,
-	const void* data, uint32 width, uint32 height)
+void XERDevice::UploadEngine::flushCommandList()
 {
+	d3dCommandList->Close();
+
+	ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
+	copyGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
+
+	d3dCommandAllocator->Reset();
+	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
+}
+
+void XERDevice::UploadEngine::flushLastBufferUploadToCommandList()
+{
+	if (d3dLastBufferUploadResource.isInitialized())
+	{
+		d3dCommandList->CopyBufferRegion(d3dLastBufferUploadResource, lastBufferUploadDestOffset,
+			d3dUploadBuffer, uploadBufferBytesUsed - lastBufferUploadSize, lastBufferUploadSize);
+
+		d3dLastBufferUploadResource = nullptr;
+		lastBufferUploadDestOffset = 0;
+		lastBufferUploadSize = 0;
+	}
+}
+
+void XERDevice::UploadEngine::flush()
+{
+	flushLastBufferUploadToCommandList();
+	flushCommandList();
+
+	uploadBufferBytesUsed = 0;
+}
+
+void XERDevice::UploadEngine::uploadTexture(DXGI_FORMAT format,
+	ID3D12Resource* d3dTexture, const void* data, uint32 width, uint32 height)
+{
+	flush();
+
 	uint32 srcRowPitch = 0;
 	switch (format)
 	{
@@ -412,9 +452,6 @@ void XERDevice::UploadEngine::uploadTexture(DXGI_FORMAT format, ID3D12Resource* 
 				to<byte*>(data) + (rowsUploaded + i) * srcRowPitch, srcRowPitch);
 		}
 
-		d3dCommandAllocator->Reset();
-		d3dCommandList->Reset(d3dCommandAllocator, nullptr);
-
 		D3D12_TEXTURE_COPY_LOCATION srcLocation = {};
 		srcLocation.pResource = d3dUploadBuffer;
 		srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
@@ -431,26 +468,78 @@ void XERDevice::UploadEngine::uploadTexture(DXGI_FORMAT format, ID3D12Resource* 
 
 		ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
 		copyGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
+
+		d3dCommandAllocator->Reset();
+		d3dCommandList->Reset(d3dCommandAllocator, nullptr);
 	}
 }
 
 void XERDevice::UploadEngine::uploadBuffer(ID3D12Resource* d3dDestBuffer,
 	uint32 destOffset, const void* data, uint32 size)
 {
-	for (uint32 bytesUploaded = 0; bytesUploaded < size; bytesUploaded += uploadBufferSize)
+	Debug::CrashCondition(d3dDestBuffer == nullptr, DbgMsgFmt("destination ID3D12Resource is null"));
+
+	uint32 bytesUploaded = 0;
+	if (d3dDestBuffer == d3dLastBufferUploadResource &&
+		destOffset == lastBufferUploadDestOffset + lastBufferUploadSize)
 	{
-		uint32 bytesToUpload = min(uploadBufferSize, size - bytesUploaded);
-		Memory::Copy(mappedUploadBuffer, to<byte*>(data) + bytesUploaded, bytesToUpload);
+		if (uploadBufferBytesUsed + size <= uploadBufferSize)
+		{
+			Memory::Copy(mappedUploadBuffer + uploadBufferBytesUsed, data, size);
+			lastBufferUploadSize += size;
+			uploadBufferBytesUsed += size;
+			return;
+		}
+		else if (uploadBufferSize - uploadBufferBytesUsed >= uploadFragmentMinSize)
+		{
+			bytesUploaded = aligndown(uploadBufferSize - uploadBufferBytesUsed, uploadFragmentMinSize);
+			Memory::Copy(mappedUploadBuffer + uploadBufferBytesUsed, data, bytesUploaded);
+			lastBufferUploadSize += bytesUploaded;
+			uploadBufferBytesUsed += bytesUploaded;
+		}
 
-		d3dCommandAllocator->Reset();
-		d3dCommandList->Reset(d3dCommandAllocator, nullptr);
+		flush();
+	}
+	else
+	{
+		flushLastBufferUploadToCommandList();
 
+		if (uploadBufferBytesUsed + size > uploadBufferSize)
+		{
+			if (uploadBufferSize - uploadBufferBytesUsed >= uploadFragmentMinSize)
+			{
+				bytesUploaded = aligndown(uploadBufferSize - uploadBufferBytesUsed, uploadFragmentMinSize);
+				Memory::Copy(mappedUploadBuffer + uploadBufferBytesUsed, data, bytesUploaded);
+
+				d3dCommandList->CopyBufferRegion(d3dDestBuffer, destOffset,
+					d3dUploadBuffer, uploadBufferBytesUsed, bytesUploaded);
+			}
+
+			flushCommandList();
+			uploadBufferBytesUsed = 0;
+		}
+	}
+
+	uint32 uploadCount = (size - bytesUploaded) / uploadBufferSize;
+	for (uint32 i = 0; i < uploadCount; i++)
+	{
+		Memory::Copy(mappedUploadBuffer, to<byte*>(data) + bytesUploaded, uploadBufferSize);
 		d3dCommandList->CopyBufferRegion(d3dDestBuffer, destOffset + bytesUploaded,
-			d3dUploadBuffer, 0, bytesToUpload);
-		d3dCommandList->Close();
+			d3dUploadBuffer, 0, uploadBufferSize);
+		flushCommandList();
 
-		ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
-		copyGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
+		bytesUploaded += uploadBufferSize;
+	}
+
+	uint32 bytesLeft = size - bytesUploaded;
+	if (bytesLeft > 0)
+	{
+		Memory::Copy(mappedUploadBuffer + uploadBufferBytesUsed, to<byte*>(data) + bytesUploaded, bytesLeft);
+
+		d3dLastBufferUploadResource = d3dDestBuffer;
+		lastBufferUploadDestOffset = destOffset + bytesUploaded;
+		lastBufferUploadSize = bytesLeft;
+		uploadBufferBytesUsed += bytesLeft;
 	}
 }
 
