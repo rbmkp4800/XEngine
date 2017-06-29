@@ -6,7 +6,8 @@
 
 namespace COMPtrInternal
 {
-	void IUnknown_Release(void *ptr);
+	void IUnknown_AddRef(void* ptr);
+	void IUnknown_Release(void* ptr);
 }
 
 template <typename Type>
@@ -41,7 +42,13 @@ public:
 
 	inline Type* operator -> () { return ptr; }
 	inline operator Type* () { return ptr; }
-	inline void operator = (Type* value) { destroy(); ptr = value; }
+	inline void operator = (Type* value)
+	{
+		destroy();
+		ptr = value;
+		if (ptr)
+			COMPtrInternal::IUnknown_AddRef(ptr);
+	}
 
 	inline GUID uuid() { return __uuidof(Type); }
 
