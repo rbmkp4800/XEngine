@@ -54,6 +54,9 @@
     <ClCompile Include="Source\XEngine.Render.Resources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.Device.UploadEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Util.COMPtr.h">

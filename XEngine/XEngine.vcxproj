@@ -223,6 +223,7 @@
     <ClCompile Include="Source\Util.COMPtr.cpp" />
     <ClCompile Include="Source\XEngine.Render.Context.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.cpp" />
+    <ClCompile Include="Source\XEngine.Render.Device.UploadEngine.cpp" />
     <ClCompile Include="Source\XEngine.Render.Effect.cpp" />
     <ClCompile Include="Source\XEngine.Render.Resources.cpp" />
     <ClCompile Include="Source\XEngine.Render.GeometryGenerator.cpp" />
