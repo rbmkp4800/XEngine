@@ -108,13 +108,19 @@ namespace XEngine
 			uint32 lastBufferUploadSize = 0;
 
 			void initalize(ID3D12Device* d3dDevice);
+
+			void uploadTextureMIPLevel(DXGI_FORMAT format, ID3D12Resource* d3dDestTexture,
+				uint16 mipLevel, uint16 width, uint16 height, uint16 pixelPitch,
+				uint32 sourceRowPitch, const void* sourceData);
+
 			void flushCommandList();
 			void flushLastBufferUploadToCommandList();
 
 		public:
 			void flush();
 
-			void uploadTexture(DXGI_FORMAT format, ID3D12Resource* d3dTexture, const void* data, uint32 width, uint32 height);
+			void uploadTextureAndGenerateMIPMaps(ID3D12Resource* d3dDestTexture, const void* sourceData,
+				uint32 sourceRowPitch, void* mipsGenerationBuffer);
 			void uploadBuffer(ID3D12Resource* d3dDestBuffer, uint32 destOffset, const void* data, uint32 size);
 		};
 

@@ -143,5 +143,5 @@ void XERMonospacedFont::initializeA1(XERDevice* device, uint8* bitmapA1,
 
 	srvDescriptor = device->srvHeap.allocateDescriptors(1);
 	device->d3dDevice->CreateShaderResourceView(d3dTexture, nullptr, device->srvHeap.getCPUHandle(srvDescriptor));
-	device->uploadEngine.uploadTexture(DXGI_FORMAT_A8_UNORM, d3dTexture, bitmap, textureWidth, charHeight);
+	device->uploadEngine.uploadTextureAndGenerateMIPMaps(d3dTexture, bitmap, textureWidth, bitmap);
 }

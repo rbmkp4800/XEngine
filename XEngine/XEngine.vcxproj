@@ -205,6 +205,7 @@
     <ClInclude Include="Source\XEngine.Render.Context.h" />
     <ClInclude Include="Source\XEngine.Render.Device.h" />
     <ClInclude Include="Source\XEngine.Render.Effect.h" />
+    <ClInclude Include="Source\XEngine.Render.MIPMapGenerator.h" />
     <ClInclude Include="Source\XEngine.Render.Resources.h" />
     <ClInclude Include="Source\XEngine.Render.GeometryGenerator.h" />
     <ClInclude Include="Source\XEngine.Render.GeometryGenerator.SampleGeometries.h" />

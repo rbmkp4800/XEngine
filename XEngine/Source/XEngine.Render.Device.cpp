@@ -7,6 +7,7 @@
 #include <XLib.Debug.h>
 
 #include "XEngine.Render.Device.h"
+#include "XEngine.Render.MIPMapGenerator.h"
 #include "XEngine.Render.Internal.Shaders.h"
 #include "XEngine.Render.Internal.GPUStructs.h"
 
@@ -394,6 +395,49 @@ void XERDevice::UploadEngine::initalize(ID3D12Device* d3dDevice)
 	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
 }
 
+void XERDevice::UploadEngine::uploadTextureMIPLevel(DXGI_FORMAT format,
+	ID3D12Resource* d3dDestTexture, uint16 mipLevel, uint16 width, uint16 height,
+	uint16 pixelPitch, uint32 sourceRowPitch, const void* sourceData)
+{
+	uint32 rowByteSize = width * pixelPitch;
+	uint32 uploadRowPitch = alignup(rowByteSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+	for (uint16 rowsUploaded = 0; rowsUploaded < height;)
+	{
+		uploadBufferBytesUsed = min(alignup(uploadBufferBytesUsed, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT), uploadBufferSize);
+		uint16 rowsFitToBuffer = uint16((uploadBufferSize - uploadBufferBytesUsed) / uploadRowPitch);
+		uint16 rowsToUpload = min<uint16>(rowsFitToBuffer, height - rowsUploaded);
+
+		for (uint32 i = 0; i < rowsToUpload; i++)
+		{
+			Memory::Copy(mappedUploadBuffer + uploadBufferBytesUsed + i * uploadRowPitch,
+				to<byte*>(sourceData) + (rowsUploaded + i) * sourceRowPitch, rowByteSize);
+		}
+
+		D3D12_TEXTURE_COPY_LOCATION srcLocation = {};
+		srcLocation.pResource = d3dUploadBuffer;
+		srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
+		srcLocation.PlacedFootprint.Offset = uploadBufferBytesUsed;
+		srcLocation.PlacedFootprint.Footprint.Format = format;
+		srcLocation.PlacedFootprint.Footprint.Width = width;
+		srcLocation.PlacedFootprint.Footprint.Height = rowsToUpload;
+		srcLocation.PlacedFootprint.Footprint.Depth = 1;
+		srcLocation.PlacedFootprint.Footprint.RowPitch = uploadRowPitch;
+
+		d3dCommandList->CopyTextureRegion(&D3D12TextureCopyLocation(d3dDestTexture, mipLevel),
+			0, rowsUploaded, 0, &srcLocation, &D3D12Box(0, width, 0, rowsToUpload));
+
+		if (rowsToUpload == rowsFitToBuffer)
+		{
+			flushCommandList();
+			uploadBufferBytesUsed = 0;
+		}
+		else
+			uploadBufferBytesUsed += rowsToUpload * uploadRowPitch;
+
+		rowsUploaded += rowsToUpload;
+	}
+}
+
 void XERDevice::UploadEngine::flushCommandList()
 {
 	d3dCommandList->Close();
@@ -426,52 +470,57 @@ void XERDevice::UploadEngine::flush()
 	uploadBufferBytesUsed = 0;
 }
 
-void XERDevice::UploadEngine::uploadTexture(DXGI_FORMAT format,
-	ID3D12Resource* d3dTexture, const void* data, uint32 width, uint32 height)
+void XERDevice::UploadEngine::uploadTextureAndGenerateMIPMaps(ID3D12Resource* d3dDestTexture,
+	const void* sourceData, uint32 sourceRowPitch, void* mipsGenerationBuffer)
 {
 	flush();
 
-	uint32 srcRowPitch = 0;
-	switch (format)
+	D3D12_RESOURCE_DESC desc = d3dDestTexture->GetDesc();
+	uint16 pixelPitch = 0;
+	switch (desc.Format)
 	{
-		case DXGI_FORMAT_A8_UNORM: srcRowPitch = width; break;
-		case DXGI_FORMAT_R8G8B8A8_UNORM: srcRowPitch = width * 4; break;
+		case DXGI_FORMAT_A8_UNORM: pixelPitch = sizeof(uint8); break;
+		case DXGI_FORMAT_R8G8B8A8_UNORM: pixelPitch = sizeof(uint8x4); break;
 		default: Debug::Crash(DbgMsgFmt("invalid format"));
 	}
 
-	uint32 uploadRowPitch = alignup<uint32>(srcRowPitch, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-	uint32 rowsPerUploadLimit = uploadBufferSize / uploadRowPitch;
-	Debug::CrashCondition(rowsPerUploadLimit == 0, DbgMsgFmt("invalid texture dimensions"));
+	uint16x2 mipSize = { uint16(desc.Width), uint16(desc.Height) };
 
-	for (uint32 rowsUploaded = 0; rowsUploaded < height; rowsUploaded += rowsPerUploadLimit)
+	Debug::CrashCondition(mipSize.x * pixelPitch > uploadBufferSize, DbgMsgFmt("texture is too large"));
+
+	const void *mipSourceData = sourceData;
+	uint32 mipSourceRowPitch = sourceRowPitch;
+	uint16 mipLevel = 0;
+	for (;;)
 	{
-		uint32 rowsToUpload = min(rowsPerUploadLimit, height - rowsUploaded);
-		for (uint32 i = 0; i < rowsToUpload; i++)
+		uploadTextureMIPLevel(desc.Format, d3dDestTexture, mipLevel,
+			mipSize.x, mipSize.y, pixelPitch, mipSourceRowPitch, mipSourceData);
+
+		mipLevel++;
+		if (mipLevel >= desc.MipLevels)
+			break;
+		if (mipSize.x <= 1 && mipSize.y <= 1)
+			break;
+
+		switch (desc.Format)
 		{
-			Memory::Copy(mappedUploadBuffer + i * uploadRowPitch,
-				to<byte*>(data) + (rowsUploaded + i) * srcRowPitch, srcRowPitch);
+			case DXGI_FORMAT_A8_UNORM:
+				MIPMapGenerator::GenerateLevel<uint8>(mipSourceData, mipSize,
+					mipSourceRowPitch, mipsGenerationBuffer, mipSize);
+				break;
+
+			case DXGI_FORMAT_R8G8B8A8_UNORM:
+				MIPMapGenerator::GenerateLevel<uint8x4>(mipSourceData, mipSize,
+					mipSourceRowPitch, mipsGenerationBuffer, mipSize);
+				break;
 		}
 
-		D3D12_TEXTURE_COPY_LOCATION srcLocation = {};
-		srcLocation.pResource = d3dUploadBuffer;
-		srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-		srcLocation.PlacedFootprint.Offset = 0;
-		srcLocation.PlacedFootprint.Footprint.Format = format;
-		srcLocation.PlacedFootprint.Footprint.Width = width;
-		srcLocation.PlacedFootprint.Footprint.Height = rowsToUpload;
-		srcLocation.PlacedFootprint.Footprint.Depth = 1;
-		srcLocation.PlacedFootprint.Footprint.RowPitch = uploadRowPitch;
-
-		d3dCommandList->CopyTextureRegion(&D3D12TextureCopyLocation(d3dTexture, 0), 0, rowsUploaded, 0,
-			&srcLocation, &D3D12Box(0, width, 0, rowsToUpload));
-		d3dCommandList->Close();
-
-		ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
-		copyGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
-
-		d3dCommandAllocator->Reset();
-		d3dCommandList->Reset(d3dCommandAllocator, nullptr);
+		mipSourceData = to<byte*>(mipsGenerationBuffer);
+		mipSourceRowPitch = mipSize.x * pixelPitch;
 	}
+	
+	flushCommandList();
+	uploadBufferBytesUsed = 0;
 }
 
 void XERDevice::UploadEngine::uploadBuffer(ID3D12Resource* d3dDestBuffer,
