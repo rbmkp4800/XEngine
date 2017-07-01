@@ -257,7 +257,7 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 		// updating command list & drawing appeared objects =================================//
 		{
 			uint32 appearedGeometryInstancesDrawCommandsByteOffset =
-				alignup<uint32>(sizeof(uint32) * scene->geometryInstanceCount + sizeof(uint32), sizeof(GPUDefaultDrawingIC));
+				alignup(sizeof(uint32) * scene->geometryInstanceCount + sizeof(uint32), sizeof(GPUDefaultDrawingIC));
 			uint32 appearedGeometryInstancesDrawCommandsStructOffset =
 				appearedGeometryInstancesDrawCommandsByteOffset / sizeof(GPUDefaultDrawingIC);
 			uint32 appearedGeometryInstancesDrawCommandsLimit =
