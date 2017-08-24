@@ -3,6 +3,7 @@
 
 #include <XLib.Util.h>
 #include <XLib.Memory.h>
+#include <XLib.Heap.h>
 
 #include "XEngine.Render.Resources.h"
 #include "XEngine.Render.Device.h"
@@ -36,4 +37,41 @@ void XERTexture::initialize(XERDevice* device, const void* data, uint32 width, u
 
 	srvDescriptor = device->srvHeap.allocateDescriptors(1);
 	device->d3dDevice->CreateShaderResourceView(d3dTexture, nullptr, device->srvHeap.getCPUHandle(srvDescriptor));
+}
+
+/*void XERMonospacedFont::initializeA8(XERDevice* device, uint8* bitmapA8,
+	uint8 charWidth, uint8 charHeight, uint8 firstCharCode, uint8 charTableSize)
+{
+	this->charWidth = charWidth;
+	this->charHeight = charHeight;
+	this->firstCharCode = firstCharCode;
+	this->charTableSize = charTableSize;
+	uint32 textureWidth = uint32(charWidth) * uint32(charTableSize);
+
+	device->d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc_Texture2D(DXGI_FORMAT_A8_UNORM, textureWidth, charHeight),
+		D3D12_RESOURCE_STATE_COPY_DEST, nullptr, d3dTexture.uuid(), d3dTexture.voidInitRef());
+}*/
+
+void XERMonospacedFont::initializeA1(XERDevice* device, uint8* bitmapA1,
+	uint8 charWidth, uint8 charHeight, uint8 firstCharCode, uint8 charTableSize)
+{
+	this->charWidth = charWidth;
+	this->charHeight = charHeight;
+	this->firstCharCode = firstCharCode;
+	this->charTableSize = charTableSize;
+	uint32 textureWidth = uint32(charWidth) * uint32(charTableSize);
+
+	uint32 bitmapSize = textureWidth * charHeight;
+	HeapPtr<uint8> bitmap(bitmapSize);
+	for (uint32 i = 0; i < bitmapSize; i++)
+		bitmap[i] = (bitmapA1[i / 8] >> (i % 8)) & 1 ? 0xFF : 0;
+
+	device->d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc_Texture2D(DXGI_FORMAT_A8_UNORM, textureWidth, charHeight),
+		D3D12_RESOURCE_STATE_COPY_DEST, nullptr, d3dTexture.uuid(), d3dTexture.voidInitRef());
+
+	srvDescriptor = device->srvHeap.allocateDescriptors(1);
+	device->d3dDevice->CreateShaderResourceView(d3dTexture, nullptr, device->srvHeap.getCPUHandle(srvDescriptor));
+	device->uploadEngine.uploadTextureAndGenerateMIPMaps(d3dTexture, bitmap, textureWidth, bitmap);
 }

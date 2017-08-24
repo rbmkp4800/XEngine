@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\XEngine.Render.Context.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\XEngine.Render.Device.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -31,9 +28,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\XEngine.Render.GeometryGenerator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\XEngine.Render.UI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\XEngine.Render.Targets.cpp">
@@ -57,6 +51,15 @@
     <ClCompile Include="Source\XEngine.Render.Device.UploadEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\XEngine.UI.Console.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.SceneRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.UIRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Util.COMPtr.h">
@@ -77,13 +80,7 @@
     <ClInclude Include="Source\Util.DXGI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\XEngine.Color.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Device.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\XEngine.Render.Context.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Camera.h">
@@ -93,9 +90,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Targets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\XEngine.Render.UI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Effect.h">
@@ -126,6 +120,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.Render.MIPMapGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.UI.Console.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Color.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.SceneRender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.UIRender.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

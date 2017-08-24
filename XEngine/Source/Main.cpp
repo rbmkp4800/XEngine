@@ -15,11 +15,13 @@ class Window : public WindowBase
 {
 private:
 	XERDevice xerDevice;
-	XERContext xerContext;
 	XERWindowTarget xerWindowTarget;
 
-	XERUIGeometryRenderer xerUIRenderer;
 	XERMonospacedFont xerFont;
+	XERSceneRender xerSceneRender;
+	XERUIRender xerUIRender;
+
+	XEUIConsole xerConsole;
 
 	XERScene xerScene;
 	XEREffect xerPlainEffect;
@@ -55,14 +57,17 @@ private:
 	uint32 frameCount = 0;
 	TimerRecord lastFrameTimerRecord;
 
+	bool consoleEnabled = false;
+
 	virtual void onCreate(CreationArgs& args) override
 	{
 		xerDevice.initialize();
-		xerContext.initialize(&xerDevice);
+		xerSceneRender.initialize(&xerDevice);
 		xerWindowTarget.initialize(&xerDevice, this->getHandle(), args.width, args.height);
 
-		xerUIRenderer.initialize(&xerDevice);
 		XEResourceLoader::LoadDefaultFont(&xerDevice, &xerFont);
+		xerUIRender.initialize(&xerDevice);
+		xerConsole.initialize(&xerDevice, &xerFont);
 		
 		xerScene.initialize(&xerDevice);
 		xerPlainEffect.initializePlain(&xerDevice);
@@ -123,10 +128,21 @@ private:
 	virtual void onResize(ResizingArgs& args) override
 	{
 		xerWindowTarget.resize(args.width, args.height);
-		xerUIRenderer.setTargetSize(args.width, args.height);
 	}
 	virtual void onKeyboard(VirtualKey key, bool state) override
 	{
+		if (consoleEnabled)
+		{
+			if (state)
+			{
+				if (key == VirtualKey::Escape)
+					consoleEnabled = false;
+				else
+					xerConsole.handleKeyboard(key);
+			}
+			return;
+		}
+
 		switch (key)
 		{
 		case VirtualKey('W'):	controls.forward = state;	break;
@@ -192,6 +208,11 @@ private:
 				xerCamera.position = lastPosition;
 				xerCameraRotation = lastRotation;
 			}
+			break;
+
+		case VirtualKey(0xC0): // OEM3 '`~'. TODO: refactor
+			consoleEnabled = true;
+			break;
 		}
 	}
 	virtual void onMouseButton(MouseState& mouseState, MouseButton button, bool state) override
@@ -264,12 +285,15 @@ public:
 		XERTargetBuffer *xerTarget = xerWindowTarget.getCurrentTargetBuffer();
 
 		XERDrawTimers xerTimers = {};
-		xerContext.draw(xerTarget, &xerScene, xerCamera,
+		xerSceneRender.draw(xerTarget, &xerScene, xerCamera,
 			controls.wireframe ? XERDebugWireframeMode::Enabled : XERDebugWireframeMode::Disabled,
 			ocUpdatesEnabled, &xerTimers);
 
-		xerUIRenderer.beginDraw(&xerContext);
-		xerUIRenderer.setFont(&xerFont);
+		// TODO: manage target buffer state transitions before and after UI rendering
+		xerUIRender.beginDraw(xerTarget);
+		if (consoleEnabled)
+			xerUIRender.drawConsole(&xerConsole);
+		else
 		{
 			char buffer[256];
 			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\n"\
@@ -283,11 +307,9 @@ public:
 				xerCamera.position.x, xerCamera.position.y, xerCamera.position.z,
 				xerCamera.forward.x, xerCamera.forward.y, xerCamera.forward.z);
 
-			xerUIRenderer.drawText(float32x2(10.0f, 10.0f), buffer);
+			xerUIRender.drawText(&xerFont, float32x2(10.0f, 10.0f), buffer);
 		}
-		xerUIRenderer.endDraw();
-
-		xerContext.draw(xerTarget, &xerUIRenderer);
+		xerUIRender.endDraw();
 		xerWindowTarget.present(true);
 	}
 };

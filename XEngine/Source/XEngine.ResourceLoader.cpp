@@ -1,5 +1,5 @@
 #include "XEngine.ResourceLoader.h"
-#include "XEngine.Render.UI.h"
+#include "XEngine.Render.Resources.h"
 #include "XEngine.Render.StaticResources.DefaultFont.h"
 
 using namespace XEngine;

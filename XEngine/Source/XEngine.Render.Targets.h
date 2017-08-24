@@ -11,13 +11,15 @@ struct IDXGISwapChain3;
 namespace XEngine
 {
 	class XERWindowTarget;
-	class XERContext;
+	class XERSceneRender;
+	class XERUIRender;
 	class XERDevice;
 
 	class XERTargetBuffer : public XLib::NonCopyable
 	{
 		friend XERWindowTarget;
-		friend XERContext;
+		friend XERSceneRender;
+		friend XERUIRender;
 
 	private:
 		COMPtr<ID3D12Resource> d3dTexture;

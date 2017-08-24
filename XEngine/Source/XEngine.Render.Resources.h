@@ -10,6 +10,7 @@ struct ID3D12Resource;
 namespace XEngine
 {
 	class XERScene;
+	class XERUIRender;
 	class XERDevice;
 
 	/*namespace Internal
@@ -54,5 +55,24 @@ namespace XEngine
 
 	public:
 		void initialize(XERDevice* device, const void* data, uint32 width, uint32 height);
+	};
+
+	class XERMonospacedFont : public XLib::NonCopyable
+	{
+		friend XERUIRender;
+
+	private:
+		COMPtr<ID3D12Resource> d3dTexture;
+		uint32 srvDescriptor;
+		uint8 charWidth, charHeight;
+		uint8 firstCharCode, charTableSize;
+
+	public:
+		void initializeA8(XERDevice* device, uint8* bitmapA8, uint8 charWidth,
+			uint8 charHeight, uint8 firstCharCode, uint8 charTableSize);
+		void initializeA1(XERDevice* device, uint8* bitmapA1, uint8 charWidth,
+			uint8 charHeight, uint8 firstCharCode, uint8 charTableSize);
+
+		static XERMonospacedFont* GetDefault();
 	};
 }

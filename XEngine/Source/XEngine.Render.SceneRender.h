@@ -5,8 +5,6 @@
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
 
-struct ID3D12GraphicsCommandList;
-struct ID3D12CommandAllocator;
 struct ID3D12Fence;
 struct ID3D12Resource;
 
@@ -15,7 +13,7 @@ namespace XEngine
 	struct XERCamera;
 
 	class XERScene;
-	class XERUIGeometryRenderer;
+	class XERUIRender;
 	class XERTargetBuffer;
 	class XERWindowTarget;
 	class XERDevice;
@@ -41,13 +39,10 @@ namespace XEngine
 		struct LightingPassCB;
 	}
 
-	class XERContext : public XLib::NonCopyable
+	class XERSceneRender : public XLib::NonCopyable
 	{
 	private:
 		XERDevice *device = nullptr;
-
-		COMPtr<ID3D12GraphicsCommandList> d3dCommandList;
-		COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
 
 		COMPtr<ID3D12Resource> d3dNormalTexture, d3dDiffuseTexture, d3dDepthTexture;
 		COMPtr<ID3D12Resource> d3dDownscaledDepthTexture;
@@ -68,7 +63,6 @@ namespace XEngine
 		void draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
 			XERDebugWireframeMode debugWireframeMode, bool updateOcclusionCulling,
 			XERDrawTimers* timers = nullptr);
-		void draw(XERTargetBuffer* target, XERUIGeometryRenderer* renderer);
 
 		inline XERDevice* getDevice() { return device; }
 	};

@@ -328,6 +328,7 @@ bool XERDevice::initialize()
 	srvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, srvDescriptorsLimit, true);
 	graphicsGPUQueue.initialize(d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
 	uploadEngine.initalize(d3dDevice);
+	graphicsCommandListPool.initialize(d3dDevice);
 
 	gpuTickPeriod = 1.0f / float32(graphicsGPUQueue.getTimestampFrequency());
 
@@ -394,3 +395,28 @@ D3D12_CPU_DESCRIPTOR_HANDLE XERDevice::DescriptorHeap::getCPUHandle(uint32 descr
 	{ return d3dDescriptorHeap->GetCPUDescriptorHandleForHeapStart() + descriptor * descritorSize; }
 D3D12_GPU_DESCRIPTOR_HANDLE XERDevice::DescriptorHeap::getGPUHandle(uint32 descriptor)
 	{ return d3dDescriptorHeap->GetGPUDescriptorHandleForHeapStart() + descriptor * descritorSize; }
+
+// GraphicsCommandListPool ==================================================================//
+
+void XERDevice::GraphicsCommandListPool::initialize(ID3D12Device* d3dDevice)
+{
+	d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, d3dCommandAllocator.uuid(), d3dCommandAllocator.voidInitRef());
+	d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3dCommandAllocator, nullptr, d3dCommandList.uuid(), d3dCommandList.voidInitRef());
+	d3dCommandList->Close();
+}
+
+bool XERDevice::GraphicsCommandListPool::acquireDefault(ID3D12GraphicsCommandList*& d3dCommandList,
+	ID3D12CommandAllocator*& d3dCommandAllocator)
+{
+	if (acquired)
+		return false;
+
+	acquired = true;
+	d3dCommandList = this->d3dCommandList;
+	d3dCommandAllocator = this->d3dCommandAllocator;
+	return true;
+}
+void XERDevice::GraphicsCommandListPool::releaseDefault()
+{
+	acquired = false;
+}

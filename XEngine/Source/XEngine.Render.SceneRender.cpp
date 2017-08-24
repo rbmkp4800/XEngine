@@ -3,11 +3,10 @@
 
 #include <XLib.Math.Matrix4x4.h>
 
-#include "XEngine.Render.Context.h"
+#include "XEngine.Render.SceneRender.h"
 #include "XEngine.Render.Device.h"
 #include "XEngine.Render.Scene.h"
 #include "XEngine.Render.Effect.h"
-#include "XEngine.Render.UI.h"
 #include "XEngine.Render.Targets.h"
 #include "XEngine.Render.Camera.h"
 #include "XEngine.Render.Internal.GPUStructs.h"
@@ -55,14 +54,10 @@ namespace XEngine::Internal
 	};
 }
 
-bool XERContext::initialize(XERDevice* device)
+bool XERSceneRender::initialize(XERDevice* device)
 {
 	this->device = device;
 	ID3D12Device *d3dDevice = device->d3dDevice;
-
-	d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, d3dCommandAllocator.uuid(), d3dCommandAllocator.voidInitRef());
-	d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3dCommandAllocator, nullptr, d3dCommandList.uuid(), d3dCommandList.voidInitRef());
-	d3dCommandList->Close();
 
 	// creating temp target buffers
 	{
@@ -124,10 +119,16 @@ bool XERContext::initialize(XERDevice* device)
 	return true;
 }
 
-void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
+void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
 	XERDebugWireframeMode debugWireframeMode, bool updateOcclusionCulling, XERDrawTimers* timers)
 {
 	device->uploadEngine.flush();
+
+	ID3D12GraphicsCommandList *d3dCommandList = nullptr;
+	ID3D12CommandAllocator *d3dCommandAllocator = nullptr;
+
+	if (!device->graphicsCommandListPool.acquireDefault(d3dCommandList, d3dCommandAllocator))
+		return;
 
 	uint32x2 targetSize = { 0, 0 };
 	{
@@ -344,6 +345,8 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 	ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
 	device->graphicsGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
 
+	device->graphicsCommandListPool.releaseDefault();
+
 	if (timers)
 	{
 		uint64 *timestamps = nullptr;
@@ -361,39 +364,4 @@ void XERContext::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera&
 
 		device->d3dReadbackBuffer->Unmap(0, nullptr);
 	}
-}
-
-void XERContext::draw(XERTargetBuffer* target, XERUIGeometryRenderer* renderer)
-{
-	uint32x2 targetSize = { 0, 0 };
-	{
-		D3D12_RESOURCE_DESC desc = target->d3dTexture->GetDesc();
-		targetSize.x = uint32(desc.Width);
-		targetSize.y = uint32(desc.Height);
-	}
-
-	d3dCommandAllocator->Reset();
-	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
-
-	d3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, float32(targetSize.x), float32(targetSize.y)));
-	d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, targetSize.x, targetSize.y));
-
-	d3dCommandList->SetGraphicsRootSignature(device->d3dUIPassRS);
-	ID3D12DescriptorHeap *d3dDescriptorHeaps[] = { device->srvHeap.getD3D12DescriptorHeap() };
-	d3dCommandList->SetDescriptorHeaps(countof(d3dDescriptorHeaps), d3dDescriptorHeaps);
-
-	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-	D3D12_CPU_DESCRIPTOR_HANDLE targetRTVDescriptorHandle = device->rtvHeap.getCPUHandle(target->rtvDescriptor);
-	d3dCommandList->OMSetRenderTargets(1, &targetRTVDescriptorHandle, FALSE, nullptr);
-
-	renderer->fillD3DCommandList(d3dCommandList);
-
-	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-
-	d3dCommandList->Close();
-
-	ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
-	device->graphicsGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
 }

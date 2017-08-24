@@ -17,6 +17,8 @@ struct IDXGIFactory5;
 struct ID3D12Device;
 struct ID3D12CommandQueue;
 struct ID3D12CommandList;
+struct ID3D12GraphicsCommandList;
+struct ID3D12CommandAllocator;
 struct ID3D12DescriptorHeap;
 struct ID3D12PipelineState;
 struct ID3D12RootSignature;
@@ -55,9 +57,9 @@ namespace XEngine
 	class XERTexture;
 	class XERScene;
 	class XERMonospacedFont;
-	class XERUIGeometryRenderer;
+	class XERUIRender;
 	class XERWindowTarget;
-	class XERContext;
+	class XERSceneRender;
 
 	class XERDevice : public XLib::NonCopyable
 	{
@@ -66,9 +68,9 @@ namespace XEngine
 		friend XERTexture;
 		friend XERScene;
 		friend XERMonospacedFont;
-		friend XERUIGeometryRenderer;
+		friend XERUIRender;
 		friend XERWindowTarget;
-		friend XERContext;
+		friend XERSceneRender;
 
 	private:
 		class GPUQueue
@@ -144,6 +146,25 @@ namespace XEngine
 			inline ID3D12DescriptorHeap* getD3D12DescriptorHeap() { return d3dDescriptorHeap; }
 		};
 
+		class GraphicsCommandListPool // temporary implementation
+		{
+			friend XERDevice;
+
+		private:
+			COMPtr<ID3D12GraphicsCommandList> d3dCommandList;
+			COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
+			bool acquired = false;
+
+			void initialize(ID3D12Device* d3dDevice);
+
+		public:
+			bool acquireDefault(ID3D12GraphicsCommandList*& d3dCommandList,
+				ID3D12CommandAllocator*& d3dCommandAllocator);
+			void releaseDefault();
+		};
+
+		//===================================================================================//
+
 		static COMPtr<IDXGIFactory5> dxgiFactory;
 		COMPtr<ID3D12Device> d3dDevice;
 
@@ -172,6 +193,7 @@ namespace XEngine
 		DescriptorHeap srvHeap;
 		GPUQueue graphicsGPUQueue;
 		UploadEngine uploadEngine;
+		GraphicsCommandListPool graphicsCommandListPool;
 
 		char name[32];
 		float32 gpuTickPeriod;

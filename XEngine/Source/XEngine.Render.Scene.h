@@ -17,7 +17,7 @@ namespace XEngine
 	class XEREffect;
 	class XERGeometry;
 	class XERTexture;
-	class XERContext;
+	class XERSceneRender;
 	class XERDevice;
 
 	using XERGeometryInstanceId = uint32;
@@ -37,7 +37,7 @@ namespace XEngine
 
 	class XERScene : public XLib::NonCopyable
 	{
-		friend XERContext;
+		friend XERSceneRender;
 
 	private:
 		struct EffectData

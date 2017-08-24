@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -28,26 +28,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -202,7 +202,6 @@
     <ClInclude Include="Source\XEngine.Formats.XEGeometry.h" />
     <ClInclude Include="Source\XEngine.h" />
     <ClInclude Include="Source\XEngine.Render.Camera.h" />
-    <ClInclude Include="Source\XEngine.Render.Context.h" />
     <ClInclude Include="Source\XEngine.Render.Device.h" />
     <ClInclude Include="Source\XEngine.Render.Effect.h" />
     <ClInclude Include="Source\XEngine.Render.MIPMapGenerator.h" />
@@ -211,28 +210,31 @@
     <ClInclude Include="Source\XEngine.Render.GeometryGenerator.SampleGeometries.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.GPUStructs.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.Shaders.h" />
+    <ClInclude Include="Source\XEngine.Render.SceneRender.h" />
+    <ClInclude Include="Source\XEngine.Render.UIRender.h" />
     <ClInclude Include="Source\XEngine.ResourceLoader.h" />
     <ClInclude Include="Source\XEngine.Render.Scene.h" />
     <ClInclude Include="Source\XEngine.Render.StaticResources.DefaultFont.h" />
     <ClInclude Include="Source\XEngine.Render.Targets.h" />
-    <ClInclude Include="Source\XEngine.Render.UI.h" />
     <ClInclude Include="Source\XEngine.Render.Vertices.h" />
+    <ClInclude Include="Source\XEngine.UI.Console.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Main.cpp" />
     <ClCompile Include="Source\Util.COMPtr.cpp" />
-    <ClCompile Include="Source\XEngine.Render.Context.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.UploadEngine.cpp" />
     <ClCompile Include="Source\XEngine.Render.Effect.cpp" />
     <ClCompile Include="Source\XEngine.Render.Resources.cpp" />
     <ClCompile Include="Source\XEngine.Render.GeometryGenerator.cpp" />
+    <ClCompile Include="Source\XEngine.Render.SceneRender.cpp" />
+    <ClCompile Include="Source\XEngine.Render.UIRender.cpp" />
     <ClCompile Include="Source\XEngine.ResourceLoader.cpp" />
     <ClCompile Include="Source\XEngine.ResourceLoader.Geometry.cpp" />
     <ClCompile Include="Source\XEngine.Render.Scene.cpp" />
     <ClCompile Include="Source\XEngine.Render.Internal.Shaders.cpp" />
     <ClCompile Include="Source\XEngine.Render.Targets.cpp" />
-    <ClCompile Include="Source\XEngine.Render.UI.cpp" />
+    <ClCompile Include="Source\XEngine.UI.Console.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XLib\XLib.vcxproj">
