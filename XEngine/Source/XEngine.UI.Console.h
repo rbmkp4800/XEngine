@@ -27,7 +27,7 @@ namespace XEngine
 	public:
 		void initialize(XERDevice* device, XERMonospacedFont* font);
 
-		void handleCharacter(wchar key);
+		void handleCharacter(wchar character);
 		void draw(XERUIRender* uiRender);
 
 		inline void setCommandHandler(XEUIConsoleCommandHandler handler) { this->handler = handler; }
