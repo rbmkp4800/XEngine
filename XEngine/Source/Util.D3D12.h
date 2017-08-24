@@ -164,6 +164,23 @@ inline D3D12_BLEND_DESC D3D12BlendDesc_NoBlend()
 	return desc;
 }
 
+inline D3D12_BLEND_DESC D3D12BlendDesc_DefaultBlend()
+{
+	D3D12_BLEND_DESC desc = {};
+	desc.AlphaToCoverageEnable = false;
+	desc.IndependentBlendEnable = false;
+	D3D12_RENDER_TARGET_BLEND_DESC blendDesc =
+	{
+		true, false,
+		D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_INV_SRC_ALPHA, D3D12_BLEND_OP_ADD,
+		D3D12_BLEND_ZERO, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+		D3D12_LOGIC_OP_NOOP,
+		D3D12_COLOR_WRITE_ENABLE_ALL,
+	};
+	desc.RenderTarget[0] = blendDesc;
+	return desc;
+}
+
 inline D3D12_RASTERIZER_DESC D3D12RasterizerDesc_Default()
 {
 	D3D12_RASTERIZER_DESC desc;

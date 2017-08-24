@@ -15,6 +15,8 @@
 #include "Shaders\Compiled\DebugPositionOnlyVS.cso.h"
 #include "Shaders\Compiled\DebugWhitePS.cso.h"
 
+#include "Shaders\Compiled\UIColorVS.cso.h"
+#include "Shaders\Compiled\UIColorPS.cso.h"
 #include "Shaders\Compiled\UIFontVS.cso.h"
 #include "Shaders\Compiled\UIFontPS.cso.h"
 
@@ -40,6 +42,8 @@ ShaderData Shaders::OCxICLUpdateCS = { OCxICLUpdateCSData, sizeof(OCxICLUpdateCS
 ShaderData Shaders::DebugPositionOnlyVS = { DebugPositionOnlyVSData, sizeof(DebugPositionOnlyVSData) };
 ShaderData Shaders::DebugWhitePS = { DebugWhitePSData, sizeof(DebugWhitePSData) };
 
+ShaderData Shaders::UIColorVS = { UIColorVSData, sizeof(UIColorVSData) };
+ShaderData Shaders::UIColorPS = { UIColorPSData, sizeof(UIColorPSData) };
 ShaderData Shaders::UIFontVS = { UIFontVSData, sizeof(UIFontVSData) };
 ShaderData Shaders::UIFontPS = { UIFontPSData, sizeof(UIFontPSData) };
 

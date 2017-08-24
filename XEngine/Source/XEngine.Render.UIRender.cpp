@@ -27,10 +27,10 @@ void XERUIRender::flushCurrentGeometry()
 	uint32 vertexStride = 0;
 	switch (currentGeometryType)
 	{
-		/*case GeometryType::Color:
+		case GeometryType::Color:
 			vertexStride = sizeof(VertexUIColor);
-			//d3dPS = device->d3dUIColorPSO;
-			break;*/
+			d3dPS = device->d3dUIColorPSO;
+			break;
 
 		case GeometryType::Font:
 			vertexStride = sizeof(VertexUIFont);
@@ -46,7 +46,8 @@ void XERUIRender::flushCurrentGeometry()
 	if (currentGeometrySRVDescriptor != uint32(-1))
 		d3dCommandList->SetGraphicsRootDescriptorTable(0, device->srvHeap.getGPUHandle(currentGeometrySRVDescriptor));
 	d3dCommandList->IASetVertexBuffers(0, 1, &D3D12VertexBufferView(
-		d3dVertexBuffer->GetGPUVirtualAddress(), currentGeometryVertexBufferSize, vertexStride));
+		d3dVertexBuffer->GetGPUVirtualAddress() + currentGeometryVertexBufferOffset,
+		currentGeometryVertexBufferSize, vertexStride));
 	d3dCommandList->DrawInstanced(currentGeometryVertexBufferSize / vertexStride, 1, 0, 0);
 
 	currentGeometryVertexBufferOffset = vertexBufferUsedBytes;

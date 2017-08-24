@@ -26,14 +26,15 @@ namespace XEngine
 		uint16x4 jointIndices;
 	};
 
+	struct VertexUIColor
+	{
+		float32x2 position;
+		uint32 color;
+	};
+
 	struct VertexUIFont
 	{
 		float32x2 position;
 		uint16x2 texture;
-	};
-
-	struct VertexUIColor
-	{
-
 	};
 }

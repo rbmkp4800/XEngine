@@ -132,16 +132,7 @@ private:
 	virtual void onKeyboard(VirtualKey key, bool state) override
 	{
 		if (consoleEnabled)
-		{
-			if (state)
-			{
-				if (key == VirtualKey::Escape)
-					consoleEnabled = false;
-				else
-					xerConsole.handleKeyboard(key);
-			}
 			return;
-		}
 
 		switch (key)
 		{
@@ -209,10 +200,6 @@ private:
 				xerCameraRotation = lastRotation;
 			}
 			break;
-
-		case VirtualKey(0xC0): // OEM3 '`~'. TODO: refactor
-			consoleEnabled = true;
-			break;
 		}
 	}
 	virtual void onMouseButton(MouseState& mouseState, MouseButton button, bool state) override
@@ -232,6 +219,18 @@ private:
 			xerCameraRotation.angles.y += float32(state.y - mouseLastPos.y) * 0.005f;
 			mouseLastPos = { state.x, state.y };
 		}
+	}
+	virtual void onCharacter(wchar character) override
+	{
+		if (consoleEnabled)
+		{
+			if (character == '`')
+				consoleEnabled = false;
+			else
+				xerConsole.handleCharacter(character);
+		}
+		else if (character == '`')
+			consoleEnabled = true;
 	}
 
 public:
@@ -291,9 +290,6 @@ public:
 
 		// TODO: manage target buffer state transitions before and after UI rendering
 		xerUIRender.beginDraw(xerTarget);
-		if (consoleEnabled)
-			xerUIRender.drawConsole(&xerConsole);
-		else
 		{
 			char buffer[256];
 			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\n"\
@@ -309,6 +305,10 @@ public:
 
 			xerUIRender.drawText(&xerFont, float32x2(10.0f, 10.0f), buffer);
 		}
+
+		if (consoleEnabled)
+			xerUIRender.drawConsole(&xerConsole);
+
 		xerUIRender.endDraw();
 		xerWindowTarget.present(true);
 	}

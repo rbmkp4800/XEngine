@@ -153,6 +153,8 @@
     <FxCompile Include="Source\Shaders\OCxICLUpdateCS.hlsl" />
     <FxCompile Include="Source\Shaders\DepthBufferDownscalePS.hlsl" />
     <FxCompile Include="Source\Shaders\ScreenQuadVS.hlsl" />
+    <FxCompile Include="Source\Shaders\UIColorVS.hlsl" />
+    <FxCompile Include="Source\Shaders\UIColorPS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Doc\xegeometry.txt" />

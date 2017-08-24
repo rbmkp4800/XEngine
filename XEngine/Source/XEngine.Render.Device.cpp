@@ -234,6 +234,32 @@ bool XERDevice::initialize()
 		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dDebugWireframePSO.uuid(), d3dDebugWireframePSO.voidInitRef());
 	}
 
+	// UI color PSO
+	{
+		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+			{ "COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dUIPassRS;
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::UIColorVS.data, Shaders::UIColorVS.size);
+		psoDesc.PS = D3D12ShaderBytecode(Shaders::UIColorPS.data, Shaders::UIColorPS.size);
+		psoDesc.BlendState = D3D12BlendDesc_DefaultBlend();
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
+		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Disable();
+		psoDesc.InputLayout = D3D12InputLayoutDesc(inputElementDescs, countof(inputElementDescs));
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 1;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+		psoDesc.SampleDesc.Count = 1;
+		psoDesc.SampleDesc.Quality = 0;
+
+		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dUIColorPSO.uuid(), d3dUIColorPSO.voidInitRef());
+	}
+
 	// UI font PSO
 	{
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -246,7 +272,7 @@ bool XERDevice::initialize()
 		psoDesc.pRootSignature = d3dUIPassRS;
 		psoDesc.VS = D3D12ShaderBytecode(Shaders::UIFontVS.data, Shaders::UIFontVS.size);
 		psoDesc.PS = D3D12ShaderBytecode(Shaders::UIFontPS.data, Shaders::UIFontPS.size);
-		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+		psoDesc.BlendState = D3D12BlendDesc_DefaultBlend();
 		psoDesc.SampleMask = UINT_MAX;
 		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
 		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Disable();

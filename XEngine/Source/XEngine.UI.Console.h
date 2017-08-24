@@ -4,7 +4,6 @@
 #include <XLib.NonCopyable.h>
 #include <XLib.Heap.h>
 #include <XLib.Delegate.h>
-#include <XLib.System.Window.h>
 
 namespace XEngine
 {
@@ -28,7 +27,7 @@ namespace XEngine
 	public:
 		void initialize(XERDevice* device, XERMonospacedFont* font);
 
-		void handleKeyboard(XLib::VirtualKey key);
+		void handleCharacter(wchar key);
 		void draw(XERUIRender* uiRender);
 
 		inline void setCommandHandler(XEUIConsoleCommandHandler handler) { this->handler = handler; }

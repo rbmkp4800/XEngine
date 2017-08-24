@@ -26,6 +26,8 @@ namespace XEngine::Internal
 		static ShaderData DebugPositionOnlyVS;
 		static ShaderData DebugWhitePS;
 
+		static ShaderData UIColorVS;
+		static ShaderData UIColorPS;
 		static ShaderData UIFontVS;
 		static ShaderData UIFontPS;
 
