@@ -20,7 +20,10 @@ void XEUIConsole::initialize(XERDevice* device, XERMonospacedFont* font)
 void XEUIConsole::handleCharacter(wchar key)
 {
 	if (key == 0x1B) // escape
+	{
 		currentCommandLength = 0;
+		return;
+	}
 	if (key == 0x08) // backspace
 	{
 		if (currentCommandLength > 0)
