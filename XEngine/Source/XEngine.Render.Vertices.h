@@ -36,5 +36,6 @@ namespace XEngine
 	{
 		float32x2 position;
 		uint16x2 texture;
+		uint32 color;
 	};
 }

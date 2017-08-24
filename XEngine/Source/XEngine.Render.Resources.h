@@ -73,6 +73,7 @@ namespace XEngine
 		void initializeA1(XERDevice* device, uint8* bitmapA1, uint8 charWidth,
 			uint8 charHeight, uint8 firstCharCode, uint8 charTableSize);
 
-		static XERMonospacedFont* GetDefault();
+		inline uint8 getCharWidth() { return charWidth; }
+		inline uint8 getCharHeight() { return charHeight; }
 	};
 }

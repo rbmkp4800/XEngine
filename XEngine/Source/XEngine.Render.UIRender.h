@@ -73,7 +73,7 @@ namespace XEngine
 		void endDraw();
 
 		void drawText(XERMonospacedFont* font, float32x2 position,
-			const char* text, uint32 length = uint32(-1));
+			const char* text, uint32 color, uint32 length = uint32(-1));
 		//void drawRectangle(...);
 		//void drawLine(...);
 

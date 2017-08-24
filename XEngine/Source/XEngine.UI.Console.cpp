@@ -5,6 +5,7 @@
 #include "XEngine.Render.UIRender.h"
 #include "XEngine.Render.Device.h"
 #include "XEngine.Render.Vertices.h"
+#include "XEngine.Render.Resources.h"
 #include "XEngine.Color.h"
 
 using namespace XLib;
@@ -62,5 +63,9 @@ void XEUIConsole::draw(XERUIRender* uiRender)
 	vertices[4] = { { -1.0f, 0.0f }, color };
 	vertices[5] = { { -1.0f, 1.0f }, color };
 
-	uiRender->drawText(font, { 0.0f, 0.0f }, buffer, currentCommandLength);
+	buffer[currentCommandLength] = '_';
+
+	uiRender->drawText(font, { 0.0f, 0.0f }, ">>>", 0xFFFFFF_rgb, 3);
+	uiRender->drawText(font, { float32(font->getCharWidth() * 4), 0.0f }, 
+		buffer, 0x9090D0_rgb, currentCommandLength + 1);
 }

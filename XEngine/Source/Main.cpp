@@ -303,7 +303,7 @@ public:
 				xerCamera.position.x, xerCamera.position.y, xerCamera.position.z,
 				xerCamera.forward.x, xerCamera.forward.y, xerCamera.forward.z);
 
-			xerUIRender.drawText(&xerFont, float32x2(10.0f, 10.0f), buffer);
+			xerUIRender.drawText(&xerFont, float32x2(10.0f, 10.0f), buffer, 0xFFFF00_rgb);
 		}
 
 		if (consoleEnabled)

@@ -153,7 +153,8 @@ void XERUIRender::endDraw()
 	targetRTVDescriptor = 0;
 }
 
-void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position, const char* text, uint32 length)
+void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position,
+	const char* text, uint32 color, uint32 length)
 {
 	setSRVDescriptor(font->srvDescriptor);
 
@@ -190,13 +191,13 @@ void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position, const ch
 			float32 bottom = position.y + charSize.y;
 
 			uint16 charTextureLeft = uint16(0xFFFF * character / charTableSize);
-			VertexUIFont leftTop = { position, { charTextureLeft, 0 } };
-			VertexUIFont leftBottom = { { position.x, bottom }, { charTextureLeft, 0xFFFF } };
+			VertexUIFont leftTop = { position, { charTextureLeft, 0 }, color };
+			VertexUIFont leftBottom = { { position.x, bottom }, { charTextureLeft, 0xFFFF }, color };
 
 			position.x += charSize.x;
 			uint16 charTextureRight = uint16(0xFFFF * (character + 1) / charTableSize);
-			VertexUIFont rightTop = { position,{ charTextureRight, 0 } };
-			VertexUIFont rightBottom = { { position.x, bottom },{ charTextureRight, 0xFFFF } };
+			VertexUIFont rightTop = { position,{ charTextureRight, 0 }, color };
+			VertexUIFont rightBottom = { { position.x, bottom },{ charTextureRight, 0xFFFF }, color };
 
 			VertexUIFont *vertices = to<VertexUIFont*>(allocateVertexBuffer(sizeof(VertexUIFont) * 6, GeometryType::Font));
 
