@@ -24,13 +24,13 @@ namespace XEngine
 		Enabled = 1,
 	};
 
-	struct XERDrawTimers
+	struct XERSceneDrawTimings
 	{
-		float32 totalTime;
-
-		float32 objectsPassTime;
-		float32 occlusionCullingTime;
-		float32 lightingPassTime;
+		float32 objectsPassFinished;
+		float32 occlusionCullingDownscaleFinished;
+		float32 occlusionCullingBBoxDrawFinished;
+		float32 occlusionCullingFinished;
+		float32 lightingPassFinished;
 	};
 
 	namespace Internal
@@ -62,7 +62,7 @@ namespace XEngine
 
 		void draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
 			XERDebugWireframeMode debugWireframeMode, bool updateOcclusionCulling,
-			XERDrawTimers* timers = nullptr);
+			XERSceneDrawTimings* timings = nullptr);
 
 		inline XERDevice* getDevice() { return device; }
 	};

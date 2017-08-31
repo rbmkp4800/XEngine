@@ -283,22 +283,35 @@ public:
 
 		XERTargetBuffer *xerTarget = xerWindowTarget.getCurrentTargetBuffer();
 
-		XERDrawTimers xerTimers = {};
+		XERSceneDrawTimings xerTimings = {};
 		xerSceneRender.draw(xerTarget, &xerScene, xerCamera,
 			controls.wireframe ? XERDebugWireframeMode::Enabled : XERDebugWireframeMode::Disabled,
-			ocUpdatesEnabled, &xerTimers);
+			ocUpdatesEnabled, &xerTimings);
 
 		// TODO: manage target buffer state transitions before and after UI rendering
 		xerUIRender.beginDraw(xerTarget);
 		{
-			char buffer[256];
-			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\n"\
-				"Total frame time %5.2f ms\nOP %5.2f ms\nOC %5.2f ms\n"\
-				"LP %5.2f ms\nOC updates %s\n"\
+			float32 totalFrameTime = xerTimings.lightingPassFinished;
+			float32 objectPassTime = xerTimings.objectsPassFinished;
+			float32 occlusionCullingTime = xerTimings.occlusionCullingFinished - xerTimings.objectsPassFinished;
+			float32 occlusionCullingDownscaleTime = xerTimings.occlusionCullingDownscaleFinished - xerTimings.objectsPassFinished;
+			float32 occlusionCullingBBoxDrawTime = xerTimings.occlusionCullingBBoxDrawFinished - xerTimings.occlusionCullingDownscaleFinished;
+			float32 occlusionCullingCommandListUpdateTime = xerTimings.occlusionCullingFinished - xerTimings.occlusionCullingBBoxDrawFinished;
+			float32 ligtingPassTime = xerTimings.lightingPassFinished - xerTimings.occlusionCullingFinished;
+
+			char buffer[512];
+			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\n"
+				"Total frame time %5.2f ms\n"
+				"OP %5.2f ms\n"
+				"OC %5.2f ms (%5.2f %5.2f %5.2f)\n"
+				"LP %5.2f ms\n"
+				"OC updates %s\n"
 				"Cam (%4.2f %4.2f %4.2f) -> (%4.2f %4.2f %4.2f)\n"
 				"WORK IN PROGRESS",
-				xerDevice.getName(), xerTimers.totalTime * 1000.0f, xerTimers.objectsPassTime * 1000.0f,
-				xerTimers.occlusionCullingTime * 1000.0f, xerTimers.lightingPassTime * 1000.0f,
+				xerDevice.getName(), totalFrameTime * 1000.0f, objectPassTime * 1000.0f,
+				occlusionCullingTime * 1000.0f,
+				occlusionCullingDownscaleTime * 1000.0f,occlusionCullingBBoxDrawTime * 1000.0f, occlusionCullingCommandListUpdateTime * 1000.0f,
+				ligtingPassTime * 1000.0f,
 				ocUpdatesEnabled ? "enabled" : "disabled",
 				xerCamera.position.x, xerCamera.position.y, xerCamera.position.z,
 				xerCamera.forward.x, xerCamera.forward.y, xerCamera.forward.z);
