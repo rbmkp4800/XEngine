@@ -370,9 +370,18 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 			timestamps[i] -= startTimestamp;
 
 		timings->objectsPassFinished = timestamps[TimestampId::ObjectPassFinished] * device->gpuTickPeriod;
-		timings->occlusionCullingDownscaleFinished = timestamps[TimestampId::OcclusionCullingDownscaleFinished] * device->gpuTickPeriod;
-		timings->occlusionCullingBBoxDrawFinished = timestamps[TimestampId::OcclusionCullingBBoxDrawFinished] * device->gpuTickPeriod;
-		timings->occlusionCullingFinished = timestamps[TimestampId::OcclusionCullingFinished] * device->gpuTickPeriod;
+		if (updateOcclusionCulling)
+		{
+			timings->occlusionCullingDownscaleFinished = timestamps[TimestampId::OcclusionCullingDownscaleFinished] * device->gpuTickPeriod;
+			timings->occlusionCullingBBoxDrawFinished = timestamps[TimestampId::OcclusionCullingBBoxDrawFinished] * device->gpuTickPeriod;
+			timings->occlusionCullingFinished = timestamps[TimestampId::OcclusionCullingFinished] * device->gpuTickPeriod;
+		}
+		else
+		{
+			timings->occlusionCullingDownscaleFinished = timings->objectsPassFinished;
+			timings->occlusionCullingBBoxDrawFinished = timings->objectsPassFinished;
+			timings->occlusionCullingFinished = timings->objectsPassFinished;
+		}
 		timings->lightingPassFinished = timestamps[TimestampId::LightingPassFinished] * device->gpuTickPeriod;
 
 		device->d3dReadbackBuffer->Unmap(0, nullptr);

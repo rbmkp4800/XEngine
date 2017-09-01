@@ -9,6 +9,7 @@
 #include "XEngine.Render.Targets.h"
 #include "XEngine.Render.Device.h"
 #include "XEngine.Render.Vertices.h"
+#include "XEngine.Color.h"
 
 using namespace XLib;
 using namespace XEngine;
@@ -27,17 +28,17 @@ void XERUIRender::flushCurrentGeometry()
 	uint32 vertexStride = 0;
 	switch (currentGeometryType)
 	{
-		case XERUIGeometryType::Color:
-			vertexStride = sizeof(VertexUIColor);
-			d3dPS = device->d3dUIColorPSO;
-			break;
+	case XERUIGeometryType::Color:
+		vertexStride = sizeof(VertexUIColor);
+		d3dPS = device->d3dUIColorPSO;
+		break;
 
-		case XERUIGeometryType::Font:
-			vertexStride = sizeof(VertexUIFont);
-			d3dPS = device->d3dUIFontPSO;
-			break;
+	case XERUIGeometryType::Font:
+		vertexStride = sizeof(VertexUIFont);
+		d3dPS = device->d3dUIFontPSO;
+		break;
 
-		default: throw;
+	default: throw;
 	}
 
 	uint32 currentGeometryVertexBufferSize = vertexBufferUsedBytes - currentGeometryVertexBufferOffset;
@@ -171,7 +172,7 @@ void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position,
 	uint8 lastCharCode = firstCharCode + font->charTableSize - 1;
 	uint32 charTableSize = font->charTableSize;
 
-	float32x2 ndcScaleCoef(1.0f / float32(targetWidth / 2), -1.0f / float32(targetHeight / 2));
+	float32x2 ndcScaleCoef = getNDCScaleCoef();
 
 	position *= ndcScaleCoef;
 	position += float32x2(-1.0f, 1.0f);
@@ -217,5 +218,52 @@ void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position,
 			vertices[4] = rightBottom;
 			vertices[5] = leftBottom;
 		}
+	}
+}
+
+void XERUIRender::drawStackedBarChart(float32x2 position, float32 height,
+	float32 horizontalScale, float32* values, uint32 valueCount)
+{
+	uint32 colors[] =
+	{
+		0xFF0000_rgb,
+		0x00FF00_rgb,
+		0x0000FF_rgb,
+		0xFFFF00_rgb,
+		0x00FFFF_rgb,
+		0xFF00FF_rgb,
+	};
+
+	float32x2 ndcScaleCoef = getNDCScaleCoef();
+
+	position *= ndcScaleCoef;
+	position += float32x2(-1.0f, 1.0f);
+	height *= ndcScaleCoef.y;
+	horizontalScale *= ndcScaleCoef.x;
+
+	float32 x = position.x;
+	float32 top = position.y;
+	float32 bottom = top + height;
+
+	VertexUIColor *vertices = to<VertexUIColor*>(allocateVertices(sizeof(VertexUIColor) * valueCount * 6, XERUIGeometryType::Color));
+	for (uint32 i = 0; i < valueCount; i++)
+	{
+		uint32 color = colors[i % countof(colors)];
+
+		VertexUIColor leftTop = { { x, top }, color };
+		VertexUIColor leftBottom = { { x, bottom }, color };
+
+		x += values[i] * horizontalScale;
+		VertexUIColor rightTop = { { x, top }, color };
+		VertexUIColor rightBottom = { { x, bottom }, color };
+
+		vertices[0] = leftTop;
+		vertices[1] = rightTop;
+		vertices[2] = leftBottom;
+		vertices[3] = rightTop;
+		vertices[4] = rightBottom;
+		vertices[5] = leftBottom;
+
+		vertices += 6;
 	}
 }

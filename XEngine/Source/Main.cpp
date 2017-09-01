@@ -16,6 +16,7 @@ class Window : public WindowBase
 private:
 	XERDevice xerDevice;
 	XERWindowTarget xerWindowTarget;
+	uint16 width, height;
 
 	XERMonospacedFont xerFont;
 	XERSceneRender xerSceneRender;
@@ -61,6 +62,9 @@ private:
 
 	virtual void onCreate(CreationArgs& args) override
 	{
+		width = args.width;
+		height = args.height;
+
 		xerDevice.initialize();
 		xerSceneRender.initialize(&xerDevice);
 		xerWindowTarget.initialize(&xerDevice, this->getHandle(), args.width, args.height);
@@ -78,7 +82,7 @@ private:
 		XERGeometryGenerator::Cube(&xerDevice, &xerCubeGeometry);
 		//XERGeometryGenerator::Monster(&xerDevice, &xerMonsterGeometry);
 		XERGeometryGenerator::MonsterSkinned(&xerDevice, &xerMonsterSkinnedGeometry);
-		XERGeometryGenerator::Sphere(4, &xerDevice, &xerSphereGeometry);
+		XERGeometryGenerator::Sphere(2, &xerDevice, &xerSphereGeometry);
 
 		{
 			static constexpr uint32 n = 1024;
@@ -95,19 +99,19 @@ private:
 			xerDefaultTexture.initialize(&xerDevice, tex, n, n);
 		}
 
-		planeGeometryInstanceId = xerScene.createGeometryInstance(&xerPlaneGeometry, &xerTexturedEffect,
-			Matrix3x4::Translation(0.0f, -2.0f, 0.0f) * Matrix3x4::Scale(10.0f, 10.0f, 1.0f), &xerDefaultTexture);
+		//planeGeometryInstanceId = xerScene.createGeometryInstance(&xerPlaneGeometry, &xerTexturedEffect,
+		//	Matrix3x4::Translation(0.0f, -2.0f, 0.0f) * Matrix3x4::Scale(10.0f, 10.0f, 1.0f), &xerDefaultTexture);
 
 		xerScene.createGeometryInstance(&xerSphereGeometry, &xerPlainEffect, Matrix3x4::Identity());
 
 		//cubeGeometryInstanceId = xerScene.createGeometryInstance(&xerCubeGeometry, &xerPlainEffect, Matrix3x4::Identity());
 		//monsterGeometryInstanceId = xerScene.createGeometryInstance(&xerMonsterSkinnedGeometry, &xerPlainSkinnedEffect, Matrix3x4::Identity());
 
-		for (uint32 i = 0; i < 50; i++)
+		for (uint32 i = 0; i < 1024 * 60; i++)
 		{
 			xerScene.createGeometryInstance(&xerSphereGeometry, &xerPlainEffect,
 				Matrix3x4::Translation(Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f)) *
-				Matrix3x4::Scale(0.5f, 0.5f, 0.5f) *
+				Matrix3x4::Scale(0.1f, 0.1f, 0.1f) *
 				Matrix3x4::RotationX(Random::Global.getF32(0.0f, 3.14f)) * Matrix3x4::RotationY(Random::Global.getF32(0.0f, 3.14f)));
 		}
 
@@ -127,6 +131,9 @@ private:
 	}
 	virtual void onResize(ResizingArgs& args) override
 	{
+		width = args.width;
+		height = args.height;
+
 		xerWindowTarget.resize(args.width, args.height);
 	}
 	virtual void onKeyboard(VirtualKey key, bool state) override
@@ -299,6 +306,14 @@ public:
 			float32 occlusionCullingCommandListUpdateTime = xerTimings.occlusionCullingFinished - xerTimings.occlusionCullingBBoxDrawFinished;
 			float32 ligtingPassTime = xerTimings.lightingPassFinished - xerTimings.occlusionCullingFinished;
 
+			totalFrameTime *= 1000.0f;
+			objectPassTime *= 1000.0f;
+			occlusionCullingTime *= 1000.0f;
+			occlusionCullingDownscaleTime *= 1000.0f;
+			occlusionCullingBBoxDrawTime *= 1000.0f;
+			occlusionCullingCommandListUpdateTime *= 1000.0f;
+			ligtingPassTime *= 1000.0f;
+
 			char buffer[512];
 			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\n"
 				"Total frame time %5.2f ms\n"
@@ -308,15 +323,28 @@ public:
 				"OC updates %s\n"
 				"Cam (%4.2f %4.2f %4.2f) -> (%4.2f %4.2f %4.2f)\n"
 				"WORK IN PROGRESS",
-				xerDevice.getName(), totalFrameTime * 1000.0f, objectPassTime * 1000.0f,
-				occlusionCullingTime * 1000.0f,
-				occlusionCullingDownscaleTime * 1000.0f,occlusionCullingBBoxDrawTime * 1000.0f, occlusionCullingCommandListUpdateTime * 1000.0f,
-				ligtingPassTime * 1000.0f,
+				xerDevice.getName(), totalFrameTime, objectPassTime,
+				occlusionCullingTime,
+				occlusionCullingDownscaleTime, occlusionCullingBBoxDrawTime, occlusionCullingCommandListUpdateTime,
+				ligtingPassTime,
 				ocUpdatesEnabled ? "enabled" : "disabled",
 				xerCamera.position.x, xerCamera.position.y, xerCamera.position.z,
 				xerCamera.forward.x, xerCamera.forward.y, xerCamera.forward.z);
 
 			xerUIRender.drawText(&xerFont, float32x2(10.0f, 10.0f), buffer, 0xFFFF00_rgb);
+
+			float32 stackedBarChartValues[] =
+			{
+				objectPassTime,
+				occlusionCullingDownscaleTime,
+				occlusionCullingBBoxDrawTime,
+				occlusionCullingCommandListUpdateTime,
+				ligtingPassTime,
+			};
+
+			xerUIRender.drawStackedBarChart(float32x2(10.0f, height - 40), 30.0f, 30.0f,
+				stackedBarChartValues, countof(stackedBarChartValues));
+
 		}
 
 		if (consoleEnabled)

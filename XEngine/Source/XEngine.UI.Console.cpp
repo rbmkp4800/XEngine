@@ -1,9 +1,5 @@
-#include <d3d12.h>
-#include "Util.D3D12.h"
-
 #include "XEngine.UI.Console.h"
 #include "XEngine.Render.UIRender.h"
-#include "XEngine.Render.Device.h"
 #include "XEngine.Render.Vertices.h"
 #include "XEngine.Render.Resources.h"
 #include "XEngine.Color.h"
