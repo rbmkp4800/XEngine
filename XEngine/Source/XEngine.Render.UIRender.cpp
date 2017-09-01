@@ -236,18 +236,8 @@ void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position,
 }
 
 void XERUIRender::drawStackedBarChart(float32x2 position, float32 height,
-	float32 horizontalScale, float32* values, uint32 valueCount)
+	float32 horizontalScale, float32* values, uint32* colors, uint32 valueCount)
 {
-	uint32 colors[] =
-	{
-		0xFF0000_rgb,
-		0x00FF00_rgb,
-		0x0000FF_rgb,
-		0xFFFF00_rgb,
-		0x00FFFF_rgb,
-		0xFF00FF_rgb,
-	};
-
 	float32x2 ndcScaleCoef = getNDCScaleCoef();
 
 	position *= ndcScaleCoef;
@@ -262,7 +252,7 @@ void XERUIRender::drawStackedBarChart(float32x2 position, float32 height,
 	VertexUIColor *vertices = to<VertexUIColor*>(allocateVertices(sizeof(VertexUIColor) * valueCount * 6, XERUIGeometryType::Color));
 	for (uint32 i = 0; i < valueCount; i++)
 	{
-		uint32 color = colors[i % countof(colors)];
+		uint32 color = colors[i];
 
 		VertexUIColor leftTop = { { x, top }, color };
 		VertexUIColor leftBottom = { { x, bottom }, color };

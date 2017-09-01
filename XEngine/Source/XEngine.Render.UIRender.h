@@ -64,7 +64,7 @@ namespace XEngine
 		void drawText(XERMonospacedFont* font, float32x2 position,
 			const char* text, uint32 color, uint32 length = uint32(-1));
 		void drawStackedBarChart(float32x2 position, float32 height,
-			float32 horizontalScale, float32* values, uint32 valueCount);
+			float32 horizontalScale, float32* values, uint32* colors, uint32 valueCount);
 		//void drawRectangle(...);
 		//void drawLine(...);
 

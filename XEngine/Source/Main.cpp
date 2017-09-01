@@ -342,8 +342,17 @@ public:
 				ligtingPassTime,
 			};
 
-			xerUIRender.drawStackedBarChart(float32x2(10.0f, height - 40), 30.0f, 30.0f,
-				stackedBarChartValues, countof(stackedBarChartValues));
+			uint32 colors[] =
+			{
+				0x3BD3A0_rgb,
+				0xE3B841_rgb,
+				0xE5753B_rgb,
+				0xE74343_rgb,
+				0x0CA0D8_rgb,
+			};
+
+			xerUIRender.drawStackedBarChart(float32x2(10.0f, height - 40), 30.0f, 40.0f,
+				stackedBarChartValues, colors, countof(stackedBarChartValues));
 
 		}
 
