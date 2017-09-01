@@ -47,7 +47,7 @@ void XERUIRender::drawVertexBuffer(ID3D12Resource *d3dVertexBufferToDraw,
 	if (srvNeeded && currentGeometrySRVDescriptor != uint32(-1))
 		d3dCommandList->SetGraphicsRootDescriptorTable(0, device->srvHeap.getGPUHandle(currentGeometrySRVDescriptor));
 	d3dCommandList->IASetVertexBuffers(0, 1, &D3D12VertexBufferView(d3dVertexBufferToDraw->GetGPUVirtualAddress() + offset, size, vertexStride));
-	d3dCommandList->DrawInstanced(vertexBufferSize / vertexStride, 1, 0, 0);
+	d3dCommandList->DrawInstanced(size / vertexStride, 1, 0, 0);
 }
 
 void XERUIRender::flushCurrentGeometry()
