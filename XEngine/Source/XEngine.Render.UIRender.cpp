@@ -16,40 +16,47 @@ using namespace XEngine;
 
 static constexpr uint32 vertexBufferSize = 0x8000;
 
-void XERUIRender::flushCurrentGeometry()
-{
-	if (currentGeometryVertexBufferOffset == vertexBufferUsedBytes)
-		return;
+// private ==================================================================================//
 
+void XERUIRender::drawVertexBuffer(ID3D12Resource *d3dVertexBufferToDraw,
+	uint32 offset, uint32 size, XERUIGeometryType geometryType)
+{
 	if (!commandListInitialized)
 		initCommandList();
 
 	ID3D12PipelineState *d3dPS = nullptr;
 	uint32 vertexStride = 0;
+	bool srvNeeded = false;
 	switch (currentGeometryType)
 	{
-	case XERUIGeometryType::Color:
-		vertexStride = sizeof(VertexUIColor);
-		d3dPS = device->d3dUIColorPSO;
-		break;
+		case XERUIGeometryType::Color:
+			vertexStride = sizeof(VertexUIColor);
+			d3dPS = device->d3dUIColorPSO;
+			break;
 
-	case XERUIGeometryType::Font:
-		vertexStride = sizeof(VertexUIFont);
-		d3dPS = device->d3dUIFontPSO;
-		break;
+		case XERUIGeometryType::Font:
+			vertexStride = sizeof(VertexUIFont);
+			d3dPS = device->d3dUIFontPSO;
+			srvNeeded = true;
+			break;
 
-	default: throw;
+		default: throw;
 	}
 
-	uint32 currentGeometryVertexBufferSize = vertexBufferUsedBytes - currentGeometryVertexBufferOffset;
-
 	d3dCommandList->SetPipelineState(d3dPS);
-	if (currentGeometrySRVDescriptor != uint32(-1))
+	if (srvNeeded && currentGeometrySRVDescriptor != uint32(-1))
 		d3dCommandList->SetGraphicsRootDescriptorTable(0, device->srvHeap.getGPUHandle(currentGeometrySRVDescriptor));
-	d3dCommandList->IASetVertexBuffers(0, 1, &D3D12VertexBufferView(
-		d3dVertexBuffer->GetGPUVirtualAddress() + currentGeometryVertexBufferOffset,
-		currentGeometryVertexBufferSize, vertexStride));
-	d3dCommandList->DrawInstanced(currentGeometryVertexBufferSize / vertexStride, 1, 0, 0);
+	d3dCommandList->IASetVertexBuffers(0, 1, &D3D12VertexBufferView(d3dVertexBufferToDraw->GetGPUVirtualAddress() + offset, size, vertexStride));
+	d3dCommandList->DrawInstanced(vertexBufferSize / vertexStride, 1, 0, 0);
+}
+
+void XERUIRender::flushCurrentGeometry()
+{
+	if (currentGeometryVertexBufferOffset == vertexBufferUsedBytes)
+		return;
+
+	drawVertexBuffer(d3dVertexBuffer, currentGeometryVertexBufferOffset,
+		vertexBufferUsedBytes - currentGeometryVertexBufferOffset, currentGeometryType);
 
 	currentGeometryVertexBufferOffset = vertexBufferUsedBytes;
 	currentGeometryType = XERUIGeometryType::None;
@@ -90,7 +97,7 @@ void XERUIRender::initCommandList()
 	commandListInitialized = true;
 }
 
-// internal interface =======================================================================//
+// public ===================================================================================//
 
 void* XERUIRender::allocateVertices(uint32 size, XERUIGeometryType geometryType)
 {
@@ -107,6 +114,13 @@ void* XERUIRender::allocateVertices(uint32 size, XERUIGeometryType geometryType)
 	void *result = to<byte*>(mappedVertexBuffer) + vertexBufferUsedBytes;
 	vertexBufferUsedBytes += size;
 	return result;
+}
+
+void XERUIRender::drawBuffer(XERUIGeometryBuffer* buffer,
+	uint32 offset, uint32 size, XERUIGeometryType geometryType)
+{
+	flushCurrentGeometry();
+	drawVertexBuffer(buffer->d3dBuffer, offset, size, geometryType);
 }
 
 void XERUIRender::setTexture(XERTexture* texture)
@@ -126,8 +140,6 @@ void XERUIRender::setTexture(XERMonospacedFont* fontTexture)
 		currentGeometrySRVDescriptor = fontTexture->srvDescriptor;
 	}
 }
-
-// public interface =========================================================================//
 
 void XERUIRender::initialize(XERDevice *device)
 {
@@ -162,6 +174,8 @@ void XERUIRender::endDraw()
 	targetHeight = 0;
 	targetRTVDescriptor = 0;
 }
+
+// utils ====================================================================================//
 
 void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position,
 	const char* text, uint32 color, uint32 length)

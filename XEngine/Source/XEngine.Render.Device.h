@@ -53,24 +53,26 @@ struct ID3D12QueryHeap;
 namespace XEngine
 {
 	class XEREffect;
-	class XERGeometry;
-	class XERTexture;
 	class XERScene;
+	class XERGeometry;
+	class XERUIGeometryBuffer;
+	class XERTexture;
 	class XERMonospacedFont;
-	class XERUIRender;
 	class XERWindowTarget;
 	class XERSceneRender;
+	class XERUIRender;
 
 	class XERDevice : public XLib::NonCopyable
 	{
 		friend XEREffect;
-		friend XERGeometry;
-		friend XERTexture;
 		friend XERScene;
+		friend XERGeometry;
+		friend XERUIGeometryBuffer;
+		friend XERTexture;
 		friend XERMonospacedFont;
-		friend XERUIRender;
 		friend XERWindowTarget;
 		friend XERSceneRender;
+		friend XERUIRender;
 
 	private:
 		class GPUQueue

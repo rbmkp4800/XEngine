@@ -45,6 +45,18 @@ namespace XEngine
 			uint32 vertexStride, const uint32* indices, uint32 indexCount);
 	};
 
+	class XERUIGeometryBuffer : public XLib::NonCopyable
+	{
+		friend XERUIRender;
+
+	private:
+		COMPtr<ID3D12Resource> d3dBuffer;
+
+	public:
+		void initialize(XERDevice* device, uint32 size);
+		void update(XERDevice* device, uint32 destOffset, const void* data, uint32 size);
+	};
+
 	class XERTexture : public XLib::NonCopyable
 	{
 		friend XERScene;

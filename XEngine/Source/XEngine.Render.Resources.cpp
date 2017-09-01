@@ -28,6 +28,18 @@ void XERGeometry::initialize(XERDevice* device, const void* vertices, uint32 ver
 	device->uploadEngine.uploadBuffer(d3dBuffer, vertexBufferSize, indices, indexBufferSize);
 }
 
+void XERUIGeometryBuffer::initialize(XERDevice* device, uint32 size)
+{
+	device->d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc_Buffer(size),
+		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, d3dBuffer.uuid(), d3dBuffer.voidInitRef());
+}
+
+void XERUIGeometryBuffer::update(XERDevice* device, uint32 destOffset, const void* data, uint32 size)
+{
+	device->uploadEngine.uploadBuffer(d3dBuffer, destOffset, data, size);
+}
+
 void XERTexture::initialize(XERDevice* device, const void* data, uint32 width, uint32 height)
 {
 	device->d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT),

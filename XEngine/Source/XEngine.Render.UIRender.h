@@ -12,6 +12,7 @@ struct ID3D12CommandAllocator;
 
 namespace XEngine
 {
+	class XERUIGeometryBuffer;
 	class XERTexture;
 	class XERMonospacedFont;
 	class XERTargetBuffer;
@@ -22,15 +23,6 @@ namespace XEngine
 		None = 0,
 		Color,
 		Font,
-	};
-
-	class UIGeometryBuffer : public XLib::NonCopyable
-	{
-	private:
-		COMPtr<ID3D12Resource> d3dBuffer;
-
-	public:
-		void initialize(XERDevice* device, uint32 size);
 	};
 
 	class XERUIRender : public XLib::NonCopyable
@@ -52,6 +44,8 @@ namespace XEngine
 		uint32 currentGeometrySRVDescriptor = uint32(-1);
 		XERUIGeometryType currentGeometryType = XERUIGeometryType::None;
 
+		void drawVertexBuffer(ID3D12Resource *d3dVertexBufferToDraw,
+			uint32 offset, uint32 size, XERUIGeometryType geometryType);
 		void flushCurrentGeometry();
 		void flushCommandList();
 		void initCommandList();
@@ -63,6 +57,7 @@ namespace XEngine
 		void endDraw();
 
 		void* allocateVertices(uint32 size, XERUIGeometryType geometryType);
+		void drawBuffer(XERUIGeometryBuffer* buffer, uint32 offset, uint32 size, XERUIGeometryType geometryType);
 		void setTexture(XERTexture* texture);
 		void setTexture(XERMonospacedFont* fontTexture);
 
