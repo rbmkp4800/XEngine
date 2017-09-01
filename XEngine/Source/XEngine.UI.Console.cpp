@@ -51,10 +51,10 @@ void XEUIConsole::handleCharacter(wchar character)
 
 void XEUIConsole::draw(XERUIRender* uiRender)
 {
-	VertexUIColor *vertices = to<VertexUIColor*>(uiRender->allocateVertexBuffer(
-		sizeof(VertexUIColor) * 6, XERUIRender::GeometryType::Color));
+	VertexUIColor *vertices = to<VertexUIColor*>(uiRender->allocateVertices(
+		sizeof(VertexUIColor) * 6, XERUIGeometryType::Color));
 
-	uint32 color = 0x101010C8_rgba;
+	uint32 color = 0x101010E8_rgba;
 	vertices[0] = { { 1.0f, 1.0f }, color };
 	vertices[1] = { { 1.0f, 0.0f }, color };
 	vertices[2] = { { -1.0f, 0.0f }, color };
@@ -66,7 +66,7 @@ void XEUIConsole::draw(XERUIRender* uiRender)
 
 	uiRender->drawText(font, { 0.0f, 0.0f }, ">>>", 0xFFFFFF_rgb, 3);
 	uiRender->drawText(font, { float32(font->getCharWidth() * 4), 0.0f },
-		buffer, 0x9090D0_rgb, currentCommandLength + 1);
+		buffer, 0x00FFFF_rgb, currentCommandLength + 1);
 	uiRender->drawText(font, { 0.0f, float32(font->getCharHeight()) },
 		"XEngine console sample text\nOne more line\n * ASDASDASD\n * BDHBDHBCHDBCh", 0x808080_rgb);
 	uiRender->drawText(font, { 0.0f, float32(font->getCharHeight() * 5) },

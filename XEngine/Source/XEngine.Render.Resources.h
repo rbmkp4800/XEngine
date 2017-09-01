@@ -48,6 +48,7 @@ namespace XEngine
 	class XERTexture : public XLib::NonCopyable
 	{
 		friend XERScene;
+		friend XERUIRender;
 
 	private:
 		COMPtr<ID3D12Resource> d3dTexture;

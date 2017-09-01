@@ -6,43 +6,36 @@
 #include <XLib.NonCopyable.h>
 #include <XLib.Vectors.h>
 
-// TODO: refactor. Remove this include
-#include "XEngine.UI.Console.h"
-
 struct ID3D12Resource;
 struct ID3D12GraphicsCommandList;
 struct ID3D12CommandAllocator;
 
 namespace XEngine
 {
+	class XERTexture;
 	class XERMonospacedFont;
 	class XERTargetBuffer;
 	class XERDevice;
 
-	/*namespace Internal
+	enum class XERUIGeometryType : uint8
 	{
-		class UIGeometryBuffer : public XLib::NonCopyable
-		{
-		private:
-			COMPtr<ID3D12Resource> d3dBuffer;
+		None = 0,
+		Color,
+		Font,
+	};
 
-		public:
+	class UIGeometryBuffer : public XLib::NonCopyable
+	{
+	private:
+		COMPtr<ID3D12Resource> d3dBuffer;
 
-		};
-	}*/
+	public:
+		void initialize(XERDevice* device, uint32 size);
+	};
 
 	class XERUIRender : public XLib::NonCopyable
 	{
-		friend XEUIConsole;
-
 	private:
-		enum class GeometryType : uint8
-		{
-			None = 0,
-			Color,
-			Font,
-		};
-
 		XERDevice *device = nullptr;
 
 		COMPtr<ID3D12Resource> d3dVertexBuffer;
@@ -57,14 +50,11 @@ namespace XEngine
 		uint32 vertexBufferUsedBytes = 0;
 		uint32 currentGeometryVertexBufferOffset = 0;
 		uint32 currentGeometrySRVDescriptor = uint32(-1);
-		GeometryType currentGeometryType = GeometryType::None;
+		XERUIGeometryType currentGeometryType = XERUIGeometryType::None;
 
 		void flushCurrentGeometry();
 		void flushCommandList();
 		void initCommandList();
-
-		void* allocateVertexBuffer(uint32 size, GeometryType geometryType);
-		void setSRVDescriptor(uint32 srvDescriptor);
 
 	public:
 		void initialize(XERDevice* device);
@@ -72,12 +62,13 @@ namespace XEngine
 		void beginDraw(XERTargetBuffer* target);
 		void endDraw();
 
+		void* allocateVertices(uint32 size, XERUIGeometryType geometryType);
+		void setTexture(XERTexture* texture);
+		void setTexture(XERMonospacedFont* fontTexture);
+
 		void drawText(XERMonospacedFont* font, float32x2 position,
 			const char* text, uint32 color, uint32 length = uint32(-1));
 		//void drawRectangle(...);
 		//void drawLine(...);
-
-		inline void drawConsole(XEUIConsole* console) { console->draw(this); }
-		//void drawGUI(...);
 	};
 }

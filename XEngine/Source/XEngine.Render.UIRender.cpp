@@ -27,12 +27,12 @@ void XERUIRender::flushCurrentGeometry()
 	uint32 vertexStride = 0;
 	switch (currentGeometryType)
 	{
-		case GeometryType::Color:
+		case XERUIGeometryType::Color:
 			vertexStride = sizeof(VertexUIColor);
 			d3dPS = device->d3dUIColorPSO;
 			break;
 
-		case GeometryType::Font:
+		case XERUIGeometryType::Font:
 			vertexStride = sizeof(VertexUIFont);
 			d3dPS = device->d3dUIFontPSO;
 			break;
@@ -51,7 +51,7 @@ void XERUIRender::flushCurrentGeometry()
 	d3dCommandList->DrawInstanced(currentGeometryVertexBufferSize / vertexStride, 1, 0, 0);
 
 	currentGeometryVertexBufferOffset = vertexBufferUsedBytes;
-	currentGeometryType = GeometryType::None;
+	currentGeometryType = XERUIGeometryType::None;
 }
 
 void XERUIRender::flushCommandList()
@@ -91,7 +91,7 @@ void XERUIRender::initCommandList()
 
 // internal interface =======================================================================//
 
-void* XERUIRender::allocateVertexBuffer(uint32 size, GeometryType geometryType)
+void* XERUIRender::allocateVertices(uint32 size, XERUIGeometryType geometryType)
 {
 	if (vertexBufferUsedBytes + size > vertexBufferSize)
 		flushCommandList();
@@ -108,12 +108,21 @@ void* XERUIRender::allocateVertexBuffer(uint32 size, GeometryType geometryType)
 	return result;
 }
 
-void XERUIRender::setSRVDescriptor(uint32 srvDescriptor)
+void XERUIRender::setTexture(XERTexture* texture)
 {
-	if (currentGeometrySRVDescriptor != srvDescriptor)
+	if (currentGeometrySRVDescriptor != texture->srvDescriptor)
 	{
 		flushCurrentGeometry();
-		currentGeometrySRVDescriptor = srvDescriptor;
+		currentGeometrySRVDescriptor = texture->srvDescriptor;
+	}
+}
+
+void XERUIRender::setTexture(XERMonospacedFont* fontTexture)
+{
+	if (currentGeometrySRVDescriptor != fontTexture->srvDescriptor)
+	{
+		flushCurrentGeometry();
+		currentGeometrySRVDescriptor = fontTexture->srvDescriptor;
 	}
 }
 
@@ -156,7 +165,7 @@ void XERUIRender::endDraw()
 void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position,
 	const char* text, uint32 color, uint32 length)
 {
-	setSRVDescriptor(font->srvDescriptor);
+	setTexture(font);
 
 	uint8 firstCharCode = font->firstCharCode;
 	uint8 lastCharCode = firstCharCode + font->charTableSize - 1;
@@ -199,7 +208,7 @@ void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position,
 			VertexUIFont rightTop = { position,{ charTextureRight, 0 }, color };
 			VertexUIFont rightBottom = { { position.x, bottom },{ charTextureRight, 0xFFFF }, color };
 
-			VertexUIFont *vertices = to<VertexUIFont*>(allocateVertexBuffer(sizeof(VertexUIFont) * 6, GeometryType::Font));
+			VertexUIFont *vertices = to<VertexUIFont*>(allocateVertices(sizeof(VertexUIFont) * 6, XERUIGeometryType::Font));
 
 			vertices[0] = leftTop;
 			vertices[1] = rightTop;

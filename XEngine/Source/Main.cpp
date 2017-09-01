@@ -320,7 +320,7 @@ public:
 		}
 
 		if (consoleEnabled)
-			xerUIRender.drawConsole(&xerConsole);
+			xerConsole.draw(&xerUIRender);
 
 		xerUIRender.endDraw();
 		xerWindowTarget.present(true);
