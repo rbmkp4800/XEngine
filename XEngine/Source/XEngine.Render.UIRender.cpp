@@ -271,3 +271,31 @@ void XERUIRender::drawStackedBarChart(float32x2 position, float32 height,
 		vertices += 6;
 	}
 }
+
+void XERUIRender::fillRectangle(rectf32 rect, uint32 color)
+{
+	float32x2 ndcScaleCoef = getNDCScaleCoef();
+
+	rect.left *= ndcScaleCoef.x;
+	rect.top *= ndcScaleCoef.y;
+	rect.right *= ndcScaleCoef.x;
+	rect.bottom *= ndcScaleCoef.y;
+
+	rect.left -= 1.0f;
+	rect.right -= 1.0f;
+	rect.top += 1.0f;
+	rect.bottom += 1.0f;
+
+	VertexUIColor *vertices = to<VertexUIColor*>(allocateVertices(sizeof(VertexUIColor) * 6, XERUIGeometryType::Color));
+	VertexUIColor leftTop = { { rect.left, rect.top }, color };
+	VertexUIColor leftBottom = { { rect.left, rect.bottom }, color };
+	VertexUIColor rightTop = { { rect.right, rect.top }, color };
+	VertexUIColor rightBottom = { { rect.right, rect.bottom }, color };
+
+	vertices[0] = leftTop;
+	vertices[1] = rightTop;
+	vertices[2] = leftBottom;
+	vertices[3] = rightTop;
+	vertices[4] = rightBottom;
+	vertices[5] = leftBottom;
+}

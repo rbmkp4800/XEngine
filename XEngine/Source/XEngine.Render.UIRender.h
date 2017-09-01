@@ -65,7 +65,7 @@ namespace XEngine
 			const char* text, uint32 color, uint32 length = uint32(-1));
 		void drawStackedBarChart(float32x2 position, float32 height,
 			float32 horizontalScale, float32* values, uint32* colors, uint32 valueCount);
-		//void drawRectangle(...);
+		void fillRectangle(rectf32 rect, uint32 color);
 		//void drawLine(...);
 
 		inline float32x2 getNDCScaleCoef() { return float32x2(1.0f / float32(targetWidth / 2), -1.0f / float32(targetHeight / 2)); }
