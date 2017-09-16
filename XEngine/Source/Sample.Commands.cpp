@@ -67,10 +67,21 @@ namespace
 
 			return true;
 		}
+
+		// TODO: refactor to parse<Type>(Type& value);
 		inline bool parseSInt32(sint32& value)
 		{
 			skipSeparators();
 			if (!Strings::Parse<sint32>(current, value, &current))
+				return false;
+
+			char c = *current;
+			return c == ' ' || c == '\t' || c == '\n' || c == '\0';
+		}
+		inline bool parseFloat32(float32& value)
+		{
+			skipSeparators();
+			if (!Strings::Parse<float32>(current, value, &current))
 				return false;
 
 			char c = *current;
@@ -101,10 +112,10 @@ void SampleWindow::onConsoleCommand(const char* commandString)
 	}
 	else if (commandName.compareTo("camera.setPosition"))
 	{
-		sint32x3 position;
-		if (!parser.parseSInt32(position.x) ||
-			!parser.parseSInt32(position.y) ||
-			!parser.parseSInt32(position.z))
+		float32x3 position;
+		if (!parser.parseFloat32(position.x) ||
+			!parser.parseFloat32(position.y) ||
+			!parser.parseFloat32(position.z))
 		{
 			// TODO: error
 			return;
@@ -136,15 +147,26 @@ void SampleWindow::onConsoleCommand(const char* commandString)
 	else if (commandName.compareTo("scene.createObject"))
 	{
 		Word geometryIdentifier;
-		sint32x3 position;
+		float32x3 position;
 
 		if (!parser.parseWord(geometryIdentifier) ||
-			!parser.parseSInt32(position.x) ||
-			!parser.parseSInt32(position.y) ||
-			!parser.parseSInt32(position.z))
+			!parser.parseFloat32(position.x) ||
+			!parser.parseFloat32(position.y) ||
+			!parser.parseFloat32(position.z))
 		{
 			// TODO: error
 			return;
+		}
+
+		float32x3 scale(1.0f, 1.0f, 1.0f);
+		if (parser.parseFloat32(scale.x))
+		{
+			if (!parser.parseFloat32(scale.y) ||
+				!parser.parseFloat32(scale.z))
+			{
+				// TODO: error
+				return;
+			}
 		}
 
 		uint64 id = geometryIdentifier.toUInt64();
@@ -166,6 +188,7 @@ void SampleWindow::onConsoleCommand(const char* commandString)
 			return;
 		}
 
-		xerScene.createGeometryInstance(xerGeometry, &xerPlainEffect, Matrix3x4::Translation(float32x3(position)));
+		xerScene.createGeometryInstance(xerGeometry, &xerPlainEffect,
+			Matrix3x4::Translation(position) * Matrix3x4::Scale(scale));
 	}
 }
