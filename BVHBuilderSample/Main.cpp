@@ -145,6 +145,7 @@ private:
 		else
 		{
 			selectedNode = nullptr;
+			optimizeNode(bvh[rootId]);
 		}
 
 		/*if (state)
@@ -201,19 +202,28 @@ private:
 			selectedNode->aabb.bottom += translation.y;
 		}
 
+		updateAABBs();
+
 		lastPointerPosition = { state.x, state.y };
 	}
 	virtual void onKeyboard(VirtualKey key, bool state) override
 	{
-		switch (key)
+		if (state)
 		{
-		case VirtualKey('A'):
-			updateAABBs();
-			break;
+			switch (key)
+			{
+			case VirtualKey('U'):
+				updateAABBs();
+				break;
 
-		case VirtualKey::Escape:
-			destroy();
-			break;
+			case VirtualKey('O'):
+				optimizeNode(bvh[rootId]);
+				break;
+
+			case VirtualKey::Escape:
+				destroy();
+				break;
+			}
 		}
 	}
 
@@ -233,22 +243,14 @@ private:
 	
 	void optimizeNode(BVHNode& node)
 	{
+		if (node.isLeaf)
+			return;
+
 		BVHNode &L = bvh[node.leftChildId];
 		BVHNode &R = bvh[node.rightChildId];
 
-		if (L.isLeaf)
-		{
-			if (!R.isLeaf)
-				optimizeNode(R);
+		if (L.isLeaf && R.isLeaf)
 			return;
-		}
-
-		if (R.isLeaf)
-		{
-			if (!L.isLeaf)
-				optimizeNode(L);
-			return;
-		}
 
 		BVHNode &A = bvh[L.leftChildId];
 		BVHNode &B = bvh[L.rightChildId];
@@ -271,13 +273,92 @@ private:
 		// A <-> C   (C B) + (A D)
 		// A <-> D   (D B) + (C A)
 
-		float32 sAR = S(AABB(R, B)) + S(A);
-		float32 sBR = S(AABB(A, R)) + S(B);
-		float32 sDL = S(D) + S(AABB(C, L));
-		float32 sCL = S(C) + S(AABB(L, D));
+		float32 sAR = L.isLeaf ? 100000000000.0f : S(AABB(R, B)) + S(A);
+		float32 sBR = L.isLeaf ? 100000000000.0f : S(AABB(A, R)) + S(B);
+		float32 sDL = R.isLeaf ? 100000000000.0f : S(D) + S(AABB(C, L));
+		float32 sCL = R.isLeaf ? 100000000000.0f : S(C) + S(AABB(L, D));
 
-		float32 sAC = S(AABB(C, B)) + S(AABB(A, D));
-		float32 sAD = S(AABB(D, B)) + S(AABB(C, A));
+		float32 sAC = L.isLeaf || R.isLeaf ? 100000000000.0f : S(AABB(C, B)) + S(AABB(A, D));
+		float32 sAD = L.isLeaf || R.isLeaf ? 100000000000.0f : S(AABB(D, B)) + S(AABB(C, A));
+
+
+		float32 mins = S(L.aabb) + S(R.aabb);
+		uint32 branch = -1;
+
+		if (mins > sAR)
+		{
+			mins = sAR;
+			branch = 0;
+		}
+		if (mins > sBR)
+		{
+			mins = sBR;
+			branch = 1;
+		}
+		if (mins > sDL)
+		{
+			mins = sDL;
+			branch = 2;
+		}
+		if (mins > sCL)
+		{
+			mins = sCL;
+			branch = 3;
+		}
+		if (mins > sAC)
+		{
+			mins = sAC;
+			branch = 4;
+		}
+		if (mins > sAD)
+		{
+			mins = sAD;
+			branch = 5;
+		}
+
+
+		switch (branch)
+		{
+		case 0: // AR
+			swap(L.leftChildId, node.rightChildId);
+			L.aabb = AABB(bvh[L.leftChildId].aabb, bvh[L.rightChildId].aabb);
+			optimizeNode(L);
+			break;
+
+		case 1: // BR
+			swap(L.rightChildId, node.rightChildId);
+			L.aabb = AABB(bvh[L.leftChildId].aabb, bvh[L.rightChildId].aabb);
+			optimizeNode(L);
+			break;
+
+		case 2: // DL
+			swap(R.rightChildId, node.leftChildId);
+			R.aabb = AABB(bvh[R.leftChildId].aabb, bvh[R.rightChildId].aabb);
+			optimizeNode(R);
+			break;
+
+		case 3: // CL
+			swap(R.leftChildId, node.leftChildId);
+			R.aabb = AABB(bvh[R.leftChildId].aabb, bvh[R.rightChildId].aabb);
+			optimizeNode(R);
+			break;
+
+		case 4: // AC
+			swap(L.leftChildId, R.leftChildId);
+			L.aabb = AABB(bvh[L.leftChildId].aabb, bvh[L.rightChildId].aabb);
+			R.aabb = AABB(bvh[R.leftChildId].aabb, bvh[R.rightChildId].aabb);
+			optimizeNode(L);
+			optimizeNode(R);
+			break;
+
+		case 5: // AD
+			swap(L.leftChildId, R.rightChildId);
+			L.aabb = AABB(bvh[L.leftChildId].aabb, bvh[L.rightChildId].aabb);
+			R.aabb = AABB(bvh[R.leftChildId].aabb, bvh[R.rightChildId].aabb);
+			optimizeNode(L);
+			optimizeNode(R);
+			break;
+		}
 	}
 
 public:
@@ -297,7 +378,7 @@ public:
 			}
 			else
 			{
-				d2dSolidBrush->SetColor(ColorF(ColorF::Red, 0.2f));
+				d2dSolidBrush->SetColor(ColorF(ColorF::Red, 0.1f));
 				d2dRT->FillRectangle(d2d(node.aabb), d2dSolidBrush);
 
 				d2dSolidBrush->SetColor(ColorF(ColorF::Red));
@@ -312,7 +393,7 @@ public:
 void Program::Run()
 {
 	MainWindow window;
-	window.create(1280, 900, L"Lab 3. kd tree");
+	window.create(1280, 900, L"XEngine BVH builder sample");
 	while (window.isOpened())
 	{
 		WindowBase::DispatchPending();
