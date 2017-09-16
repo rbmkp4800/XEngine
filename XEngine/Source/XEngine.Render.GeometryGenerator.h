@@ -13,7 +13,5 @@ namespace XEngine
 		static void Cube(XERDevice* device, XERGeometry* geometry);
 		static void Tetrahedron(XERDevice* device, XERGeometry* geometry);
 		static void Sphere(uint32 detalizationLevel, XERDevice* device, XERGeometry* geometry);
-		//static void Monster(XERDevice* device, XERGeometry* geometry);
-		static void MonsterSkinned(XERDevice* device, XERGeometry* geometry);
 	};
 }

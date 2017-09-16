@@ -97,7 +97,9 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)XLib\Source;</AdditionalIncludeDirectories>
-      <AdditionalOptions>/std:c++latest</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -121,7 +123,9 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)XLib\Source;</AdditionalIncludeDirectories>
-      <AdditionalOptions>/std:c++latest</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -147,7 +151,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)XLib\Source;</AdditionalIncludeDirectories>
-      <AdditionalOptions>/std:c++latest</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -175,7 +181,9 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)XLib\Source;</AdditionalIncludeDirectories>
-      <AdditionalOptions>/std:c++latest</AdditionalOptions>
+      <AdditionalOptions>
+      </AdditionalOptions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -194,6 +202,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Sample.h" />
     <ClInclude Include="Source\Util.COMPtr.h" />
     <ClInclude Include="Source\Util.D3D12.h" />
     <ClInclude Include="Source\Util.DXGI.h" />
@@ -207,7 +216,6 @@
     <ClInclude Include="Source\XEngine.Render.MIPMapGenerator.h" />
     <ClInclude Include="Source\XEngine.Render.Resources.h" />
     <ClInclude Include="Source\XEngine.Render.GeometryGenerator.h" />
-    <ClInclude Include="Source\XEngine.Render.GeometryGenerator.SampleGeometries.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.GPUStructs.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.Shaders.h" />
     <ClInclude Include="Source\XEngine.Render.SceneRender.h" />
@@ -220,7 +228,9 @@
     <ClInclude Include="Source\XEngine.UI.Console.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Main.cpp" />
+    <ClCompile Include="Source\Sample.Commands.cpp" />
+    <ClCompile Include="Source\Sample.Main.cpp" />
+    <ClCompile Include="Source\Sample.cpp" />
     <ClCompile Include="Source\Util.COMPtr.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.UploadEngine.cpp" />
@@ -359,7 +369,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Doc\xegeometry.txt" />
-    <Text Include="Source\TODO.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -33,9 +33,6 @@
     <ClCompile Include="Source\XEngine.Render.Targets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Util.COMPtr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -58,6 +55,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\XEngine.Render.UIRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Sample.Main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Sample.Commands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Sample.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -107,9 +113,6 @@
     <ClInclude Include="Source\XEngine.Render.StaticResources.DefaultFont.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\XEngine.Render.GeometryGenerator.SampleGeometries.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\XEngine.Formats.XEGeometry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -132,6 +135,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.Render.UIRender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Sample.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -158,6 +164,5 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Doc\xegeometry.txt" />
-    <Text Include="Source\TODO.txt" />
   </ItemGroup>
 </Project>

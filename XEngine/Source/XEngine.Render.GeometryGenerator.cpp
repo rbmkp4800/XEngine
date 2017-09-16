@@ -4,7 +4,6 @@
 #include <XLib.Vectors.Math.h>
 
 #include "XEngine.Render.GeometryGenerator.h"
-#include "XEngine.Render.GeometryGenerator.SampleGeometries.h"
 #include "XEngine.Render.Resources.h"
 #include "XEngine.Render.Vertices.h"
 
@@ -158,10 +157,4 @@ void XERGeometryGenerator::Sphere(uint32 detalizationLevel, XERDevice* device, X
 
 	geometry->initialize(device, vertexBuffer, vertexPerFace * 6,
 		sizeof(VertexBase), indexBuffer, indexPerFace * 6);
-}
-
-void XERGeometryGenerator::MonsterSkinned(XERDevice* device, XERGeometry* geometry)
-{
-	geometry->initialize(device, monsterSkinnedVertices, countof(monsterSkinnedVertices),
-		sizeof(monsterSkinnedVertices[0]), monsterIndices, countof(monsterIndices));
 }
