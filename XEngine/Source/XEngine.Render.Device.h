@@ -16,6 +16,7 @@ struct D3D12_GPU_DESCRIPTOR_HANDLE;
 struct IDXGIFactory5;
 struct ID3D12Device;
 struct ID3D12CommandQueue;
+struct ID3D12Fence;
 struct ID3D12CommandList;
 struct ID3D12GraphicsCommandList;
 struct ID3D12CommandAllocator;

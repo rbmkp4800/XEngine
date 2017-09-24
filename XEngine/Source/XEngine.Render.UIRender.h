@@ -36,6 +36,7 @@ namespace XEngine
 		ID3D12GraphicsCommandList *d3dCommandList = nullptr;
 		ID3D12CommandAllocator *d3dCommandAllocator = nullptr;
 		uint16 targetWidth = 0, targetHeight = 0;
+		float32x2 ndcScale = { 0.0f, 0.0f };
 		uint32 targetRTVDescriptor = 0;
 		bool commandListInitialized = false;
 
@@ -68,6 +69,12 @@ namespace XEngine
 		void fillRectangle(rectf32 rect, uint32 color);
 		//void drawLine(...);
 
-		inline float32x2 getNDCScaleCoef() { return float32x2(1.0f / float32(targetWidth / 2), -1.0f / float32(targetHeight / 2)); }
+		inline XERDevice* getDevice() { return device; }
+
+		inline uint16 getTargetWidth() { return targetWidth; }
+		inline uint16 getTargetHeight() { return targetHeight; }
+		inline float32 getNDCHorizontalScale() { return ndcScale.x; }
+		inline float32 getNDCVerticalScale() { return ndcScale.y; }
+		inline float32x2 getNDCScale() { return ndcScale; }
 	};
 }

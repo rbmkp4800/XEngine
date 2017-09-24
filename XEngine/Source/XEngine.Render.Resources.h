@@ -88,5 +88,7 @@ namespace XEngine
 
 		inline uint8 getCharWidth() { return charWidth; }
 		inline uint8 getCharHeight() { return charHeight; }
+		inline uint8 getFirstCharCode() { return firstCharCode; }
+		inline uint8 getCharTableSize() { return charTableSize; }
 	};
 }

@@ -27,7 +27,7 @@ void XERUIRender::drawVertexBuffer(ID3D12Resource *d3dVertexBufferToDraw,
 	ID3D12PipelineState *d3dPS = nullptr;
 	uint32 vertexStride = 0;
 	bool srvNeeded = false;
-	switch (currentGeometryType)
+	switch (geometryType)
 	{
 		case XERUIGeometryType::Color:
 			vertexStride = sizeof(VertexUIColor);
@@ -160,6 +160,8 @@ void XERUIRender::beginDraw(XERTargetBuffer* target)
 	D3D12_RESOURCE_DESC desc = target->d3dTexture->GetDesc();
 	targetWidth = uint16(desc.Width);
 	targetHeight = uint16(desc.Height);
+	ndcScale = { 1.0f / float32(targetWidth / 2), -1.0f / float32(targetHeight / 2) };
+
 	targetRTVDescriptor = target->rtvDescriptor;
 }
 
@@ -186,11 +188,9 @@ void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position,
 	uint8 lastCharCode = firstCharCode + font->charTableSize - 1;
 	uint32 charTableSize = font->charTableSize;
 
-	float32x2 ndcScaleCoef = getNDCScaleCoef();
-
-	position *= ndcScaleCoef;
+	position *= ndcScale;
 	position += float32x2(-1.0f, 1.0f);
-	float32x2 charSize = float32x2(font->charWidth, font->charHeight) * ndcScaleCoef;
+	float32x2 charSize = float32x2(font->charWidth, font->charHeight) * ndcScale;
 	float32 leftBorder = position.x;
 
 	for (uint32 i = 0; i < length; i++)
@@ -238,12 +238,10 @@ void XERUIRender::drawText(XERMonospacedFont* font, float32x2 position,
 void XERUIRender::drawStackedBarChart(float32x2 position, float32 height,
 	float32 horizontalScale, float32* values, uint32* colors, uint32 valueCount)
 {
-	float32x2 ndcScaleCoef = getNDCScaleCoef();
-
-	position *= ndcScaleCoef;
+	position *= ndcScale;
 	position += float32x2(-1.0f, 1.0f);
-	height *= ndcScaleCoef.y;
-	horizontalScale *= ndcScaleCoef.x;
+	height *= ndcScale.y;
+	horizontalScale *= ndcScale.x;
 
 	float32 x = position.x;
 	float32 top = position.y;
@@ -274,12 +272,10 @@ void XERUIRender::drawStackedBarChart(float32x2 position, float32 height,
 
 void XERUIRender::fillRectangle(rectf32 rect, uint32 color)
 {
-	float32x2 ndcScaleCoef = getNDCScaleCoef();
-
-	rect.left *= ndcScaleCoef.x;
-	rect.top *= ndcScaleCoef.y;
-	rect.right *= ndcScaleCoef.x;
-	rect.bottom *= ndcScaleCoef.y;
+	rect.left *= ndcScale.x;
+	rect.top *= ndcScale.y;
+	rect.right *= ndcScale.x;
+	rect.bottom *= ndcScale.y;
 
 	rect.left -= 1.0f;
 	rect.right -= 1.0f;
