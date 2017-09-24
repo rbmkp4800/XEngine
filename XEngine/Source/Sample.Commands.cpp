@@ -191,4 +191,6 @@ void SampleWindow::onConsoleCommand(const char* commandString)
 		xerScene.createGeometryInstance(xerGeometry, &xerPlainEffect,
 			Matrix3x4::Translation(position) * Matrix3x4::Scale(scale));
 	}
+	else
+		xerConsole.write(XECONSOLE_SETCOLOR_RED_LITERAL "unknown command\n");
 }
