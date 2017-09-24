@@ -129,7 +129,7 @@ bool XERSceneRender::initialize(XERDevice* device)
 }
 
 void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
-	XERDebugWireframeMode debugWireframeMode, bool updateOcclusionCulling, XERSceneDrawTimings* timings)
+	uint32 debugFlags, bool updateOcclusionCulling, XERSceneDrawTimings* timings)
 {
 	device->uploadEngine.flush();
 
@@ -332,19 +332,27 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, TimestampId::LightingPassFinished);
 
 	// debug geometry =======================================================================//
-	if (debugWireframeMode != XERDebugWireframeMode::Disabled)
+	if (debugFlags & XERSceneRenderDebugFlags::Wireframe)
 	{
 		d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
 		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dCameraTransformCB->GetGPUVirtualAddress());
-
 		d3dCommandList->SetPipelineState(device->d3dDebugWireframePSO);
-
 		for (uint32 i = 0; i < scene->effectCount; i++)
 		{
 			XERScene::EffectData &effectData = scene->effectsDataList[i];
 			d3dCommandList->ExecuteIndirect(device->d3dDefaultDrawingICS,
 				effectData.commandCount, effectData.d3dCommandsBuffer, 0, nullptr, 0);
 		}
+	}
+
+	if (debugFlags & XERSceneRenderDebugFlags::OCxBBoxes)
+	{
+		d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
+		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dCameraTransformCB->GetGPUVirtualAddress());
+		d3dCommandList->SetGraphicsRootShaderResourceView(2, scene->d3dBVHBuffer->GetGPUVirtualAddress());
+		d3dCommandList->SetPipelineState(device->d3dDebugOCxBBoxPSO);
+		d3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+		d3dCommandList->DrawInstanced(24 * scene->bvhNodeCount, 1, 0, 0);
 	}
 
 	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture,

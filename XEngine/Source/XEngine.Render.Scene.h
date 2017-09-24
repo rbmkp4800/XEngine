@@ -12,6 +12,9 @@
 struct ID3D12Resource;
 struct ID3D12GraphicsCommandList;
 
+namespace XEngine::Internal { struct GPUGeometryInstanceDesc; }
+namespace XEngine::Internal { struct GPUxBVHNode; }
+
 namespace XEngine
 {
 	class XEREffect;
@@ -30,11 +33,6 @@ namespace XEngine
 		float32 intensity;
 	};
 
-	namespace Internal
-	{
-		struct GPUGeometryInstanceDesc;
-	}
-
 	class XERScene : public XLib::NonCopyable
 	{
 		friend XERSceneRender;
@@ -52,11 +50,13 @@ namespace XEngine
 
 		COMPtr<ID3D12Resource> d3dGeometryInstacesBuffer;
 		COMPtr<ID3D12Resource> d3dTransformsBuffer;
+		COMPtr<ID3D12Resource> d3dBVHBuffer;
 		XLib::Matrix3x4 *mappedTransformsBuffer = nullptr;
 		Internal::GPUGeometryInstanceDesc *mappedGeometryInstacesBuffer = nullptr;
+		Internal::GPUxBVHNode *mappedBVHBuffer = nullptr;
 
-		uint32 geometryInstancesBufferSize = 0, transformsBufferSize = 0;
-		uint32 geometryInstanceCount = 0;
+		uint32 geometryInstancesBufferSize = 0, transformsBufferSize = 0, bvhBufferSize;
+		uint32 geometryInstanceCount = 0, bvhNodeCount = 0;
 
 		EffectData effectsDataList[8];
 		uint32 effectCount = 0;

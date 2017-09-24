@@ -178,6 +178,7 @@ namespace XEngine
 
 		COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
 		COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;
+		COMPtr<ID3D12PipelineState> d3dDebugOCxBBoxPSO;
 		COMPtr<ID3D12PipelineState> d3dUIColorPSO;
 		COMPtr<ID3D12PipelineState> d3dUIFontPSO;
 

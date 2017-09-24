@@ -1,6 +1,8 @@
 // TODO: remove
 #include <stdio.h>
 
+#include <XLib.Random.h>
+
 #include "Sample.h"
 
 using namespace XLib;
@@ -34,6 +36,18 @@ void SampleWindow::onCreate(CreationArgs& args)
 	xerScene.createLight(float32x3(0.0f, 10.0f, 2.0f), 0xFF4040_rgb, 6.0f);
 	xerScene.createLight(float32x3(8.0f, 11.0f, 10.0f), 0xFFFFFF_rgb, 30.0f);
 	xerScene.createLight(float32x3(-10.0f, -11.0f, -10.0f), 0x00FFFF_rgb, 30.0f);
+
+	// TODO: remove
+
+	XERGeometryGenerator::Sphere(4, &xerDevice, &geometryBase[0].xerGeometry);
+
+	for (uint32 i = 0; i < 1024; i++)
+	{
+		xerScene.createGeometryInstance(&geometryBase[0].xerGeometry, &xerPlainEffect,
+			Matrix3x4::Translation(Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f)) *
+			Matrix3x4::Scale(0.1f, 0.1f, 0.1f) *
+			Matrix3x4::RotationX(Random::Global.getF32(0.0f, 3.14f)) * Matrix3x4::RotationY(Random::Global.getF32(0.0f, 3.14f)));
+	}
 }
 
 void SampleWindow::onResize(ResizingArgs& args)
@@ -58,6 +72,7 @@ void SampleWindow::onKeyboard(VirtualKey key, bool state)
 	case VirtualKey('E'):	controls.up = state;		break;
 	case VirtualKey('Q'):	controls.down = state;		break;
 	case VirtualKey('1'):	controls.wireframe = state;	break;
+	case VirtualKey('2'):	controls.ocBBoxes = state;	break;
 	case VirtualKey('Z'):	controls.coefUp = state;	break;
 	case VirtualKey('X'):	controls.coefDown = state;	break;
 
@@ -137,7 +152,8 @@ void SampleWindow::update()
 
 	XERSceneDrawTimings xerTimings = {};
 	xerSceneRender.draw(xerTarget, &xerScene, xerCamera,
-		controls.wireframe ? XERDebugWireframeMode::Enabled : XERDebugWireframeMode::Disabled,
+		(controls.wireframe ? XERSceneRenderDebugFlags::Wireframe : 0) |
+		(controls.ocBBoxes ? XERSceneRenderDebugFlags::OCxBBoxes : 0),
 		ocUpdatesEnabled, &xerTimings);
 
 	// TODO: manage target buffer state transitions before and after UI rendering

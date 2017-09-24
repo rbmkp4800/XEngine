@@ -18,10 +18,12 @@ namespace XEngine
 	class XERWindowTarget;
 	class XERDevice;
 
-	enum class XERDebugWireframeMode : uint8
+	class XERSceneRenderDebugFlags abstract final
 	{
-		Disabled = 0,
-		Enabled = 1,
+	public:
+		static constexpr uint32
+			Wireframe = 1,
+			OCxBBoxes = 2;
 	};
 
 	struct XERSceneDrawTimings
@@ -61,7 +63,7 @@ namespace XEngine
 		bool initialize(XERDevice* device);
 
 		void draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
-			XERDebugWireframeMode debugWireframeMode, bool updateOcclusionCulling,
+			uint32 debugFlags, bool updateOcclusionCulling,
 			XERSceneDrawTimings* timings = nullptr);
 
 		inline XERDevice* getDevice() { return device; }

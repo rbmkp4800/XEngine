@@ -28,11 +28,26 @@ namespace XEngine::Internal
 		uint32 transformsBaseOffset;
 	};
 
-	/*struct GPUxOCBBoxDesc
+	struct GPUxBVHNode
 	{
-		XLib::Matrix3x4 transform;
-		uint32 geometryInstanceId;	// to set visibility flag
-		uint32 geometryInstanceTransformBaseOffset;
-	};*/
+		uint32 isLeafFlag_parentId;
+		union
+		{
+			struct // internal node
+			{
+				uint32 leftChildId;
+				uint32 rightChildId;
+			};
+
+			struct // leaf node
+			{
+				uint32 geometryInstanceId;
+				uint32 drawCommandId;
+			};
+		};
+
+		float32x3 bboxMin;
+		float32x3 bboxMax;
+	};
 }
 #pragma pack(pop)
