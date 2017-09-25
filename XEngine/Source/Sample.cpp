@@ -25,7 +25,7 @@ void SampleWindow::onCreate(CreationArgs& args)
 	xerConsole.initialize(&xerDevice, &xerFont);
 	xerConsole.setCommandHandler(XEUIConsoleCommandHandler(this, &SampleWindow::onConsoleCommand));
 
-	xerCamera.position = { 0.0f, 0.0f, 0.0f };
+	xerCamera.position = { -5.0f, 0.0f, 0.0f };
 	xerCamera.fov = 1.0f;
 	xerCameraRotation.angles = { 0.0f, 0.0f };
 
@@ -39,11 +39,18 @@ void SampleWindow::onCreate(CreationArgs& args)
 
 	// TODO: remove
 
-	XERGeometryGenerator::Sphere(4, &xerDevice, &geometryBase[0].xerGeometry);
+	XERGeometryGenerator::Cube(&xerDevice, &geometryBase[0].xerGeometry);
+	geometryBase[0].id = 0;
+	XERGeometryGenerator::Sphere(5, &xerDevice, &geometryBase[1].xerGeometry);
+	geometryBase[0].id = 1;
+	geometryBaseEntryCount = 2;
 
-	for (uint32 i = 0; i < 1024; i++)
+	xerScene.createGeometryInstance(&geometryBase[0].xerGeometry, &xerPlainEffect,
+		Matrix3x4::Translation(5.0f, 5.0f, 2.0f) * Matrix3x4::Scale(2.0f, 2.0f, 2.0f));
+
+	for (uint32 i = 0; i < 1024 * 16; i++)
 	{
-		xerScene.createGeometryInstance(&geometryBase[0].xerGeometry, &xerPlainEffect,
+		xerScene.createGeometryInstance(&geometryBase[1].xerGeometry, &xerPlainEffect,
 			Matrix3x4::Translation(Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f)) *
 			Matrix3x4::Scale(0.1f, 0.1f, 0.1f) *
 			Matrix3x4::RotationX(Random::Global.getF32(0.0f, 3.14f)) * Matrix3x4::RotationY(Random::Global.getF32(0.0f, 3.14f)));
@@ -175,24 +182,35 @@ void SampleWindow::update()
 		occlusionCullingCommandListUpdateTime *= 1000.0f;
 		ligtingPassTime *= 1000.0f;
 
-		char buffer[512];
-		sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\n"
-			"Total frame time %5.2f ms\n"
-			"OP %5.2f ms\n"
-			"OC %5.2f ms (%5.2f %5.2f %5.2f)\n"
-			"LP %5.2f ms\n"
-			"OC updates %s\n"
-			"Cam (%4.2f %4.2f %4.2f) -> (%4.2f %4.2f %4.2f)\n"
-			"WORK IN PROGRESS",
-			xerDevice.getName(), totalFrameTime, objectPassTime,
-			occlusionCullingTime,
-			occlusionCullingDownscaleTime, occlusionCullingBBoxDrawTime, occlusionCullingCommandListUpdateTime,
-			ligtingPassTime,
-			ocUpdatesEnabled ? "enabled" : "disabled",
-			xerCamera.position.x, xerCamera.position.y, xerCamera.position.z,
-			xerCamera.forward.x, xerCamera.forward.y, xerCamera.forward.z);
+		{
+			char buffer[512];
+			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\n"
+				"Total frame time %5.2f ms\n"
+				"OP %5.2f ms\n"
+				"OC %5.2f ms (%5.2f %5.2f %5.2f)\n"
+				"LP %5.2f ms\n"
+				"OC updates %s\n"
+				"Cam (%4.2f %4.2f %4.2f) -> (%4.2f %4.2f %4.2f)\n"
+				"WORK IN PROGRESS",
+				xerDevice.getName(), totalFrameTime, objectPassTime,
+				occlusionCullingTime,
+				occlusionCullingDownscaleTime, occlusionCullingBBoxDrawTime, occlusionCullingCommandListUpdateTime,
+				ligtingPassTime,
+				ocUpdatesEnabled ? "enabled" : "disabled",
+				xerCamera.position.x, xerCamera.position.y, xerCamera.position.z,
+				xerCamera.forward.x, xerCamera.forward.y, xerCamera.forward.z);
 
-		xerUIRender.drawText(&xerFont, float32x2(10.0f, 10.0f), buffer, 0xFFFF00_rgb);
+			xerUIRender.drawText(&xerFont, float32x2(10.0f, 10.0f), buffer, 0xFFFF00_rgb);
+		}
+
+		{
+			static char helpText[] =
+				"WASDQE - movement\n"
+				"'~' - console\n"
+				"'1' - wireframe\n"
+				"'o' - toggle occlusion culling\n";
+			xerUIRender.drawText(&xerFont, float32x2(width - 300, 10.0f), helpText, 0x00FFFF_rgb);
+		}
 
 		float32 stackedBarChartValues[] =
 		{

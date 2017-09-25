@@ -117,7 +117,7 @@ void SampleWindow::onConsoleCommand(const char* commandString)
 			!parser.parseFloat32(position.y) ||
 			!parser.parseFloat32(position.z))
 		{
-			// TODO: error
+			xerConsole.write(XECONSOLE_SETCOLOR_RED_LITERAL "invalid format");
 			return;
 		}
 
@@ -130,7 +130,7 @@ void SampleWindow::onConsoleCommand(const char* commandString)
 		if (!parser.parseWord(templateName) ||
 			!parser.parseWord(geometryIdentifier))
 		{
-			// TODO: error
+			xerConsole.write(XECONSOLE_SETCOLOR_RED_LITERAL "invalid format");
 			return;
 		}
 
@@ -144,6 +144,33 @@ void SampleWindow::onConsoleCommand(const char* commandString)
 
 		entry.id = geometryIdentifier.toUInt64();
 	}
+	else if (commandName.compareTo("geometry.load"))
+	{
+		// TODO: refactor
+
+		Word filenameWord;
+		Word geometryIdentifier;
+		if (!parser.parseWord(filenameWord) || filenameWord.length > 127 ||
+			!parser.parseWord(geometryIdentifier))
+		{
+			xerConsole.write(XECONSOLE_SETCOLOR_RED_LITERAL "invalid format");
+			return;
+		}
+
+		char filename[128];
+		Memory::Copy(filename, filenameWord.string, filenameWord.length);
+		filename[filenameWord.length] = '\0';
+
+		GeometryBaseEntry& entry = geometryBase[geometryBaseEntryCount];
+		if (!XEResourceLoader::LoadGeometryFromFile(filename, &xerDevice, &entry.xerGeometry))
+		{
+			xerConsole.write(XECONSOLE_SETCOLOR_RED_LITERAL "error loading file");
+			return;
+		}
+
+		entry.id = geometryIdentifier.toUInt64();
+		geometryBaseEntryCount++;
+	}
 	else if (commandName.compareTo("scene.createObject"))
 	{
 		Word geometryIdentifier;
@@ -154,7 +181,7 @@ void SampleWindow::onConsoleCommand(const char* commandString)
 			!parser.parseFloat32(position.y) ||
 			!parser.parseFloat32(position.z))
 		{
-			// TODO: error
+			xerConsole.write(XECONSOLE_SETCOLOR_RED_LITERAL "invalid format");
 			return;
 		}
 
@@ -164,7 +191,7 @@ void SampleWindow::onConsoleCommand(const char* commandString)
 			if (!parser.parseFloat32(scale.y) ||
 				!parser.parseFloat32(scale.z))
 			{
-				// TODO: error
+				xerConsole.write(XECONSOLE_SETCOLOR_RED_LITERAL "invalid format");
 				return;
 			}
 		}
@@ -190,6 +217,14 @@ void SampleWindow::onConsoleCommand(const char* commandString)
 
 		xerScene.createGeometryInstance(xerGeometry, &xerPlainEffect,
 			Matrix3x4::Translation(position) * Matrix3x4::Scale(scale));
+	}
+	else if (commandName.compareTo("help") || commandName.compareTo("?"))
+	{
+		xerConsole.write(XECONSOLE_SETCOLOR_LIGHTGRAY_LITERAL " quit\n");
+		xerConsole.write(XECONSOLE_SETCOLOR_LIGHTGRAY_LITERAL " camera.setPosition\n");
+		xerConsole.write(XECONSOLE_SETCOLOR_LIGHTGRAY_LITERAL " geometry.generate\n");
+		xerConsole.write(XECONSOLE_SETCOLOR_LIGHTGRAY_LITERAL " geometry.load\n");
+		xerConsole.write(XECONSOLE_SETCOLOR_LIGHTGRAY_LITERAL " scene.createObject\n");
 	}
 	else
 		xerConsole.write(XECONSOLE_SETCOLOR_RED_LITERAL "unknown command\n");
