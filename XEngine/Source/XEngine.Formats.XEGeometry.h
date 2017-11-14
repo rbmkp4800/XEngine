@@ -3,18 +3,22 @@
 #include <XLib.Types.h>
 
 #pragma pack(push, 1)
-namespace XEngine::Formats::XEGeometry
+namespace XEngine::Formats
 {
-	static constexpr uint64 FileSignature = 0xAABBCCDDEEFF; // TODO: replace
-	static constexpr uint32 SupportedFileVersion = 0;
-
-	struct FileHeader
+	class XEGeometryFile abstract final
 	{
-		uint64 signature;
-		uint32 version;
-		uint32 vertexStride;
-		uint32 vertexCount;
-		uint32 indexCount;
+	public:
+		static constexpr uint32 Magic = 0xAABBCCDD; // TODO: replace
+		static constexpr uint16 SupportedVersion = 1;
+
+		struct Header
+		{
+			uint32 magic;
+			uint16 version;
+			uint16 vertexStride;
+			uint32 vertexCount;
+			uint32 indexCount;
+		};
 	};
 }
 #pragma pack(pop)

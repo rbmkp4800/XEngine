@@ -8,7 +8,7 @@
 
 using namespace XLib;
 using namespace XEngine;
-using namespace XEngine::Formats::XEGeometry;
+using namespace XEngine::Formats;
 
 bool XEResourceLoader::LoadGeometryFromFile(const char* filename, XERDevice* device, XERGeometry* geometry)
 {
@@ -16,13 +16,13 @@ bool XEResourceLoader::LoadGeometryFromFile(const char* filename, XERDevice* dev
 	if (!file.open(filename, FileAccessMode::Read))
 		return false;
 
-	FileHeader header;
+	XEGeometryFile::Header header;
 	if (!file.read(header))
 		return false;
 
-	if (header.signature != FileSignature ||
-		header.version != SupportedFileVersion ||
-		header.vertexStride != sizeof(VertexBase))
+	if (header.magic != XEGeometryFile::Magic ||
+		header.version != XEGeometryFile::SupportedVersion ||
+		header.vertexStride != sizeof(VertexTexture))
 	{
 		return false;
 	}
@@ -32,7 +32,7 @@ bool XEResourceLoader::LoadGeometryFromFile(const char* filename, XERDevice* dev
 	if (expectedFileSize != file.getSize())
 		return false;
 
-	HeapPtr<VertexBase> vertices(header.vertexCount);
+	HeapPtr<VertexTexture> vertices(header.vertexCount);
 	if (!file.read(vertices, header.vertexStride * header.vertexCount))
 		return false;
 

@@ -1,155 +1,228 @@
 #include <stdio.h>
+#include <fbxsdk.h>
 
 #include <XLib.Types.h>
-#include <XLib.NonCopyable.h>
-#include <XLib.Containers.Vector.h>
-#include <XLib.Program.h>
+#include <XLib.Util.h>
+#include <XLib.Heap.h>
+#include <XLib.System.File.h>
 
-#include "XEngine.Render.Vertices.h"
-#include "XEngine.Formats.XEGeometry.h"
-
-#include "XEngine.FBXImporter.Token.h"
-#include "XEngine.FBXImporter.FileTokenizer.h"
-#include "XEngine.FBXImporter.Parser.h"
+#include <XEngine.Render.Vertices.h>
+#include <XEngine.Formats.XEGeometry.h>
 
 using namespace XLib;
 using namespace XEngine;
-using namespace XEngine::FBXImporter;
-using namespace XEngine::Formats::XEGeometry;
+using namespace XEngine::Formats;
 
-void Program::Run()
+inline float32x3 FBXVector4ToFloat32x3(const FbxVector4& a)
 {
-	printf("FBX parser by RBMKP4800\n");
+	return float32x3
+	(
+		float32(a.mData[0]),
+		float32(a.mData[1]),
+		float32(a.mData[2])
+	);
+}
 
-	FileTokenizer tokenizer;
-	if (!tokenizer.initialize("D:\\rbmkp4800\\Downloads\\prom.fbx"))
-	//if (!tokenizer.initialize("example.txt"))
+inline float32x2 FBXVector4ToFloat32x2(const FbxVector4& a)
+{
+	return float32x2
+	(
+		float32(a.mData[0]),
+		float32(a.mData[1])
+	);
+}
+
+template <typename TargetType, typename SourceType>
+inline TargetType FBXConvertValue(const SourceType& value)
+{
+	static_assert(false, "invalid conversion");
+}
+
+template <>
+inline float32x3 FBXConvertValue<float32x3, FbxVector4>(const FbxVector4& value)
+{
+	return float32x3
+	(
+		float32(value.mData[0]),
+		float32(value.mData[1]),
+		float32(value.mData[2])
+	);
+}
+
+template <>
+inline float32x2 FBXConvertValue<float32x2, FbxVector2>(const FbxVector2& value)
+{
+	return float32x2
+	(
+		float32(value.mData[0]),
+		float32(value.mData[1])
+	);
+}
+
+template <typename TargetComponentType, typename FbxLayerElementType, typename VertexType>
+static bool FillVertexBufferComponent(const FbxLayerElementTemplate<FbxLayerElementType>* fbxLayerElement,
+	VertexType* vertexBuffer, uint32 polygonVertexCount, uint32 targetComponentOffset)
+{
+	FbxLayerElement::EMappingMode fbxMappingMode = fbxLayerElement->GetMappingMode();
+	FbxLayerElement::EReferenceMode fbxReferenceMode = fbxLayerElement->GetReferenceMode();
+
+	if (fbxMappingMode != FbxLayerElement::EMappingMode::eByPolygonVertex)
 	{
-		printf("can't open file\n");
+		printf("mapping mode not supported (%d)\n", uint32(fbxMappingMode));
+		return false;
+	}
+
+	if (fbxReferenceMode == FbxLayerElement::EReferenceMode::eDirect)
+	{
+		FbxLayerElementArrayTemplate<FbxLayerElementType> &fbxDirect = fbxLayerElement->GetDirectArray();
+
+		if (fbxDirect.GetCount() != polygonVertexCount)
+		{
+			printf("invalid layer element value count\n");
+			return false;
+		}
+
+		for (uint32 i = 0; i < polygonVertexCount; i++)
+		{
+			TargetComponentType &target =
+				*to<TargetComponentType*>(to<byte*>(vertexBuffer + i) + targetComponentOffset);
+			target = FBXConvertValue<TargetComponentType>(fbxDirect.GetAt(i));
+		}
+	}
+	else if (fbxReferenceMode == FbxLayerElement::EReferenceMode::eIndexToDirect)
+	{
+		FbxLayerElementArrayTemplate<FbxLayerElementType> &fbxDirect = fbxLayerElement->GetDirectArray();
+		FbxLayerElementArrayTemplate<int> &fbxIndex = fbxLayerElement->GetIndexArray();
+
+		if (fbxIndex.GetCount() != polygonVertexCount)
+		{
+			printf("invalid layer element index count\n");
+			return false;
+		}
+
+		for (uint32 i = 0; i < polygonVertexCount; i++)
+		{
+			TargetComponentType &target =
+				*to<TargetComponentType*>(to<byte*>(vertexBuffer + i) + targetComponentOffset);
+			target = FBXConvertValue<TargetComponentType>(fbxDirect.GetAt(fbxIndex.GetAt(i)));
+		}
+	}
+	else
+	{
+		printf("reference mode not supported (%d)\n", uint32(fbxReferenceMode));
+		return false;
+	}
+
+	return true;
+}
+
+static void SaveMesh(FbxMesh *fbxMesh)
+{
+	if (!fbxMesh->IsTriangleMesh())
+	{
+		printf("mesh is not triangle\n");
 		return;
 	}
 
-	printf("reading...\n");
+	uint32 polygonVertexCount = fbxMesh->GetPolygonVertexCount();
+	HeapPtr<VertexTexture> vertexBuffer(polygonVertexCount);
 
-	uint32 fileSizeKib = tokenizer.getFileSize() / 1024;
-	uint32 progressUpdateCounter = 0;
+	FbxVector4 *fbxPositions = fbxMesh->GetControlPoints();
+	int *fbxIndices = fbxMesh->GetPolygonVertices();
+	for (uint32 i = 0; i < polygonVertexCount; i++)
+		vertexBuffer[i].position = FBXVector4ToFloat32x3(fbxPositions[fbxIndices[i]]);
 
-	Parser parser;
-	while (!parser.isFinalized())
+	FbxGeometryElementNormal *fbxNormalElement = fbxMesh->GetElementNormal();
+	if (!fbxNormalElement)
 	{
-		Token token;
-		TokenizerResult tokenizerResult = tokenizer.nextToken(token);
-		if (tokenizerResult != TokenizerResult::Success)
-		{
-			printf("tokenizer error %d at %d\n", tokenizerResult, tokenizer.getCurrentLine());
-			return;
-		}
-		ParserResult parserResult = parser.pushToken(token);
-		if (parserResult != ParserResult::Success)
-		{
-			printf("parser error %d at %d\n", parserResult, tokenizer.getCurrentLine());
-			return;
-		}
-
-		progressUpdateCounter++;
-		if (progressUpdateCounter > 100000)
-		{
-			progressUpdateCounter = 0;
-			printf("\r%4d%%", tokenizer.getFilePosition() / 1024 * 100 / fileSizeKib);
-		}
-	}
-	printf("\r      \n");
-
-	Vector<MeshData> meshes = parser.takeMeshes();
-	for (uint32 i = 0; i < meshes.getSize(); i++)
-	{
-		printf("mesh %d: \"%s\" %d %d %d\n", i, meshes[i].name.data,
-			meshes[i].vertexCount, meshes[i].indexCount, meshes[i].normalCount);
-
-		//for (uint32 i = 0; i < mesh.vertexCount; i++)
-		//	printf("%f ", mesh.vertices[i]);
-		//printf("\n\n");
+		printf("mesh has no normals\n");
+		return;
 	}
 
-	uint32 meshIndex = 0;
-	for (;;)
+	if (!FillVertexBufferComponent<float32x3, FbxVector4, VertexTexture>(fbxNormalElement,
+			vertexBuffer, polygonVertexCount, offsetof(VertexTexture, normal)))
 	{
-		printf("select mesh to import (0-%d): ", meshes.getSize() - 1);
+		printf("error converting normals\n");
+		return;
+	}
 
-		fseek(stdin, 0, SEEK_END);
+	FbxGeometryElementUV *fbxUVElement = fbxMesh->GetElementUV();
+	if (!fbxUVElement)
+	{
+		printf("mesh has no UVs\n");
+		return;
+	}
 
-		if (scanf("%d", &meshIndex) != 1)
-		{
-			printf("invalid input\n");
+	if (!FillVertexBufferComponent<float32x2, FbxVector2, VertexTexture>(fbxUVElement,
+			vertexBuffer, polygonVertexCount, offsetof(VertexTexture, texture)))
+	{
+		printf("error converting UVs\n");
+		return;
+	}
+
+	File outputFile;
+	if (!outputFile.open("output.xegeometry", FileAccessMode::Write, FileOpenMode::Override))
+	{
+		printf("error writing file\n");
+		return;
+	}
+
+	HeapPtr<uint32> indexBuffer(polygonVertexCount);
+	for (uint32 i = 0; i < polygonVertexCount; i++)
+		indexBuffer[i] = i;
+
+	XEGeometryFile::Header header;
+	header.magic = XEGeometryFile::Magic;
+	header.version = XEGeometryFile::SupportedVersion;
+	header.vertexStride = sizeof(VertexTexture);
+	header.vertexCount = polygonVertexCount;
+	header.indexCount = polygonVertexCount;
+	outputFile.write(header);
+	outputFile.write(vertexBuffer, polygonVertexCount * sizeof(VertexTexture));
+	outputFile.write(indexBuffer, polygonVertexCount * sizeof(uint32));
+	outputFile.close();
+}
+
+int main(int argc, char** argv)
+{
+	//const char* lFilename = "F:\\model\\wood_stick_01.FBX";
+	//const char* filename = "F:\\prom.FBX";
+	const char* filename = "F:\\x18.FBX";
+	FbxManager* fbxSDKManager = FbxManager::Create();
+
+	FbxIOSettings *fbxIOSettings = FbxIOSettings::Create(fbxSDKManager, IOSROOT);
+	fbxSDKManager->SetIOSettings(fbxIOSettings);
+
+	FbxImporter* fbxImporter = FbxImporter::Create(fbxSDKManager, "");
+	if (!fbxImporter->Initialize(filename, -1, fbxSDKManager->GetIOSettings()))
+	{
+		printf("FbxImporter.Initialize failed: %s\n", fbxImporter->GetStatus().GetErrorString());
+		return 0;
+	}
+
+	FbxScene *fbxScene = FbxScene::Create(fbxSDKManager, "scene");
+	fbxImporter->Import(fbxScene);
+	fbxImporter->Destroy();
+
+	FbxNode *fbxRoot = fbxScene->GetRootNode();
+	if (!fbxRoot)
+	{
+		printf("invalid format\n");
+		return 0;
+	}
+
+	for (int i = 0; i < fbxRoot->GetChildCount(); i++)
+	{
+		FbxNode *fbxNode = fbxRoot->GetChild(i);
+		FbxMesh *fbxMesh = fbxNode->GetMesh();
+		if (!fbxMesh)
 			continue;
-		}
 
-		if (meshIndex >= meshes.getSize())
-		{
-			printf("invalid index\n");
-			continue;
-		}
+		printf("mesh id %d\t\"%s\"\n", i, fbxNode->GetName());
 
+		SaveMesh(fbxMesh);
 		break;
 	}
 
-	MeshData& mesh = meshes[meshIndex];
-	
-	if (mesh.normalCount != mesh.indexCount * 3)
-		printf("not supported number of normals");
-
-	{
-		File file;
-		file.open("output.xegeometry", FileAccessMode::Write, FileOpenMode::Override);
-
-		{
-			FileHeader header;
-			header.signature = FileSignature;
-			header.version = SupportedFileVersion;
-			header.vertexStride = sizeof(VertexBase);
-			header.vertexCount = mesh.indexCount;
-			header.indexCount = mesh.indexCount;
-
-			file.write(header);
-		}
-
-		{
-			HeapPtr<VertexBase> vertices(mesh.indexCount);
-			for (uint32 i = 0; i < mesh.indexCount; i++)
-			{
-				sint32 index = mesh.indices[i];
-				if (i % 3 == 2)
-				{
-					index++;
-					index = -index;
-				}
-
-				if (uint32(index) >= mesh.vertexCount)
-				{
-					printf("invalid index\n");
-					return;
-				}
-
-				VertexBase &vertex = vertices[i];
-				vertex.position.x = mesh.vertices[index * 3 + 0];
-				vertex.position.y = mesh.vertices[index * 3 + 1];
-				vertex.position.z = mesh.vertices[index * 3 + 2];
-				vertex.normal.x = mesh.normals[i * 3 + 0];
-				vertex.normal.y = mesh.normals[i * 3 + 1];
-				vertex.normal.z = mesh.normals[i * 3 + 2];
-			}
-
-			file.write(vertices, sizeof(VertexBase) * mesh.indexCount);
-		}
-
-		{
-			HeapPtr<uint32> indices(mesh.indexCount);
-			for (uint32 i = 0; i < mesh.indexCount; i++)
-				indices[i] = i;
-
-			file.write(indices, sizeof(uint32) * mesh.indexCount);
-		}
-
-		file.close();
-	}
+	return 0;
 }
