@@ -5,6 +5,8 @@
 #include <XLib.Util.h>
 #include <XLib.Heap.h>
 #include <XLib.System.File.h>
+#include <XLib.Crypto.CRC.h>
+#include <XLib.Algorithm.QuickSort.h>
 
 #include <XEngine.Render.Vertices.h>
 #include <XEngine.Formats.XEGeometry.h>
@@ -12,25 +14,6 @@
 using namespace XLib;
 using namespace XEngine;
 using namespace XEngine::Formats;
-
-inline float32x3 FBXVector4ToFloat32x3(const FbxVector4& a)
-{
-	return float32x3
-	(
-		float32(a.mData[0]),
-		float32(a.mData[1]),
-		float32(a.mData[2])
-	);
-}
-
-inline float32x2 FBXVector4ToFloat32x2(const FbxVector4& a)
-{
-	return float32x2
-	(
-		float32(a.mData[0]),
-		float32(a.mData[1])
-	);
-}
 
 template <typename TargetType, typename SourceType>
 inline TargetType FBXConvertValue(const SourceType& value)
@@ -116,6 +99,65 @@ static bool FillVertexBufferComponent(const FbxLayerElementTemplate<FbxLayerElem
 	return true;
 }
 
+template <typename VertexType>
+static uint32 RemoveVertexDuplicatesAndFillIndexBuffer(
+	VertexType* vertexBuffer, uint32* indexBuffer, uint32 totalVertexCount)
+{
+	// TODO: refactor, write explanations
+
+	if (totalVertexCount & 0xFF000000)
+	{
+		printf("vertex limit exceeded\n");
+		return 0;
+	}
+
+	HeapPtr<uint64> hashedVertices(totalVertexCount);
+	HeapPtr<uint32> sparseVertexBufferIndices(totalVertexCount);
+	HeapPtr<uint32> vertexBufferCompactionIndices(totalVertexCount);
+
+	for (uint32 i = 0; i < totalVertexCount; i++)
+	{
+		uint64 hash = uint64(CRC32::Compute(vertexBuffer[i])) << 32;
+		hash |= uint32(CRC8::Compute(vertexBuffer[i])) << 24;
+		hash |= i;
+		hashedVertices[i] = hash;
+	}
+
+	QuickSort(to<uint64*>(hashedVertices), totalVertexCount);
+	
+	for (uint32 i = 0; i < totalVertexCount;)
+	{
+		uint32 blockBegin = i;
+		uint64 hash = hashedVertices[i] & 0xFFFFFFFF'FF000000;
+		do
+		{
+			i++;
+		} while ((hashedVertices[i] & 0xFFFFFFFF'FF000000) == hash && i < totalVertexCount);
+
+		uint32 firstVertexIndex = hashedVertices[blockBegin] & 0xFFFFFF;
+		sparseVertexBufferIndices[firstVertexIndex] = firstVertexIndex;
+		for (uint32 j = blockBegin + 1; j < i; j++)
+		{
+			uint32 targetIndex = hashedVertices[j] & 0xFFFFFF;
+			sparseVertexBufferIndices[targetIndex] = firstVertexIndex;
+		}
+	}
+
+	uint32 compactVertexCount = 0;
+	for (uint32 i = 0; i < totalVertexCount; i++)
+	{
+		if (sparseVertexBufferIndices[i] == i)
+		{
+			vertexBuffer[compactVertexCount] = vertexBuffer[i];
+			vertexBufferCompactionIndices[i] = compactVertexCount;
+			compactVertexCount++;
+		}
+		indexBuffer[i] = vertexBufferCompactionIndices[sparseVertexBufferIndices[i]];
+	}
+
+	return compactVertexCount;
+}
+
 static void SaveMesh(FbxMesh *fbxMesh)
 {
 	if (!fbxMesh->IsTriangleMesh())
@@ -124,13 +166,15 @@ static void SaveMesh(FbxMesh *fbxMesh)
 		return;
 	}
 
+	printf("converting geometry...\n");
+
 	uint32 polygonVertexCount = fbxMesh->GetPolygonVertexCount();
 	HeapPtr<VertexTexture> vertexBuffer(polygonVertexCount);
 
 	FbxVector4 *fbxPositions = fbxMesh->GetControlPoints();
 	int *fbxIndices = fbxMesh->GetPolygonVertices();
 	for (uint32 i = 0; i < polygonVertexCount; i++)
-		vertexBuffer[i].position = FBXVector4ToFloat32x3(fbxPositions[fbxIndices[i]]);
+		vertexBuffer[i].position = FBXConvertValue<float32x3>(fbxPositions[fbxIndices[i]]);
 
 	FbxGeometryElementNormal *fbxNormalElement = fbxMesh->GetElementNormal();
 	if (!fbxNormalElement)
@@ -160,6 +204,26 @@ static void SaveMesh(FbxMesh *fbxMesh)
 		return;
 	}
 
+	printf("compacting vertex buffer...\n");
+
+	HeapPtr<uint32> indexBuffer(polygonVertexCount);
+	uint32 compactVertexCount = RemoveVertexDuplicatesAndFillIndexBuffer(
+		to<VertexTexture*>(vertexBuffer), to<uint32*>(indexBuffer), polygonVertexCount);
+
+	/*uint32 compactVertexCount = polygonVertexCount;
+	for (uint32 i = 0; i < polygonVertexCount; i++)
+		indexBuffer[i] = i;*/
+
+	if (!compactVertexCount)
+	{
+		printf("error compacting vertex buffer\n");
+		return;
+	}
+
+	printf("vertex count = %u'%03u, index count = %u'%03u\n",
+		compactVertexCount / 1000, compactVertexCount % 1000,
+		polygonVertexCount / 1000, polygonVertexCount % 1000);
+
 	File outputFile;
 	if (!outputFile.open("output.xegeometry", FileAccessMode::Write, FileOpenMode::Override))
 	{
@@ -167,27 +231,27 @@ static void SaveMesh(FbxMesh *fbxMesh)
 		return;
 	}
 
-	HeapPtr<uint32> indexBuffer(polygonVertexCount);
-	for (uint32 i = 0; i < polygonVertexCount; i++)
-		indexBuffer[i] = i;
-
 	XEGeometryFile::Header header;
 	header.magic = XEGeometryFile::Magic;
 	header.version = XEGeometryFile::SupportedVersion;
 	header.vertexStride = sizeof(VertexTexture);
-	header.vertexCount = polygonVertexCount;
+	header.vertexCount = compactVertexCount;
 	header.indexCount = polygonVertexCount;
 	outputFile.write(header);
-	outputFile.write(vertexBuffer, polygonVertexCount * sizeof(VertexTexture));
-	outputFile.write(indexBuffer, polygonVertexCount * sizeof(uint32));
+	outputFile.write(vertexBuffer, sizeof(VertexTexture) * compactVertexCount);
+	outputFile.write(indexBuffer, sizeof(uint32) * polygonVertexCount);
 	outputFile.close();
+
+	printf("file converted\n");
 }
 
 int main(int argc, char** argv)
 {
 	//const char* lFilename = "F:\\model\\wood_stick_01.FBX";
 	//const char* filename = "F:\\prom.FBX";
-	const char* filename = "F:\\x18.FBX";
+	const char* filename = "f:\\cube.FBX";
+	//const char* filename = "f:\\x18.FBX";
+
 	FbxManager* fbxSDKManager = FbxManager::Create();
 
 	FbxIOSettings *fbxIOSettings = FbxIOSettings::Create(fbxSDKManager, IOSROOT);
@@ -200,6 +264,7 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
+	printf("reading file...\n");
 	FbxScene *fbxScene = FbxScene::Create(fbxSDKManager, "scene");
 	fbxImporter->Import(fbxScene);
 	fbxImporter->Destroy();
