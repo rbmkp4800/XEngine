@@ -244,6 +244,7 @@
     <ClCompile Include="Source\XEngine.Render.Scene.cpp" />
     <ClCompile Include="Source\XEngine.Render.Internal.Shaders.cpp" />
     <ClCompile Include="Source\XEngine.Render.Targets.cpp" />
+    <ClCompile Include="Source\XEngine.ResourceLoader.Texture.cpp" />
     <ClCompile Include="Source\XEngine.UI.Console.cpp" />
   </ItemGroup>
   <ItemGroup>

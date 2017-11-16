@@ -5,6 +5,7 @@
 namespace XEngine
 {
 	class XERGeometry;
+	class XERTexture;
 	class XERMonospacedFont;
 	class XERDevice;
 
@@ -12,7 +13,7 @@ namespace XEngine
 	{
 	public:
 		static void LoadDefaultFont(XERDevice* device, XERMonospacedFont* font);
-		//static void LoadTextureFromFile(const char* filename, XERDevice* device, XERTexture* texture);
+		static void LoadTextureFromFile(const wchar* filename, XERDevice* device, XERTexture* texture);
 		static bool LoadGeometryFromFile(const char* filename, XERDevice* device, XERGeometry* geometry);
 		//static void LoadDefaultFont(XERDevice* device, XEUIMonospacedFont* font);
 	};
