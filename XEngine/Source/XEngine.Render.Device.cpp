@@ -1,14 +1,15 @@
 #include <d3d12.h>
 #include <dxgi1_5.h>
-#include "Util.D3D12.h"
 
 #include <XLib.Util.h>
+#include <XLib.Platform.D3D12.Helpers.h>
 
 #include "XEngine.Render.Device.h"
 #include "XEngine.Render.Internal.Shaders.h"
 #include "XEngine.Render.Internal.GPUStructs.h"
 
 using namespace XLib;
+using namespace XLib::Platform;
 using namespace XEngine;
 using namespace XEngine::Internal;
 

@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Util.COMPtr.h"
-
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
+#include <XLib.Platform.COMPtr.h>
 
 struct ID3D12Resource;
 
@@ -13,32 +12,15 @@ namespace XEngine
 	class XERUIRender;
 	class XERDevice;
 
-	/*namespace Internal
-	{
-		struct SkeletonJoint
-		{
-			XLib::Matrix3x4 inverseBindPose;
-			uint32 parent;
-		};
-
-		struct Skeleton
-		{
-			SkeletonJoint* joints;
-			uint32 jointCount;
-		};
-	}*/
-
 	class XERGeometry : public XLib::NonCopyable
 	{
 		friend XERScene;
 
 	private:
-		COMPtr<ID3D12Resource> d3dBuffer;
-		uint32 vertexCount = 0, vertexStride = 0;
-		uint32 indexCount = 0;
-		uint32 id = 0;
-
-		//Internal::Skeleton skeleton;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dBuffer;
+		uint32 vertexCount = 0, indexCount = 0;
+		uint16 vertexStride = 0;
+		uint16 transformsCount = 0;
 
 	public:
 		void initialize(XERDevice* device, const void* vertices, uint32 vertexCount,
@@ -50,7 +32,7 @@ namespace XEngine
 		friend XERUIRender;
 
 	private:
-		COMPtr<ID3D12Resource> d3dBuffer;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dBuffer;
 
 	public:
 		void initialize(XERDevice* device, uint32 size);
@@ -63,7 +45,7 @@ namespace XEngine
 		friend XERUIRender;
 
 	private:
-		COMPtr<ID3D12Resource> d3dTexture;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dTexture;
 		uint32 srvDescriptor;
 
 	public:
@@ -75,7 +57,7 @@ namespace XEngine
 		friend XERUIRender;
 
 	private:
-		COMPtr<ID3D12Resource> d3dTexture;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dTexture;
 		uint32 srvDescriptor;
 		uint8 charWidth, charHeight;
 		uint8 firstCharCode, charTableSize;

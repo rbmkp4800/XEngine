@@ -1,6 +1,5 @@
 #pragma once
 
-#include "XEngine.Color.h"
 #include "XEngine.Render.Camera.h"
 
 // render core

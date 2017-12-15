@@ -1,15 +1,14 @@
 #include <d3d12.h>
-#include "Util.D3D12.h"
 
 #include <XLib.Util.h>
 #include <XLib.Vectors.Arithmetics.h>
+#include <XLib.Platform.D3D12.Helpers.h>
 
 #include "XEngine.Render.UIRender.h"
 #include "XEngine.Render.Resources.h"
 #include "XEngine.Render.Targets.h"
 #include "XEngine.Render.Device.h"
 #include "XEngine.Render.Vertices.h"
-#include "XEngine.Color.h"
 
 using namespace XLib;
 using namespace XEngine;

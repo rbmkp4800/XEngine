@@ -1,10 +1,11 @@
 #include <wincodec.h>
 
-#include "Util.COMPtr.h"
+#include <XLib.Platform.COMPtr.h>
 
 #include "XEngine.ResourceLoader.h"
 #include "XEngine.Render.Resources.h"
 
+using namespace XLib::Platform;
 using namespace XEngine;
 
 // TODO: rewrite

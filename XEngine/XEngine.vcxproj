@@ -203,11 +203,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Source\Sample.h" />
-    <ClInclude Include="Source\Util.COMPtr.h" />
-    <ClInclude Include="Source\Util.D3D12.h" />
-    <ClInclude Include="Source\Util.DXGI.h" />
     <ClInclude Include="Source\XEngine.Base.h" />
-    <ClInclude Include="Source\XEngine.Color.h" />
     <ClInclude Include="Source\XEngine.Formats.XEGeometry.h" />
     <ClInclude Include="Source\XEngine.h" />
     <ClInclude Include="Source\XEngine.Render.Camera.h" />
@@ -231,7 +227,6 @@
     <ClCompile Include="Source\Sample.Commands.cpp" />
     <ClCompile Include="Source\Sample.Main.cpp" />
     <ClCompile Include="Source\Sample.cpp" />
-    <ClCompile Include="Source\Util.COMPtr.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.UploadEngine.cpp" />
     <ClCompile Include="Source\XEngine.Render.Effect.cpp" />

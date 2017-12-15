@@ -1,9 +1,9 @@
 #include <d3d12.h>
-#include "Util.D3D12.h"
 
 #include <XLib.Util.h>
 #include <XLib.Memory.h>
 #include <XLib.Debug.h>
+#include <XLib.Platform.D3D12.Helpers.h>
 
 #include "XEngine.Render.Device.h"
 #include "XEngine.Render.MIPMapGenerator.h"

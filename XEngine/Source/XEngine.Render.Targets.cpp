@@ -1,14 +1,15 @@
 #include <d3d12.h>
 #include <dxgi1_5.h>
-#include "Util.D3D12.h"
-#include "Util.DXGI.h"
 
 #include <XLib.Memory.h>
+#include <XLib.Platform.D3D12.Helpers.h>
+#include <XLib.Platform.DXGI.Helpers.h>
 
 #include "XEngine.Render.Targets.h"
 #include "XEngine.Render.Device.h"
 
 using namespace XLib;
+using namespace XLib::Platform;
 using namespace XEngine;
 
 void XERWindowTarget::updateRTVs()

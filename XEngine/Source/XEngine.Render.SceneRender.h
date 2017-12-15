@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Util.COMPtr.h"
-
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
+#include <XLib.Platform.COMPtr.h>
 
 struct ID3D12Fence;
 struct ID3D12Resource;
@@ -46,16 +45,16 @@ namespace XEngine
 	private:
 		XERDevice *device = nullptr;
 
-		COMPtr<ID3D12Resource> d3dNormalTexture, d3dDiffuseTexture, d3dDepthTexture;
-		COMPtr<ID3D12Resource> d3dDownscaledDepthTexture;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dNormalTexture, d3dDiffuseTexture, d3dDepthTexture;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dDownscaledDepthTexture;
 		uint32 rtvDescriptors = 0, srvDescriptors = 0;	// +0 diffuse, +1 normal
 		uint32 dsvDescriptor = 0;
 
-		COMPtr<ID3D12Resource> d3dTempBuffer;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dTempBuffer;
 		uint32 tempRTVDescriptorsBase;
 
-		COMPtr<ID3D12Resource> d3dCameraTransformCB;
-		COMPtr<ID3D12Resource> d3dLightingPassCB;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dCameraTransformCB;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dLightingPassCB;
 		Internal::CameraTransformCB *mappedCameraTransformCB = nullptr;
 		Internal::LightingPassCB *mappedLightingPassCB = nullptr;
 

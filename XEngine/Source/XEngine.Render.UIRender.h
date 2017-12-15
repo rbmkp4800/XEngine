@@ -1,10 +1,9 @@
 #pragma once
 
-#include "Util.COMPtr.h"
-
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
 #include <XLib.Vectors.h>
+#include <XLib.Platform.COMPtr.h>
 
 struct ID3D12Resource;
 struct ID3D12GraphicsCommandList;
@@ -30,7 +29,7 @@ namespace XEngine
 	private:
 		XERDevice *device = nullptr;
 
-		COMPtr<ID3D12Resource> d3dVertexBuffer;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dVertexBuffer;
 		void *mappedVertexBuffer = nullptr;
 
 		ID3D12GraphicsCommandList *d3dCommandList = nullptr;

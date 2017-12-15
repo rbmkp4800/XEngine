@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Util.COMPtr.h"
-
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
+#include <XLib.Platform.COMPtr.h>
 
 struct ID3D12PipelineState;
 
@@ -17,7 +16,7 @@ namespace XEngine
 		friend XERSceneRender;
 
 	private:
-		COMPtr<ID3D12PipelineState> d3dPipelineState;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dPipelineState;
 
 	public:
 		void initializePlain(XERDevice* device);

@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Util.COMPtr.h"
-
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
 #include <XLib.Vectors.h>
 #include <XLib.System.Threading.Event.h>
+#include <XLib.Platform.COMPtr.h>
 
 enum D3D12_COMMAND_LIST_TYPE;
 enum D3D12_DESCRIPTOR_HEAP_TYPE;
@@ -81,8 +80,8 @@ namespace XEngine
 			friend XERDevice;
 
 		private:
-			COMPtr<ID3D12CommandQueue> d3dCommandQueue;
-			COMPtr<ID3D12Fence> d3dFence;
+			XLib::Platform::COMPtr<ID3D12CommandQueue> d3dCommandQueue;
+			XLib::Platform::COMPtr<ID3D12Fence> d3dFence;
 			XLib::Event fenceSyncEvent;
 			uint64 fenceValue = 0;
 
@@ -101,14 +100,14 @@ namespace XEngine
 
 		private:
 			GPUQueue copyGPUQueue;
-			COMPtr<ID3D12GraphicsCommandList> d3dCommandList;
-			COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
-			COMPtr<ID3D12Resource> d3dUploadBuffer;
+			XLib::Platform::COMPtr<ID3D12GraphicsCommandList> d3dCommandList;
+			XLib::Platform::COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
+			XLib::Platform::COMPtr<ID3D12Resource> d3dUploadBuffer;
 			byte *mappedUploadBuffer = nullptr;
 
 			uint32 uploadBufferBytesUsed = 0;
 
-			COMPtr<ID3D12Resource> d3dLastBufferUploadResource;
+			XLib::Platform::COMPtr<ID3D12Resource> d3dLastBufferUploadResource;
 			uint64 lastBufferUploadDestOffset = 0;
 			uint32 lastBufferUploadSize = 0;
 
@@ -134,7 +133,7 @@ namespace XEngine
 			friend XERDevice;
 
 		private:
-			COMPtr<ID3D12DescriptorHeap> d3dDescriptorHeap;
+			XLib::Platform::COMPtr<ID3D12DescriptorHeap> d3dDescriptorHeap;
 			uint32 allocatedDescriptorsCount;
 			uint32 descritorSize;
 
@@ -154,8 +153,8 @@ namespace XEngine
 			friend XERDevice;
 
 		private:
-			COMPtr<ID3D12GraphicsCommandList> d3dCommandList;
-			COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
+			XLib::Platform::COMPtr<ID3D12GraphicsCommandList> d3dCommandList;
+			XLib::Platform::COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
 			bool acquired = false;
 
 			void initialize(ID3D12Device* d3dDevice);
@@ -168,30 +167,30 @@ namespace XEngine
 
 		//===================================================================================//
 
-		static COMPtr<IDXGIFactory5> dxgiFactory;
-		COMPtr<ID3D12Device> d3dDevice;
+		static XLib::Platform::COMPtr<IDXGIFactory5> dxgiFactory;
+		XLib::Platform::COMPtr<ID3D12Device> d3dDevice;
 
-		COMPtr<ID3D12RootSignature> d3dDefaultGraphicsRS;
-		COMPtr<ID3D12RootSignature> d3dDefaultComputeRS;
-		COMPtr<ID3D12RootSignature> d3dLightingPassRS;
-		COMPtr<ID3D12RootSignature> d3dUIPassRS;
+		XLib::Platform::COMPtr<ID3D12RootSignature> d3dDefaultGraphicsRS;
+		XLib::Platform::COMPtr<ID3D12RootSignature> d3dDefaultComputeRS;
+		XLib::Platform::COMPtr<ID3D12RootSignature> d3dLightingPassRS;
+		XLib::Platform::COMPtr<ID3D12RootSignature> d3dUIPassRS;
 
-		COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
-		COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;
-		COMPtr<ID3D12PipelineState> d3dDebugOCxBBoxPSO;
-		COMPtr<ID3D12PipelineState> d3dUIColorPSO;
-		COMPtr<ID3D12PipelineState> d3dUIFontPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDebugOCxBBoxPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dUIColorPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dUIFontPSO;
 
-		COMPtr<ID3D12PipelineState> d3dClearDefaultUAVxPSO;
-		COMPtr<ID3D12PipelineState> d3dDepthBufferDownscalePSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dClearDefaultUAVxPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDepthBufferDownscalePSO;
 
-		COMPtr<ID3D12PipelineState> d3dOCxBBoxDrawPSO;
-		COMPtr<ID3D12PipelineState> d3dOCxICLUpdatePSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dOCxBBoxDrawPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dOCxICLUpdatePSO;
 
-		COMPtr<ID3D12CommandSignature> d3dDefaultDrawingICS;
+		XLib::Platform::COMPtr<ID3D12CommandSignature> d3dDefaultDrawingICS;
 
-		COMPtr<ID3D12Resource> d3dReadbackBuffer;
-		COMPtr<ID3D12QueryHeap> d3dTimestampQueryHeap;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dReadbackBuffer;
+		XLib::Platform::COMPtr<ID3D12QueryHeap> d3dTimestampQueryHeap;
 
 		DescriptorHeap rtvHeap;
 		DescriptorHeap dsvHeap;

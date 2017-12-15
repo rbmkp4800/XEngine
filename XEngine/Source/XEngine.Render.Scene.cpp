@@ -1,7 +1,7 @@
 #include <d3d12.h>
-#include "Util.D3D12.h"
 
 #include <XLib.Debug.h>
+#include <XLib.Platform.D3D12.Helpers.h>
 
 #include "XEngine.Render.Scene.h"
 #include "XEngine.Render.Device.h"
@@ -145,7 +145,7 @@ XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry,
 	return id;
 }
 
-XERLightId XERScene::createLight(float32x3 position, XEColor color, float32 intensity)
+XERLightId XERScene::createLight(float32x3 position, Color color, float32 intensity)
 {
 	LightDesc &desc = lights[lightCount];
 	desc.position = position;

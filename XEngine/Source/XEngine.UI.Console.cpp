@@ -2,13 +2,13 @@
 #include <XLib.Vectors.h>
 #include <XLib.Vectors.Arithmetics.h>
 #include <XLib.Strings.h>
+#include <XLib.Color.h>
 
 #include "XEngine.UI.Console.h"
 #include "XEngine.Render.UIRender.h"
 #include "XEngine.Render.Vertices.h"
 #include "XEngine.Render.Resources.h"
 #include "XEngine.Render.Device.h"
-#include "XEngine.Color.h"
 
 using namespace XLib;
 using namespace XEngine;
@@ -172,7 +172,7 @@ void XEUIConsole::draw(XERUIRender* uiRender)
 
 			if (setColorSequence)
 			{
-				XEColor tempColor;
+				Color tempColor;
 				uint8 p;
 				p = character & 0b00000011; tempColor.r = (p << 6) | (p << 4) | (p << 2) | p;
 				p = character & 0b00001100; tempColor.g = (p << 4) | (p << 2) | p | (p >> 2);

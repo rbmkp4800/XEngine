@@ -1,13 +1,11 @@
 #pragma once
 
-#include "Util.COMPtr.h"
-
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
 #include <XLib.Vectors.h>
 #include <XLib.Math.Matrix3x4.h>
-
-#include "XEngine.Color.h"
+#include <XLib.Color.h>
+#include <XLib.Platform.COMPtr.h>
 
 struct ID3D12Resource;
 struct ID3D12GraphicsCommandList;
@@ -29,7 +27,7 @@ namespace XEngine
 	struct LightDesc
 	{
 		float32x3 position;
-		XEColor color;
+		XLib::Color color;
 		float32 intensity;
 	};
 
@@ -41,16 +39,16 @@ namespace XEngine
 		struct EffectData
 		{
 			XEREffect *effect = nullptr;
-			COMPtr<ID3D12Resource> d3dCommandsBuffer;
+			XLib::Platform::COMPtr<ID3D12Resource> d3dCommandsBuffer;
 			uint32 commandsBufferSize = 0;
 			uint32 commandCount = 0;
 		};
 
 		XERDevice *device = nullptr;
 
-		COMPtr<ID3D12Resource> d3dGeometryInstacesBuffer;
-		COMPtr<ID3D12Resource> d3dTransformsBuffer;
-		COMPtr<ID3D12Resource> d3dBVHBuffer;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dGeometryInstacesBuffer;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dTransformsBuffer;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dBVHBuffer;
 		XLib::Matrix3x4 *mappedTransformsBuffer = nullptr;
 		Internal::GPUGeometryInstanceDesc *mappedGeometryInstacesBuffer = nullptr;
 		Internal::GPUxBVHNode *mappedBVHBuffer = nullptr;
@@ -69,7 +67,7 @@ namespace XEngine
 
 		XERGeometryInstanceId createGeometryInstance(XERGeometry* geometry, XEREffect* effect,
 			const XLib::Matrix3x4& transform, XERTexture* texture = nullptr);
-		XERLightId createLight(float32x3 position, XEColor color, float32 intensity);
+		XERLightId createLight(float32x3 position, XLib::Color color, float32 intensity);
 		void removeGeometryInstance(XERGeometryInstanceId id);
 		void removeLight(XERLightId id);
 

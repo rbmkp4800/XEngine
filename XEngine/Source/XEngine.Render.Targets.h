@@ -1,9 +1,8 @@
 #pragma once
 
-#include "Util.COMPtr.h"
-
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
+#include <XLib.Platform.COMPtr.h>
 
 struct ID3D12Resource;
 struct IDXGISwapChain3;
@@ -22,7 +21,7 @@ namespace XEngine
 		friend XERUIRender;
 
 	private:
-		COMPtr<ID3D12Resource> d3dTexture;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dTexture;
 		uint32 rtvDescriptor = uint32(-1);
 	};
 
@@ -33,7 +32,7 @@ namespace XEngine
 
 		XERDevice *device;
 
-		COMPtr<IDXGISwapChain3> dxgiSwapChain;
+		XLib::Platform::COMPtr<IDXGISwapChain3> dxgiSwapChain;
 		XERTargetBuffer buffers[bufferCount];
 
 		void updateRTVs();

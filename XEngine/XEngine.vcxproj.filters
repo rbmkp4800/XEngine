@@ -33,9 +33,6 @@
     <ClCompile Include="Source\XEngine.Render.Targets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Util.COMPtr.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\XEngine.ResourceLoader.Geometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,22 +68,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source\Util.COMPtr.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\XEngine.Base.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Util.D3D12.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Internal.Shaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Util.DXGI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Device.h">
@@ -129,9 +117,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.UI.Console.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\XEngine.Color.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.Render.SceneRender.h">
