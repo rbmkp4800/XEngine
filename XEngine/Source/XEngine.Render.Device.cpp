@@ -376,11 +376,11 @@ bool XERDevice::initialize()
 	rtvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, rtvDescriptorsLimit, false);
 	dsvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, dsvDescriptorsLimit, false);
 	srvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, srvDescriptorsLimit, true);
-	graphicsGPUQueue.initialize(d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	gpuGraphicsQueue.initialize(d3dDevice, D3D12_COMMAND_LIST_TYPE_DIRECT);
 	uploadEngine.initalize(d3dDevice);
 	graphicsCommandListPool.initialize(d3dDevice);
 
-	gpuTickPeriod = 1.0f / float32(graphicsGPUQueue.getTimestampFrequency());
+	gpuTickPeriod = 1.0f / float32(gpuGraphicsQueue.getTimestampFrequency());
 
 	return true;
 }

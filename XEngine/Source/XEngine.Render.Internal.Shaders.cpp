@@ -2,31 +2,31 @@
 
 #include "XEngine.Render.Internal.Shaders.h"
 
-#include "Shaders\Compiled\ScreenQuadVS.cso.h"
-#include "Shaders\Compiled\ClearDefaultUAVxCS.cso.h"
-#include "Shaders\Compiled\DepthBufferDownscalePS.cso.h"
+#include "..\Intermediate\Shaders\ScreenQuadVS.cso.h"
+#include "..\Intermediate\Shaders\ClearDefaultUAVxCS.cso.h"
+#include "..\Intermediate\Shaders\DepthBufferDownscalePS.cso.h"
 
-#include "Shaders\Compiled\LightingPassPS.cso.h"
+#include "..\Intermediate\Shaders\LightingPassPS.cso.h"
 
-#include "Shaders\Compiled\OCxBBoxVS.cso.h"
-#include "Shaders\Compiled\OCxBBoxPS.cso.h"
-#include "Shaders\Compiled\OCxICLUpdateCS.cso.h"
+#include "..\Intermediate\Shaders\OCxBBoxVS.cso.h"
+#include "..\Intermediate\Shaders\OCxBBoxPS.cso.h"
+#include "..\Intermediate\Shaders\OCxICLUpdateCS.cso.h"
 
-#include "Shaders\Compiled\DebugPositionOnlyVS.cso.h"
-#include "Shaders\Compiled\DebugWhitePS.cso.h"
-#include "shaders\Compiled\DebugOCxBBoxVS.cso.h"
+#include "..\Intermediate\Shaders\DebugPositionOnlyVS.cso.h"
+#include "..\Intermediate\Shaders\DebugWhitePS.cso.h"
+#include "..\Intermediate\Shaders\DebugOCxBBoxVS.cso.h"
 
-#include "Shaders\Compiled\UIColorVS.cso.h"
-#include "Shaders\Compiled\UIColorPS.cso.h"
-#include "Shaders\Compiled\UIFontVS.cso.h"
-#include "Shaders\Compiled\UIFontPS.cso.h"
+#include "..\Intermediate\Shaders\UIColorVS.cso.h"
+#include "..\Intermediate\Shaders\UIColorPS.cso.h"
+#include "..\Intermediate\Shaders\UIFontVS.cso.h"
+#include "..\Intermediate\Shaders\UIFontPS.cso.h"
 
-#include "Shaders\Compiled\EffectPlainVS.cso.h"
-#include "Shaders\Compiled\EffectPlainPS.cso.h"
-#include "Shaders\Compiled\EffectPlainSkinnedVS.cso.h"
-#include "Shaders\Compiled\EffectPlainSkinnedPS.cso.h"
-#include "Shaders\Compiled\EffectTextureVS.cso.h"
-#include "Shaders\Compiled\EffectTexturePS.cso.h"
+#include "..\Intermediate\Shaders\EffectPlainVS.cso.h"
+#include "..\Intermediate\Shaders\EffectPlainPS.cso.h"
+#include "..\Intermediate\Shaders\EffectPlainSkinnedVS.cso.h"
+#include "..\Intermediate\Shaders\EffectPlainSkinnedPS.cso.h"
+#include "..\Intermediate\Shaders\EffectTextureVS.cso.h"
+#include "..\Intermediate\Shaders\EffectTexturePS.cso.h"
 
 using namespace XEngine::Internal;
 

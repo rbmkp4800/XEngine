@@ -32,7 +32,7 @@ void XERWindowTarget::initialize(XERDevice* device, void* hWnd, uint32 width, ui
 	this->device = device;
 
 	COMPtr<IDXGISwapChain1> dxgiSwapChain1;
-	XERDevice::dxgiFactory->CreateSwapChainForHwnd(device->graphicsGPUQueue.getD3DCommandQueue(), HWND(hWnd),
+	XERDevice::dxgiFactory->CreateSwapChainForHwnd(device->gpuGraphicsQueue.getD3DCommandQueue(), HWND(hWnd),
 		&DXGISwapChainDesc1(width, height, DXGI_FORMAT_R8G8B8A8_UNORM, bufferCount,
 		DXGI_SWAP_EFFECT_FLIP_DISCARD), nullptr, nullptr, dxgiSwapChain1.initRef());
 	dxgiSwapChain1->QueryInterface(dxgiSwapChain.uuid(), dxgiSwapChain.voidInitRef());

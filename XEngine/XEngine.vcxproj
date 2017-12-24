@@ -111,7 +111,7 @@
     </FxCompile>
     <FxCompile>
       <ObjectFileOutput />
-      <HeaderFileOutput>$(ProjectDir)Source\Shaders\Compiled\%(Filename).cso.h</HeaderFileOutput>
+      <HeaderFileOutput>$(ProjectDir)Intermediate\Shaders\%(Filename).cso.h</HeaderFileOutput>
       <ShaderModel>5.1</ShaderModel>
     </FxCompile>
   </ItemDefinitionGroup>
@@ -137,7 +137,7 @@
     </FxCompile>
     <FxCompile>
       <ObjectFileOutput />
-      <HeaderFileOutput>$(ProjectDir)Source\Shaders\Compiled\%(Filename).cso.h</HeaderFileOutput>
+      <HeaderFileOutput>$(ProjectDir)Intermediate\Shaders\%(Filename).cso.h</HeaderFileOutput>
       <ShaderModel>5.1</ShaderModel>
     </FxCompile>
   </ItemDefinitionGroup>
@@ -167,7 +167,7 @@
     </FxCompile>
     <FxCompile>
       <ObjectFileOutput />
-      <HeaderFileOutput>$(ProjectDir)Source\Shaders\Compiled\%(Filename).cso.h</HeaderFileOutput>
+      <HeaderFileOutput>$(ProjectDir)Intermediate\Shaders\%(Filename).cso.h</HeaderFileOutput>
       <ShaderModel>5.1</ShaderModel>
     </FxCompile>
   </ItemDefinitionGroup>
@@ -197,7 +197,7 @@
     </FxCompile>
     <FxCompile>
       <ObjectFileOutput />
-      <HeaderFileOutput>$(ProjectDir)Source\Shaders\Compiled\%(Filename).cso.h</HeaderFileOutput>
+      <HeaderFileOutput>$(ProjectDir)Intermediate\Shaders\%(Filename).cso.h</HeaderFileOutput>
       <ShaderModel>5.1</ShaderModel>
     </FxCompile>
   </ItemDefinitionGroup>

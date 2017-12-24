@@ -195,7 +195,7 @@ namespace XEngine
 		DescriptorHeap rtvHeap;
 		DescriptorHeap dsvHeap;
 		DescriptorHeap srvHeap;
-		GPUQueue graphicsGPUQueue;
+		GPUQueue gpuGraphicsQueue;
 		UploadEngine uploadEngine;
 		GraphicsCommandListPool graphicsCommandListPool;
 

@@ -364,7 +364,7 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 	d3dCommandList->Close();
 
 	ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
-	device->graphicsGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
+	device->gpuGraphicsQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
 
 	device->graphicsCommandListPool.releaseDefault();
 
