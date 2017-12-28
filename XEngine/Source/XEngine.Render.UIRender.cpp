@@ -70,7 +70,7 @@ void XERUIRender::flushCommandList()
 
 	d3dCommandList->Close();
 	ID3D12CommandList *d3dCommandLists[] = { d3dCommandList };
-	device->graphicsGPUQueue.execute(d3dCommandLists, countof(d3dCommandLists));
+	device->gpuGraphicsQueue.execute(d3dCommandLists, countof(d3dCommandLists));
 
 	commandListInitialized = false;
 	vertexBufferUsedBytes = 0;
