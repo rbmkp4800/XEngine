@@ -1,4 +1,4 @@
-Texture2D<float> depthTexture : register(t2);
+Texture2D<float> depthTexture : register(t0, space1);
 
 float main(float4 position : SV_Position) : SV_Depth
 {

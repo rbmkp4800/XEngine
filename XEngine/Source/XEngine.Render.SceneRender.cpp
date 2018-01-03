@@ -226,8 +226,8 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 
 		// downscale depth buffer ===========================================================//
 		{
-			d3dCommandList->SetGraphicsRootSignature(device->d3dLightingPassRS);
-			d3dCommandList->SetGraphicsRootDescriptorTable(1, device->srvHeap.getGPUHandle(srvDescriptors));
+			// graphics root signature = d3dDefaultGraphicsRS after objects pass
+			d3dCommandList->SetGraphicsRootDescriptorTable(3, device->srvHeap.getGPUHandle(srvDescriptors + 2));
 			d3dCommandList->SetPipelineState(device->d3dDepthBufferDownscalePSO);
 			d3dCommandList->DrawInstanced(3, 1, 0, 0);
 		}
@@ -249,7 +249,7 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 			d3dCommandList->SetPipelineState(device->d3dClearDefaultUAVxPSO);
 			d3dCommandList->Dispatch(tempBufferSize / (sizeof(uint32) * 1024), 1, 1);	// TODO: refactor that 1024
 
-			d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
+			// graphics root signature = d3dDefaultGraphicsRS after objects pass
 			d3dCommandList->SetGraphicsRootShaderResourceView(2, scene->d3dTransformsBuffer->GetGPUVirtualAddress());
 			d3dCommandList->SetGraphicsRootUnorderedAccessView(4, d3dTempBuffer->GetGPUVirtualAddress() + sizeof(uint32));
 			d3dCommandList->SetPipelineState(device->d3dOCxBBoxDrawPSO);

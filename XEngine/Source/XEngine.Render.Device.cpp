@@ -80,7 +80,9 @@ bool XERDevice::initialize()
 			D3D12RootParameter_Constants(1, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX),
 			D3D12RootParameter_SRV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
+				// TODO: need this for objects pass (transforms). Maybe move to separate RS
 			D3D12RootParameter_UAV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
+				// TODO: remove after moving OC to CPU
 		};
 
 		D3D12_STATIC_SAMPLER_DESC staticSapmplers[] =
@@ -189,7 +191,7 @@ bool XERDevice::initialize()
 	// depth buffer downscale PSO
 	{
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-		psoDesc.pRootSignature = d3dLightingPassRS;
+		psoDesc.pRootSignature = d3dDefaultGraphicsRS;
 		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
 		psoDesc.PS = D3D12ShaderBytecode(Shaders::DepthBufferDownscalePS.data, Shaders::DepthBufferDownscalePS.size);
 		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
