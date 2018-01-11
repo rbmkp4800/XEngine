@@ -311,10 +311,18 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, TimestampId::OcclusionCullingFinished);
 
-	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture,
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
 	// lighting pass ========================================================================//
+	{
+		D3D12_RESOURCE_BARRIER d3dBarriers[] =
+		{
+			D3D12ResourceBarrier_Transition(d3dDiffuseTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+			D3D12ResourceBarrier_Transition(d3dNormalTexture, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+			D3D12ResourceBarrier_Transition(d3dDepthTexture, D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+			D3D12ResourceBarrier_Transition(target->d3dTexture, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET)
+		};
+		d3dCommandList->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
+	}
+
 	{
 		D3D12_CPU_DESCRIPTOR_HANDLE targetRTVDescriptorHandle = device->rtvHeap.getCPUHandle(target->rtvDescriptor);
 		d3dCommandList->OMSetRenderTargets(1, &targetRTVDescriptorHandle, FALSE, nullptr);
@@ -327,6 +335,16 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 		d3dCommandList->SetGraphicsRootDescriptorTable(1, device->srvHeap.getGPUHandle(srvDescriptors));
 		d3dCommandList->SetPipelineState(device->d3dLightingPassPSO);
 		d3dCommandList->DrawInstanced(3, 1, 0, 0);
+	}
+
+	{
+		D3D12_RESOURCE_BARRIER d3dBarriers[] =
+		{
+			D3D12ResourceBarrier_Transition(d3dDiffuseTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
+			D3D12ResourceBarrier_Transition(d3dNormalTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
+			D3D12ResourceBarrier_Transition(d3dDepthTexture, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
+		};
+		d3dCommandList->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
 	}
 
 	d3dCommandList->EndQuery(device->d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, TimestampId::LightingPassFinished);
