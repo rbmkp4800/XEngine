@@ -17,3 +17,5 @@
 // render util
 #include "XEngine.Render.GeometryGenerator.h"
 #include "XEngine.ResourceLoader.h"
+
+#include "XEngine.Physics.h"

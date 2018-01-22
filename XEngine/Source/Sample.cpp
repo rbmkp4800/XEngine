@@ -25,7 +25,7 @@ void SampleWindow::onCreate(CreationArgs& args)
 	xerConsole.initialize(&xerDevice, &xerFont);
 	xerConsole.setCommandHandler(XEUIConsoleCommandHandler(this, &SampleWindow::onConsoleCommand));
 
-	xerCamera.position = { -5.0f, 0.0f, 0.0f };
+	xerCamera.position = { -10.0f, 0.0f, 2.0f };
 	xerCamera.fov = 1.0f;
 	xerCameraRotation.angles = { 0.0f, 0.0f };
 
@@ -45,16 +45,30 @@ void SampleWindow::onCreate(CreationArgs& args)
 	geometryBase[0].id = 1;
 	geometryBaseEntryCount = 2;
 
-	xerScene.createGeometryInstance(&geometryBase[0].xerGeometry, &xerPlainEffect,
-		Matrix3x4::Translation(5.0f, 5.0f, 2.0f) * Matrix3x4::Scale(2.0f, 2.0f, 2.0f));
+	xerBallAGeoInstId = xerScene.createGeometryInstance(&geometryBase[1].xerGeometry,
+		&xerPlainEffect, Matrix3x4::Identity());
+	xerBallBGeoInstId = xerScene.createGeometryInstance(&geometryBase[1].xerGeometry,
+		&xerPlainEffect, Matrix3x4::Identity());
 
-	for (uint32 i = 0; i < 1024 * 16; i++)
+	/*for (uint32 i = 0; i < 1024 * 16; i++)
 	{
 		xerScene.createGeometryInstance(&geometryBase[1].xerGeometry, &xerPlainEffect,
 			Matrix3x4::Translation(Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f), Random::Global.getF32(-3.0f, 3.0f)) *
 			Matrix3x4::Scale(0.1f, 0.1f, 0.1f) *
 			Matrix3x4::RotationX(Random::Global.getF32(0.0f, 3.14f)) * Matrix3x4::RotationY(Random::Global.getF32(0.0f, 3.14f)));
-	}
+	}*/
+
+	xepBallABody.setMass(1.0f);
+	xepBallABody.setPosition({ 3.0f, 3.0f, 5.0f });
+	xepBallABody.setVelocity({ -3.0f, -2.0f, 4.0f });
+
+	xepBallBBody.setMass(1.0f);
+	xepBallBBody.setPosition({ -3.0f, -3.0f, 5.0f });
+	xepBallBBody.setVelocity({ 1.5f, 3.5f, 0.7f });
+
+	xepWorld.setGravity({ 0.0f, 0.0f, -10.0f });
+	xepWorld.addRigidBody(&xepBallABody);
+	xepWorld.addRigidBody(&xepBallBBody);
 }
 
 void SampleWindow::onResize(ResizingArgs& args)
@@ -137,6 +151,7 @@ void SampleWindow::onCharacter(wchar character)
 
 void SampleWindow::update()
 {
+	// controls
 	float32x3 translation(0.0f, 0.0f, 0.0f);
 	if (controls.forward)
 		translation.z += 0.1f;
@@ -155,8 +170,13 @@ void SampleWindow::update()
 
 	xerCameraRotation.setCameraForwardAndTranslateRotated_cameraVertical(xerCamera, translation);
 
-	XERTargetBuffer *xerTarget = xerWindowTarget.getCurrentTargetBuffer();
+	// physics
+	xepWorld.update(0.01f);
+	xerScene.setGeometryInstanceTransform(xerBallAGeoInstId, Matrix3x4::Translation(xepBallABody.getPosition()));
+	xerScene.setGeometryInstanceTransform(xerBallBGeoInstId, Matrix3x4::Translation(xepBallBBody.getPosition()));
 
+	// rendering
+	XERTargetBuffer *xerTarget = xerWindowTarget.getCurrentTargetBuffer();
 	XERSceneDrawTimings xerTimings = {};
 	xerSceneRender.draw(xerTarget, &xerScene, xerCamera,
 		(controls.wireframe ? XERSceneRenderDebugFlags::Wireframe : 0) |

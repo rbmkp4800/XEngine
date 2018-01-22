@@ -29,6 +29,11 @@ private:
 	XEngine::XERCamera xerCamera;
 	XEngine::XERCameraRotation xerCameraRotation;
 
+	XEngine::Physics::World xepWorld;
+	XEngine::Physics::RigidBody xepBallABody, xepBallBBody;
+
+	XEngine::XERGeometryInstanceId xerBallAGeoInstId, xerBallBGeoInstId;
+
 	GeometryBaseEntry geometryBase[8];
 	uint32 geometryBaseEntryCount = 0;
 

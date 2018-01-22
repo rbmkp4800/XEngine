@@ -206,6 +206,7 @@
     <ClInclude Include="Source\XEngine.Base.h" />
     <ClInclude Include="Source\XEngine.Formats.XEGeometry.h" />
     <ClInclude Include="Source\XEngine.h" />
+    <ClInclude Include="Source\XEngine.Physics.h" />
     <ClInclude Include="Source\XEngine.Render.Camera.h" />
     <ClInclude Include="Source\XEngine.Render.Device.h" />
     <ClInclude Include="Source\XEngine.Render.Effect.h" />
@@ -227,6 +228,7 @@
     <ClCompile Include="Source\Sample.Commands.cpp" />
     <ClCompile Include="Source\Sample.Main.cpp" />
     <ClCompile Include="Source\Sample.cpp" />
+    <ClCompile Include="Source\XEngine.Physics.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.UploadEngine.cpp" />
     <ClCompile Include="Source\XEngine.Render.Effect.cpp" />

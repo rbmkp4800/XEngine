@@ -66,6 +66,9 @@
     <ClCompile Include="Source\XEngine.ResourceLoader.Texture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\XEngine.Physics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\XEngine.Base.h">
@@ -126,6 +129,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Sample.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Physics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
