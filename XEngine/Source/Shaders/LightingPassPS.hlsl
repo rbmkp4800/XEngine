@@ -1,4 +1,5 @@
-static const float specularPower = 10.0f;
+static const float specularPower = 100.0f;
+static const float abmientIntensity = 0.3f;
 static const float glareRadiusScale = 0.5f;
 static const float glareIntensityScale = 0.01f;
 
@@ -6,14 +7,17 @@ static const uint lightsLimit = 4;
 
 struct Light
 {
-	float3 vsPosition;
+	float3 viewSpacePosition;
 	float3 color;
 	float intensity;
 };
 
 cbuffer Constants : register(b0)
 {
-	float zNear, zFar, aspect, fovTg;
+	float ndcToViewDepthConversionA;
+	float ndcToViewDepthConversionB;
+	float aspect;
+	float fovTg;
 	Light lights[lightsLimit];
 	uint lightsCount;
 };
@@ -25,19 +29,18 @@ Texture2D<float> depthTexture : register(t2);
 struct PSInput
 {
 	float4 position : SV_Position;
-	float2 positionNDC : POSITION0;
+	float2 ndcPosition : POSITION0;
 };
 
 float sqr(float value) { return value * value; }
 
-// vs - view space
-float ComputePixelGlareIntensity(float3 vsLightPosition, float glareRadius, float3 vsPixelPosition)
+float ComputePixelGlareIntensity(float3 viewSapceLightPosition, float glareRadius, float3 viewSpacePosition)
 {
-    float viewerToLightDistance = length(vsLightPosition);
-    float3 normalizedVSLightPosition = vsLightPosition / viewerToLightDistance;
+    float viewerToLightDistance = length(viewSapceLightPosition);
+    float3 normalizedViewSapceLightPosition = viewSapceLightPosition / viewerToLightDistance;
 
     // alpha - angle between light direction ray and pixel direction ray
-    float cosAlpha = dot(normalizedVSLightPosition, normalize(vsPixelPosition));
+    float cosAlpha = dot(normalizedViewSapceLightPosition, normalize(viewSpacePosition));
     float sinAlpha = sqrt(saturate(1.0f - sqr(cosAlpha)));
 
     float viewerToGlareSphereIntersectionCenterDistance = cosAlpha * viewerToLightDistance;
@@ -50,10 +53,10 @@ float ComputePixelGlareIntensity(float3 vsLightPosition, float glareRadius, floa
     float intersectionFar = viewerToGlareSphereIntersectionCenterDistance + glareSphereIntersectionHalfLength;
 
 	float result = 0.0f;
-	if (intersectionNear <= vsPixelPosition.z && intersectionFar >= zNear)
+	if (intersectionNear <= viewSpacePosition.z && intersectionFar > 0.0f)
 	{
-		intersectionNear = max(intersectionNear, zNear);
-		intersectionFar = min(intersectionFar, vsPixelPosition.z);
+		intersectionNear = max(intersectionNear, 0.0f);
+		intersectionFar = min(intersectionFar, viewSpacePosition.z);
 		intersectionNear -= viewerToGlareSphereIntersectionCenterDistance;
 		intersectionFar -= viewerToGlareSphereIntersectionCenterDistance;
 
@@ -71,24 +74,35 @@ float ComputePixelGlareIntensity(float3 vsLightPosition, float glareRadius, floa
 	return result;
 }
 
+float NDCDepthToViewSpaceDepth(float ndcDepth)
+{
+	// result = (zFar * zNear) / (zFar - ndcDepth * (zFar - zNear));
+
+	// optimized:
+	// ndcToViewDepthConversionA = (zFar * zNear) / (zFar - zNear);
+	// ndcToViewDepthConversionB = zFar / (zFar - zNear);
+
+	return ndcToViewDepthConversionA / (ndcToViewDepthConversionB - ndcDepth);
+}
+
 float4 main(PSInput input) : SV_Target
 {
 	int2 texPosition = int2(input.position.xy);
 
-	float depthNDC = depthTexture[texPosition];
+	float ndcDepth = depthTexture[texPosition];
 
-    float depth = (zFar * zNear) / (zFar - depthNDC * (zFar - zNear));
-    float3 vsPixelPosition = float3(input.positionNDC * depth * fovTg, depth);
-    vsPixelPosition.x *= aspect;
-    float3 normalizedVSPixelPosition = normalize(vsPixelPosition);
+	float viewSpaceDepth = NDCDepthToViewSpaceDepth(ndcDepth);
+    float3 viewSpacePosition = float3(input.ndcPosition * viewSpaceDepth * fovTg, viewSpaceDepth);
+	viewSpacePosition.x *= aspect;
+    float3 normalizedViewSpacePosition = normalize(viewSpacePosition);
 
-    if (depthNDC == 1.0f)
+    if (ndcDepth == 1.0f)
     {
         float3 glare = float3(0.0f, 0.0f, 0.0f);
         for (uint i = 0; i < lightsCount; i++)
         {
-            float glareIntensity = ComputePixelGlareIntensity(lights[i].vsPosition,
-                lights[i].intensity * glareRadiusScale, vsPixelPosition);
+            float glareIntensity = ComputePixelGlareIntensity(lights[i].viewSpacePosition,
+                lights[i].intensity * glareRadiusScale, viewSpacePosition);
             glare += lights[i].color * glareIntensity * glareIntensityScale;
         }
 
@@ -99,7 +113,7 @@ float4 main(PSInput input) : SV_Target
         float4 diffuseColor = diffuseTexture[texPosition];
         float3 normal = float3(normalTexture[texPosition], 0.0f);
         normal.z = -sqrt(saturate(1.0f - sqr(normal.x) - sqr(normal.y)));
-	                       // ^^^ can be less then 0 (precision)
+	                           // ^^^ can be less then 0 (precision issue)
 
         float3 diffuse = float3(0.0f, 0.0f, 0.0f);
         float3 specular = float3(0.0f, 0.0f, 0.0f);
@@ -107,7 +121,7 @@ float4 main(PSInput input) : SV_Target
 
         for (uint i = 0; i < lightsCount; i++)
         {
-            float3 pixelToLightVector = lights[i].vsPosition - vsPixelPosition;
+            float3 pixelToLightVector = lights[i].viewSpacePosition - viewSpacePosition;
             float pixelToLightDistance = length(pixelToLightVector);
             float3 normalizedPixelToLightVector = pixelToLightVector / pixelToLightDistance;
 
@@ -118,19 +132,19 @@ float4 main(PSInput input) : SV_Target
             }
 
             {
-                float3 reflectVector = reflect(normalizedVSPixelPosition, normal);
+                float3 reflectVector = reflect(normalizedViewSpacePosition, normal);
                 float isFacingLightCoef = saturate(sign(dot(normal, normalizedPixelToLightVector)));
                 specular += lights[i].color * lights[i].intensity * 0.03f *
-			    pow(saturate(dot(normalizedPixelToLightVector, reflectVector)) * isFacingLightCoef, specularPower);
+					pow(saturate(dot(normalizedPixelToLightVector, reflectVector)) * isFacingLightCoef, specularPower);
             }
 
             {
-                float glareIntensity = ComputePixelGlareIntensity(lights[i].vsPosition,
-                lights[i].intensity * glareRadiusScale, vsPixelPosition);
+                float glareIntensity = ComputePixelGlareIntensity(lights[i].viewSpacePosition,
+                lights[i].intensity * glareRadiusScale, viewSpacePosition);
                 glare += lights[i].color * glareIntensity * glareIntensityScale;
             }
         }
 
-        return float4(diffuseColor.xyz * (diffuse + specular) + glare, 1.0f);
+        return float4(diffuseColor.xyz * (abmientIntensity + diffuse + specular) + glare, 1.0f);
     }
 }

@@ -47,7 +47,10 @@ namespace XEngine::Internal
 	{
 		static constexpr uint32 lightsLimit = 4;
 
-		float32 zNear, zFar, aspect, fovTg;
+		float32 ndcToViewDepthConversionA;
+		float32 ndcToViewDepthConversionB;
+		float32 aspect;
+		float32 fovTg;
 
 		struct Light
 		{
@@ -154,8 +157,10 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 		mappedCameraTransformCB->viewProjection = viewProjection;
 		mappedCameraTransformCB->view = view;
 
-		mappedLightingPassCB->zNear = camera.zNear;
-		mappedLightingPassCB->zFar = camera.zFar;
+		mappedLightingPassCB->ndcToViewDepthConversionA =
+			(camera.zFar * camera.zNear) / (camera.zFar - camera.zNear);
+		mappedLightingPassCB->ndcToViewDepthConversionB =
+			camera.zFar / (camera.zFar - camera.zNear);
 		mappedLightingPassCB->aspect = aspect;
 		mappedLightingPassCB->fovTg = Math::Tan(camera.fov / 2.0f);
 
