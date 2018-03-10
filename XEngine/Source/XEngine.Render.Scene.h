@@ -48,13 +48,12 @@ namespace XEngine
 
 		XLib::Platform::COMPtr<ID3D12Resource> d3dGeometryInstacesBuffer;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dTransformsBuffer;
-		XLib::Platform::COMPtr<ID3D12Resource> d3dBVHBuffer;
 		XLib::Matrix3x4 *mappedTransformsBuffer = nullptr;
 		Internal::GPUGeometryInstanceDesc *mappedGeometryInstacesBuffer = nullptr;
-		Internal::GPUxBVHNode *mappedBVHBuffer = nullptr;
 
-		uint32 geometryInstancesBufferSize = 0, transformsBufferSize = 0, bvhBufferSize;
-		uint32 geometryInstanceCount = 0, bvhNodeCount = 0;
+		uint32 geometryInstancesBufferSize = 0;
+		uint32 transformsBufferSize = 0;
+		uint32 geometryInstanceCount = 0;
 
 		EffectData effectsDataList[8];
 		uint32 effectCount = 0;

@@ -93,7 +93,6 @@ void SampleWindow::onKeyboard(VirtualKey key, bool state)
 	case VirtualKey('E'):	controls.up = state;		break;
 	case VirtualKey('Q'):	controls.down = state;		break;
 	case VirtualKey('1'):	controls.wireframe = state;	break;
-	case VirtualKey('2'):	controls.ocBBoxes = state;	break;
 	case VirtualKey('Z'):	controls.coefUp = state;	break;
 	case VirtualKey('X'):	controls.coefDown = state;	break;
 
@@ -179,8 +178,7 @@ void SampleWindow::update()
 	XERTargetBuffer *xerTarget = xerWindowTarget.getCurrentTargetBuffer();
 	XERSceneDrawTimings xerTimings = {};
 	xerSceneRender.draw(xerTarget, &xerScene, xerCamera,
-		(controls.wireframe ? XERSceneRenderDebugFlags::Wireframe : 0) |
-		(controls.ocBBoxes ? XERSceneRenderDebugFlags::OCxBBoxes : 0),
+		controls.wireframe ? XERSceneRenderDebugFlags::Wireframe : 0,
 		ocUpdatesEnabled, &xerTimings);
 
 	// TODO: manage target buffer state transitions before and after UI rendering

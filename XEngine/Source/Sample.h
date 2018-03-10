@@ -38,7 +38,7 @@ private:
 	uint32 geometryBaseEntryCount = 0;
 
 	uint16 width, height;
-	struct { bool left, right, up, down, forward, backward, wireframe, ocBBoxes, narrowFOV, coefUp, coefDown; } controls = {};
+	struct { bool left, right, up, down, forward, backward, wireframe, narrowFOV, coefUp, coefDown; } controls = {};
 	sint16x2 mouseLastPos = { 0, 0 };
 	bool captureMouseToCameraRotation = false;
 	bool ocUpdatesEnabled = false;

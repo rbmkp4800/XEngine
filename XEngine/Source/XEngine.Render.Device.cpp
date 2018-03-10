@@ -237,28 +237,6 @@ bool XERDevice::initialize()
 		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dDebugWireframePSO.uuid(), d3dDebugWireframePSO.voidInitRef());
 	}
 
-	// debug OC BBox draw PSO
-	{
-		// TODO: change RS to disable input assembler
-
-		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-		psoDesc.pRootSignature = d3dDefaultGraphicsRS;
-		psoDesc.VS = D3D12ShaderBytecode(Shaders::DebugOCxBBoxVS.data, Shaders::DebugOCxBBoxVS.size);
-		psoDesc.PS = D3D12ShaderBytecode(Shaders::DebugWhitePS.data, Shaders::DebugWhitePS.size);
-		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
-		psoDesc.SampleMask = UINT_MAX;
-		psoDesc.RasterizerState = D3D12RasterizerDesc(D3D12_CULL_MODE_NONE);
-		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Disable();
-		psoDesc.InputLayout = D3D12InputLayoutDesc();
-		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-		psoDesc.NumRenderTargets = 1;
-		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-		psoDesc.SampleDesc.Count = 1;
-		psoDesc.SampleDesc.Quality = 0;
-
-		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dDebugOCxBBoxPSO.uuid(), d3dDebugOCxBBoxPSO.voidInitRef());
-	}
-
 	// UI color PSO
 	{
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =

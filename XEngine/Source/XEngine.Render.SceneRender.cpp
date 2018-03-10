@@ -368,16 +368,6 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 		}
 	}
 
-	if (debugFlags & XERSceneRenderDebugFlags::OCxBBoxes)
-	{
-		d3dCommandList->SetGraphicsRootSignature(device->d3dDefaultGraphicsRS);
-		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dCameraTransformCB->GetGPUVirtualAddress());
-		d3dCommandList->SetGraphicsRootShaderResourceView(2, scene->d3dBVHBuffer->GetGPUVirtualAddress());
-		d3dCommandList->SetPipelineState(device->d3dDebugOCxBBoxPSO);
-		d3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-		d3dCommandList->DrawInstanced(24 * scene->bvhNodeCount, 1, 0, 0);
-	}
-
 	d3dCommandList->ResourceBarrier(1, &D3D12ResourceBarrier_Transition(target->d3dTexture,
 		D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 

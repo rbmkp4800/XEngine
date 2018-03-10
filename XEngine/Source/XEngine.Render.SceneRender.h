@@ -21,8 +21,7 @@ namespace XEngine
 	{
 	public:
 		static constexpr uint32
-			Wireframe = 1,
-			OCxBBoxes = 2;
+			Wireframe = 1;
 	};
 
 	struct XERSceneDrawTimings

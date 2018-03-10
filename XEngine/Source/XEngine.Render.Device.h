@@ -177,7 +177,6 @@ namespace XEngine
 
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;
-		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDebugOCxBBoxPSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dUIColorPSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dUIFontPSO;
 

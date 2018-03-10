@@ -14,7 +14,6 @@ using namespace XEngine::Internal;
 
 static constexpr uint32 initialGeometryInstancesBufferSize = 65536;
 static constexpr uint32 initialTransformsBufferSize = 65536;
-static constexpr uint32 initialBVHBufferSize = 65536;
 static constexpr uint32 initialCommandsBufferSize = 65536;
 
 void XERScene::initialize(XERDevice* device)
@@ -23,9 +22,7 @@ void XERScene::initialize(XERDevice* device)
 
 	geometryInstancesBufferSize = initialGeometryInstancesBufferSize;
 	transformsBufferSize = initialTransformsBufferSize;
-	bvhBufferSize = initialBVHBufferSize;
 	geometryInstanceCount = 0;
-	bvhNodeCount = 0;
 	effectCount = 0;
 	lightCount = 0;
 
@@ -38,14 +35,9 @@ void XERScene::initialize(XERDevice* device)
 		&D3D12ResourceDesc_Buffer(sizeof(Matrix3x4) * transformsBufferSize),
 		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
 		d3dTransformsBuffer.uuid(), d3dTransformsBuffer.voidInitRef());
-	d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-		&D3D12ResourceDesc_Buffer(sizeof(GPUxBVHNode) * bvhBufferSize),
-		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		d3dBVHBuffer.uuid(), d3dBVHBuffer.voidInitRef());
 
  	d3dGeometryInstacesBuffer->Map(0, &D3D12Range(), to<void**>(&mappedGeometryInstacesBuffer));
 	d3dTransformsBuffer->Map(0, &D3D12Range(), to<void**>(&mappedTransformsBuffer));
-	d3dBVHBuffer->Map(0, &D3D12Range(), to<void**>(&mappedBVHBuffer));
 }
 
 XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry,
@@ -99,41 +91,6 @@ XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry,
 	command.drawIndexedArguments.BaseVertexLocation = 0;
 	command.drawIndexedArguments.StartInstanceLocation = id;
 	command.geometryInstanceId = id;
-
-	{
-		GPUxBVHNode &bvhNode = mappedBVHBuffer[bvhNodeCount];
-		bvhNodeCount++;
-
-		float32x3 convexHullVertices[] =
-		{
-			{ -1.0f, -1.0f, -1.0f },
-			{ -1.0f, -1.0f,  1.0f },
-			{ -1.0f,  1.0f, -1.0f },
-			{ -1.0f,  1.0f,  1.0f },
-
-			{  1.0f, -1.0f, -1.0f },
-			{  1.0f, -1.0f,  1.0f },
-			{  1.0f,  1.0f, -1.0f },
-			{  1.0f,  1.0f,  1.0f },
-		};
-
-		for each (float32x3& vertex in convexHullVertices)
-			vertex = vertex * transform;
-
-		bvhNode.bboxMin = convexHullVertices[0];
-		bvhNode.bboxMax = convexHullVertices[0];
-
-		for (uint32 i = 1; i < countof(convexHullVertices); i++)
-		{
-			bvhNode.bboxMin.x = { min(bvhNode.bboxMin.x, convexHullVertices[i].x) };
-			bvhNode.bboxMin.y = { min(bvhNode.bboxMin.y, convexHullVertices[i].y) };
-			bvhNode.bboxMin.z = { min(bvhNode.bboxMin.z, convexHullVertices[i].z) };
-
-			bvhNode.bboxMax.x = { max(bvhNode.bboxMax.x, convexHullVertices[i].x) };
-			bvhNode.bboxMax.y = { max(bvhNode.bboxMax.y, convexHullVertices[i].y) };
-			bvhNode.bboxMax.z = { max(bvhNode.bboxMax.z, convexHullVertices[i].z) };
-		}
-	}
 
 	device->uploadEngine.uploadBuffer(effectData->d3dCommandsBuffer,
 		effectData->commandCount * sizeof(GPUDefaultDrawingIC),
