@@ -85,14 +85,14 @@ bool XERDevice::initialize()
 				// TODO: remove after moving OC to CPU
 		};
 
-		D3D12_STATIC_SAMPLER_DESC staticSapmplers[] =
+		D3D12_STATIC_SAMPLER_DESC staticSamplers[] =
 		{
 			D3D12StaticSamplerDesc_Default(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
 		COMPtr<ID3DBlob> d3dSignature, d3dError;
 		D3D12SerializeRootSignature(&D3D12RootSignatureDesc(countof(rootParameters), rootParameters,
-			countof(staticSapmplers), staticSapmplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),
+			countof(staticSamplers), staticSamplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),
 			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
 		d3dDevice->CreateRootSignature(0, d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
 			d3dDefaultGraphicsRS.uuid(), d3dDefaultGraphicsRS.voidInitRef());
@@ -153,14 +153,14 @@ bool XERDevice::initialize()
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
-		D3D12_STATIC_SAMPLER_DESC staticSapmplers[] =
+		D3D12_STATIC_SAMPLER_DESC staticSamplers[] =
 		{
 			D3D12StaticSamplerDesc_DisableMIPs(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
 		COMPtr<ID3DBlob> d3dSignature, d3dError;
 		D3D12SerializeRootSignature(&D3D12RootSignatureDesc(countof(rootParameters), rootParameters,
-			countof(staticSapmplers), staticSapmplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),
+			countof(staticSamplers), staticSamplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),
 			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
 		d3dDevice->CreateRootSignature(0, d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
 			d3dUIPassRS.uuid(), d3dUIPassRS.voidInitRef());

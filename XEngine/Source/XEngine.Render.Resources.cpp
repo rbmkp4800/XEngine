@@ -45,7 +45,7 @@ void XERTexture::initialize(XERDevice* device, const void* data, uint32 width, u
 	device->d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAG_NONE, &D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height),
 		D3D12_RESOURCE_STATE_COPY_DEST, nullptr, d3dTexture.uuid(), d3dTexture.voidInitRef());
-	device->uploadEngine.uploadTextureAndGenerateMIPMaps(d3dTexture, data, width * 4, to<void*>(data));
+	device->uploadEngine.uploadTexture2DAndGenerateMIPs(d3dTexture, data, width * 4, to<void*>(data));
 
 	srvDescriptor = device->srvHeap.allocateDescriptors(1);
 	device->d3dDevice->CreateShaderResourceView(d3dTexture, nullptr, device->srvHeap.getCPUHandle(srvDescriptor));
@@ -85,5 +85,5 @@ void XERMonospacedFont::initializeA1(XERDevice* device, uint8* bitmapA1,
 
 	srvDescriptor = device->srvHeap.allocateDescriptors(1);
 	device->d3dDevice->CreateShaderResourceView(d3dTexture, nullptr, device->srvHeap.getCPUHandle(srvDescriptor));
-	device->uploadEngine.uploadTextureAndGenerateMIPMaps(d3dTexture, bitmap, textureWidth, bitmap);
+	device->uploadEngine.uploadTexture2DAndGenerateMIPs(d3dTexture, bitmap, textureWidth, bitmap);
 }
