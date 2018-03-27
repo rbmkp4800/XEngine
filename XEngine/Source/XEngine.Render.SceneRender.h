@@ -26,6 +26,7 @@ namespace XEngine
 
 	struct XERSceneDrawTimings
 	{
+		float32 commandListRecorded;
 		float32 objectsPassFinished;
 		float32 occlusionCullingDownscaleFinished;
 		float32 occlusionCullingBBoxDrawFinished;

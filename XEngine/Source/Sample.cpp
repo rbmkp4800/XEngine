@@ -185,7 +185,8 @@ void SampleWindow::update()
 	xerUIRender.beginDraw(xerTarget);
 	{
 		float32 totalFrameTime = xerTimings.lightingPassFinished;
-		float32 objectPassTime = xerTimings.objectsPassFinished;
+		float32 commandListRecordingTime = xerTimings.commandListRecorded;
+		float32 objectPassTime = xerTimings.objectsPassFinished - xerTimings.commandListRecorded;
 		float32 occlusionCullingTime = xerTimings.occlusionCullingFinished - xerTimings.objectsPassFinished;
 		float32 occlusionCullingDownscaleTime = xerTimings.occlusionCullingDownscaleFinished - xerTimings.objectsPassFinished;
 		float32 occlusionCullingBBoxDrawTime = xerTimings.occlusionCullingBBoxDrawFinished - xerTimings.occlusionCullingDownscaleFinished;
@@ -193,6 +194,7 @@ void SampleWindow::update()
 		float32 ligtingPassTime = xerTimings.lightingPassFinished - xerTimings.occlusionCullingFinished;
 
 		totalFrameTime *= 1000.0f;
+		commandListRecordingTime *= 1000.0f;
 		objectPassTime *= 1000.0f;
 		occlusionCullingTime *= 1000.0f;
 		occlusionCullingDownscaleTime *= 1000.0f;
@@ -204,13 +206,14 @@ void SampleWindow::update()
 			char buffer[512];
 			sprintf(buffer, "XEngine v0.0001 by RBMKP4800\nRunning %s\n"
 				"Total frame time %5.2f ms\n"
+				"CPU %5.2f ms\n"
 				"OP %5.2f ms\n"
 				"OC %5.2f ms (%5.2f %5.2f %5.2f)\n"
 				"LP %5.2f ms\n"
 				"OC updates %s\n"
 				"Cam (%4.2f %4.2f %4.2f) -> (%4.2f %4.2f %4.2f)\n"
 				"WORK IN PROGRESS",
-				xerDevice.getName(), totalFrameTime, objectPassTime,
+				xerDevice.getName(), totalFrameTime, commandListRecordingTime, objectPassTime,
 				occlusionCullingTime,
 				occlusionCullingDownscaleTime, occlusionCullingBBoxDrawTime, occlusionCullingCommandListUpdateTime,
 				ligtingPassTime,
@@ -232,6 +235,7 @@ void SampleWindow::update()
 
 		float32 stackedBarChartValues[] =
 		{
+			commandListRecordingTime,
 			objectPassTime,
 			occlusionCullingDownscaleTime,
 			occlusionCullingBBoxDrawTime,
@@ -241,6 +245,7 @@ void SampleWindow::update()
 
 		uint32 colors[] =
 		{
+			0xE34192_rgb,
 			0x3BD3A0_rgb,
 			0xE3B841_rgb,
 			0xE5753B_rgb,

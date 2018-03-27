@@ -2,6 +2,7 @@
 
 #include <XLib.Math.Matrix4x4.h>
 #include <XLib.Platform.D3D12.Helpers.h>
+#include <XLib.System.Timer.h>
 
 #include "XEngine.Render.SceneRender.h"
 #include "XEngine.Render.Device.h"
@@ -134,6 +135,8 @@ bool XERSceneRender::initialize(XERDevice* device)
 void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCamera& camera,
 	uint32 debugFlags, bool updateOcclusionCulling, XERSceneDrawTimings* timings)
 {
+	TimerRecord cpuStartTimestamp = Timer::GetRecord();
+
 	device->uploadEngine.flush();
 
 	ID3D12GraphicsCommandList *d3dCommandList = nullptr;
@@ -376,6 +379,8 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 
 	d3dCommandList->Close();
 
+	TimerRecord cpuFlushTimestamp = Timer::GetRecord();
+
 	ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
 	device->gpuGraphicsQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
 
@@ -390,6 +395,9 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 		for (uint32 i = 0; i < TimestampId::TimestampCount; i++)
 			timestamps[i] -= startTimestamp;
 
+		float32 cpuCommandListRecordTime = Timer::GetTimeDelta(cpuStartTimestamp, cpuFlushTimestamp);
+
+		timings->commandListRecorded = cpuCommandListRecordTime;
 		timings->objectsPassFinished = timestamps[TimestampId::ObjectPassFinished] * device->gpuTickPeriod;
 		if (updateOcclusionCulling)
 		{
@@ -404,6 +412,12 @@ void XERSceneRender::draw(XERTargetBuffer* target, XERScene* scene, const XERCam
 			timings->occlusionCullingFinished = timings->objectsPassFinished;
 		}
 		timings->lightingPassFinished = timestamps[TimestampId::LightingPassFinished] * device->gpuTickPeriod;
+
+		timings->objectsPassFinished += cpuCommandListRecordTime;
+		timings->occlusionCullingDownscaleFinished += cpuCommandListRecordTime;
+		timings->occlusionCullingBBoxDrawFinished += cpuCommandListRecordTime;
+		timings->occlusionCullingFinished += cpuCommandListRecordTime;
+		timings->lightingPassFinished += cpuCommandListRecordTime;
 
 		device->d3dReadbackBuffer->Unmap(0, nullptr);
 	}
