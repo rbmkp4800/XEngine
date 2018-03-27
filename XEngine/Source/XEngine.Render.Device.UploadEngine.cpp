@@ -45,6 +45,8 @@ void XERDevice::UploadEngine::uploadTexture2DMIPLevel(DXGI_FORMAT format,
 		uint16 rowsFitToBuffer = uint16((uploadBufferSize - uploadBufferBytesUsed) / uploadRowPitch);
 		uint16 rowsToUpload = min<uint16>(rowsFitToBuffer, height - rowsUploaded);
 
+		// TODO: [CRITICAL] handle case, when rowsFitToBuffer == 0 !!!
+
 		for (uint32 i = 0; i < rowsToUpload; i++)
 		{
 			Memory::Copy(mappedUploadBuffer + uploadBufferBytesUsed + i * uploadRowPitch,
@@ -74,23 +76,31 @@ void XERDevice::UploadEngine::uploadTexture2DMIPLevel(DXGI_FORMAT format,
 
 		rowsUploaded += rowsToUpload;
 	}
+
+	commandListDirty = true;
 }
 
 void XERDevice::UploadEngine::flushCommandList()
 {
-	d3dCommandList->Close();
+	if (commandListDirty)
+	{
+		d3dCommandList->Close();
 
-	ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
-	copyGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
+		ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
+		copyGPUQueue.execute(d3dCommandListsToExecute, countof(d3dCommandListsToExecute));
 
-	d3dCommandAllocator->Reset();
-	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
+		d3dCommandAllocator->Reset();
+		d3dCommandList->Reset(d3dCommandAllocator, nullptr);
+
+		commandListDirty = false;
+	}
 }
 
 void XERDevice::UploadEngine::flushLastBufferUploadToCommandList()
 {
-	if (d3dLastBufferUploadResource.isInitialized())
+	if (d3dLastBufferUploadResource)
 	{
+		commandListDirty = true;
 		d3dCommandList->CopyBufferRegion(d3dLastBufferUploadResource, lastBufferUploadDestOffset,
 			d3dUploadBuffer, uploadBufferBytesUsed - lastBufferUploadSize, lastBufferUploadSize);
 
@@ -111,6 +121,8 @@ void XERDevice::UploadEngine::flush()
 void XERDevice::UploadEngine::uploadTexture2DAndGenerateMIPs(ID3D12Resource* d3dDstTexture,
 	const void* sourceData, uint32 sourceRowPitch, void* mipsGenerationBuffer)
 {
+	flushLastBufferUploadToCommandList();
+
 	D3D12_RESOURCE_DESC desc = d3dDstTexture->GetDesc();
 	uint16 pixelPitch = 0;
 	switch (desc.Format)
@@ -156,9 +168,6 @@ void XERDevice::UploadEngine::uploadTexture2DAndGenerateMIPs(ID3D12Resource* d3d
 		mipSourceData = to<byte*>(mipsGenerationBuffer);
 		mipSourceRowPitch = mipSize.x * pixelPitch;
 	}
-
-	flushCommandList();
-	uploadBufferBytesUsed = 0;
 }
 
 void XERDevice::UploadEngine::uploadTexture3DRegion(ID3D12Resource* d3dDstTexture,
@@ -169,7 +178,9 @@ void XERDevice::UploadEngine::uploadTexture3DRegion(ID3D12Resource* d3dDstTextur
 	// WARNING: temporary implementation. Assuming that entire region fits into upload buffer
 	// TODO: implement proper solution
 
+	// TODO: implement upload buffer remaining free space usage instead of complete flush
 	flush();
+	// flushLastBufferUploadToCommandList();
 
 	D3D12_RESOURCE_DESC desc = d3dDstTexture->GetDesc();
 
@@ -220,6 +231,7 @@ void XERDevice::UploadEngine::uploadTexture3DRegion(ID3D12Resource* d3dDstTextur
 	srcLocation.PlacedFootprint.Footprint.Depth = depth;
 	srcLocation.PlacedFootprint.Footprint.RowPitch = uploadRowPitch;
 
+	commandListDirty = true;
 	d3dCommandList->CopyTextureRegion(&D3D12TextureCopyLocation(d3dDstTexture, 0),
 		dstLeft, dstTop, dstFront, &srcLocation, &D3D12Box(0, width, 0, height, 0, depth));
 
@@ -263,6 +275,7 @@ void XERDevice::UploadEngine::uploadBuffer(ID3D12Resource* d3dDestBuffer,
 				bytesUploaded = aligndown(uploadBufferSize - uploadBufferBytesUsed, uploadFragmentMinSize);
 				Memory::Copy(mappedUploadBuffer + uploadBufferBytesUsed, data, bytesUploaded);
 
+				commandListDirty = true;
 				d3dCommandList->CopyBufferRegion(d3dDestBuffer, destOffset,
 					d3dUploadBuffer, uploadBufferBytesUsed, bytesUploaded);
 			}
@@ -276,6 +289,8 @@ void XERDevice::UploadEngine::uploadBuffer(ID3D12Resource* d3dDestBuffer,
 	for (uint32 i = 0; i < uploadCount; i++)
 	{
 		Memory::Copy(mappedUploadBuffer, to<byte*>(data) + bytesUploaded, uploadBufferSize);
+
+		commandListDirty = true;
 		d3dCommandList->CopyBufferRegion(d3dDestBuffer, destOffset + bytesUploaded,
 			d3dUploadBuffer, 0, uploadBufferSize);
 		flushCommandList();

@@ -107,9 +107,10 @@ namespace XEngine
 
 			uint32 uploadBufferBytesUsed = 0;
 
-			XLib::Platform::COMPtr<ID3D12Resource> d3dLastBufferUploadResource;
+			ID3D12Resource *d3dLastBufferUploadResource = nullptr;
 			uint64 lastBufferUploadDestOffset = 0;
 			uint32 lastBufferUploadSize = 0;
+			bool commandListDirty = false;
 
 			void initalize(ID3D12Device* d3dDevice);
 
