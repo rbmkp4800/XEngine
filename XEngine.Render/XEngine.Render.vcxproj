@@ -173,6 +173,7 @@
     <ClInclude Include="Source\XEngine.Render.Scene.h" />
     <ClInclude Include="Source\XEngine.Render.SceneRenderer.h" />
     <ClInclude Include="Source\XEngine.Render.Device.TextureHeap.h" />
+    <ClInclude Include="Source\XEngine.Render.Target.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\XEngine.Render.Device.SceneRendererResources.cpp" />

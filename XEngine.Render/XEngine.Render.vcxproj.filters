@@ -45,6 +45,9 @@
     <ClInclude Include="Source\XEngine.Render.Internal.RootSignaturesConfig.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.Target.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\XEngine.Render.SceneRenderer.cpp">
