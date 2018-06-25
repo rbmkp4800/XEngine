@@ -11,9 +11,10 @@ uint32 __stdcall MainWindow::DispatchThreadMain(MainWindow* self)
 
 void MainWindow::dispatchThreadMain()
 {
+	window.create(1280, 720, L"XEngine");
+
 	controlEvent.set();
 
-	window.create(1280, 720, L"XEngine");
 	WindowBase::DispatchAll();
 }
 

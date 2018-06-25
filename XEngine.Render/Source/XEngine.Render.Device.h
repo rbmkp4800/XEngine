@@ -3,15 +3,26 @@
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
 #include <XLib.Platform.COMPtr.h>
+#include <XLib.Color.h>
 
 #include "XEngine.Render.Base.h"
-#include "XEngine.Render.Device.SceneRendererResources.h"
+#include "XEngine.Render.Device.DescriptorHeap.h"
+#include "XEngine.Render.Device.UploadEngine.h"
+#include "XEngine.Render.Device.SceneRenderer.h"
 #include "XEngine.Render.Device.GeometryHeap.h"
 #include "XEngine.Render.Device.TextureHeap.h"
 #include "XEngine.Render.Device.EffectHeap.h"
 #include "XEngine.Render.Device.MaterialHeap.h"
 
 struct ID3D12Device;
+struct IDXGIFactory5;
+struct ID3D12DescriptorHeap;
+
+namespace XEngine::Render { class Camera; }
+namespace XEngine::Render { class Scene; }
+namespace XEngine::Render { class Target; }
+namespace XEngine::Render { class GBuffer; }
+namespace XEngine::Render { class SwapChain; }
 
 namespace XEngine::Render
 {
@@ -22,24 +33,40 @@ namespace XEngine::Render
 
 	class Device : public XLib::NonCopyable
 	{
-		friend SceneRenderer;
+		friend Device_::SceneRenderer;
+		friend GBuffer;
+		friend SwapChain;
 
 	private:
 		XLib::Platform::COMPtr<ID3D12Device> d3dDevice;
+		static XLib::Platform::COMPtr<IDXGIFactory5> dxgiFactory;
 
-		Device_::SceneRendererResources sceneRendererResources;
+		Device_::DescriptorHeap srvHeap;
+		Device_::DescriptorHeap rtvHeap;
+		Device_::DescriptorHeap dsvHeap;
+
+		Device_::SceneRenderer sceneRenderer;
+
+		Device_::UploadEngine uploadEngine;
 
 		Device_::GeometryHeap geometryHeap;
 		Device_::TextureHeap textureHeap;
 		Device_::EffectHeap effectHeap;
 		Device_::MaterialHeap materialHeap;
+		
+	private:
+		
 
 	public:
 		Device() = default;
 		~Device() = default;
 
-		void initialize();
+		bool initialize();
 		void destroy();
+
+		void clearTarget(Target& target, XLib::Color color);
+		void renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
+			Target& target, rectu16 viewport);
 
 		inline GeometryHeap&	getGeometryHeap()	{ return geometryHeap; }
 		inline TextureHeap&		getTextureHeap()	{ return textureHeap;  }

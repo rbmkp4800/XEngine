@@ -11,11 +11,13 @@
 struct ID3D12GraphicsCommandList2;
 struct ID3D12Resource;
 
+namespace XEngine::Render::Device_ { class SceneRenderer; }
+
 namespace XEngine::Render
 {
     class Scene : public XLib::NonCopyable
     {
-		friend SceneRenderer;
+		friend Device_::SceneRenderer;
 
 	private:
 		struct InstancesTableEntry
@@ -49,7 +51,7 @@ namespace XEngine::Render
 
 		XLib::Platform::COMPtr<ID3D12Resource> d3dTransformBuffer;
 
-		uint32 transformBufferSize;
+		uint32 transformBufferSize = 0;
 
 	private:
 		void populateCommandList(ID3D12GraphicsCommandList2* d3dCommandList);
@@ -62,7 +64,7 @@ namespace XEngine::Render
 		void destroy();
 
 		TransformHandle createTransformGroup(uint32 transformCount);
-		void releaseTransformGrout(TransformHandle handle);
+		void releaseTransformGroup(TransformHandle handle);
 
 		GeometryInstanceHandle createGeometryInstance(GeometryHandle geometry, MaterialHandle material,
 			uint32 transformCount = 1, const XLib::Matrix3x4* intialTransforms = nullptr);

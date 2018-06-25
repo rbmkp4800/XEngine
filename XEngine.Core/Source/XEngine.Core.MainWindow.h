@@ -27,5 +27,6 @@ namespace XEngine::Core
 		void destroy();
 
 		inline bool isActive();
+		inline bool isOpened() { return window.isOpened(); }
 	};
 }

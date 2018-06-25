@@ -16,8 +16,8 @@ void Program::Run()
 	//Device device;
 	//device.initialize();
 
-	for (;;)
+	while (window.isOpened())
 	{
-
+		
 	}
 }

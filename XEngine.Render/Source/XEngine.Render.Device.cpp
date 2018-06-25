@@ -40,9 +40,18 @@ bool Device::initialize()
 			break;
 	}
 
-	sceneRendererResources.inititalize();
+	d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
+		d3dCommandAllocator.uuid(), d3dCommandAllocator.voidInitRef());
+	d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+		d3dCommandAllocator, nullptr, d3dCommandList.uuid(), d3dCommandList.voidInitRef());
+	d3dCommandList->Close();
+
+	sceneRenderer.inititalize(d3dDevice);
+
 	geometryHeap .initialize();
-	textureHeap  .initialize();
-	effectHeap   .initialize();
-	materialHeap .initialize();
+	//textureHeap  .initialize();
+	//effectHeap   .initialize();
+	//materialHeap .initialize();
+
+	return true;
 }

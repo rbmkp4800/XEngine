@@ -25,6 +25,8 @@ namespace XEngine::Render::Device_
 
 		inline Device* getDevice();
 
+		void initialize();
+
 	public:
 
 		inline const GeometryDesc& getGeometryDesc(GeometryHandle handle) const;

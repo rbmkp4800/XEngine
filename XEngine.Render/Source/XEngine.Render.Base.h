@@ -11,8 +11,4 @@ namespace XEngine::Render
 
 	using TransformHandle = uint32;
 	using GeometryInstanceHandle = uint32;
-
-	class Device;
-	class Scene;
-	class SceneRenderer;
 }
