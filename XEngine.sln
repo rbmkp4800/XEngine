@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2020
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XEngine", "XEngine\XEngine.vcxproj", "{8D37AB2B-38F7-4ABE-990C-8C151A8709AD}"
 EndProject
@@ -14,6 +14,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XEngine.Core", "XEngine.Core\XEngine.Core.vcxproj", "{B8914A5B-A366-4B57-86FD-788A6DFD14F6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XEngine.Render", "XEngine.Render\XEngine.Render.vcxproj", "{25B57CC9-0F71-4901-BA27-3EA9952FA23C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GameSample1", "GameSample1\GameSample1.vcxproj", "{49E97366-0D25-4597-8DB6-F85F5BBA50EB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,6 +73,14 @@ Global
 		{25B57CC9-0F71-4901-BA27-3EA9952FA23C}.Release|x64.Build.0 = Release|x64
 		{25B57CC9-0F71-4901-BA27-3EA9952FA23C}.Release|x86.ActiveCfg = Release|Win32
 		{25B57CC9-0F71-4901-BA27-3EA9952FA23C}.Release|x86.Build.0 = Release|Win32
+		{49E97366-0D25-4597-8DB6-F85F5BBA50EB}.Debug|x64.ActiveCfg = Debug|x64
+		{49E97366-0D25-4597-8DB6-F85F5BBA50EB}.Debug|x64.Build.0 = Debug|x64
+		{49E97366-0D25-4597-8DB6-F85F5BBA50EB}.Debug|x86.ActiveCfg = Debug|Win32
+		{49E97366-0D25-4597-8DB6-F85F5BBA50EB}.Debug|x86.Build.0 = Debug|Win32
+		{49E97366-0D25-4597-8DB6-F85F5BBA50EB}.Release|x64.ActiveCfg = Release|x64
+		{49E97366-0D25-4597-8DB6-F85F5BBA50EB}.Release|x64.Build.0 = Release|x64
+		{49E97366-0D25-4597-8DB6-F85F5BBA50EB}.Release|x86.ActiveCfg = Release|Win32
+		{49E97366-0D25-4597-8DB6-F85F5BBA50EB}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

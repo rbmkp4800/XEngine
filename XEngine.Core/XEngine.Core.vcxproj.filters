@@ -18,13 +18,19 @@
     <ClInclude Include="Source\XEngine.Core.WorldController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\XEngine.Core.GeometryManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\XEngine.Core.AbstractResourceManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\XEngine.Core.MainWindow.h">
+    <ClInclude Include="Source\XEngine.Core.DiskWorker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Core.GeometryResource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Core.Engine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Core.UserIOManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,10 +38,16 @@
     <ClCompile Include="Source\XEngine.Core.WorldController.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\XEngine.Core.Main.cpp">
+    <ClCompile Include="Source\XEngine.Core.DiskWorker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\XEngine.Core.MainWindow.cpp">
+    <ClCompile Include="Source\XEngine.Core.Engine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Core.GeometryResource.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Core.UserIOManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

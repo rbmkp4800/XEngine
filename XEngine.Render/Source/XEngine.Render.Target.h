@@ -37,6 +37,7 @@ namespace XEngine::Render
 		Device *device = nullptr;
 		XLib::Platform::COMPtr<IDXGISwapChain3> dxgiSwapChain;
 		Target buffers[bufferCount];
+		uint16x2 size;
 
 	private:
 		void updateRTVs(bool allocateDescriptors);
@@ -52,5 +53,7 @@ namespace XEngine::Render
 		void present(bool sync = false);
 
 		Target& getCurrentTarget();
+
+		inline uint16x2 getSize() const { return size; }
 	};
 }
