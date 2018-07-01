@@ -39,6 +39,8 @@ void Engine::Run(GameBase* game)
 
 		outputSwapChain.present();
 	}
+
+	Output::Destroy();
 }
 
 void Engine::Shutdown()

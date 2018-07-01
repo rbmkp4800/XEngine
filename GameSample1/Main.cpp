@@ -24,6 +24,18 @@ protected:
 
 	}
 
+	virtual void onMouseMove(sint16x2 delta) override {}
+
+	virtual void onMouseButton(XLib::MouseButton button, bool state) override {}
+
+	virtual void onMouseWheel(float32 delta) override {}
+
+	virtual void onKeyboard(VirtualKey key, bool state) override
+	{
+		if (key == VirtualKey::Escape && state)
+			Core::Engine::Shutdown();
+	}
+
 	virtual void onCloseRequest() override
 	{
 		Core::Engine::Shutdown();

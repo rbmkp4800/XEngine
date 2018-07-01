@@ -9,6 +9,7 @@ namespace XEngine::Core
 	{
 	public:
 		static void Initialize();
+		static void Destroy();
 
 		static bool IsInFocus();
 

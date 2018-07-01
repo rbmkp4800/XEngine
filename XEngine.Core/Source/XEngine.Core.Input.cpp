@@ -22,13 +22,6 @@ void Input::RemoveHandler(InputHandler* handler)
 		handlersList.remove(handler);
 }
 
-void Input::OnCloseRequest()
-{
-	ScopedLock lock(handlersListLock);
-	for (InputHandler& handler : handlersList)
-		handler.onCloseRequest();
-}
-
 bool Input::IsKeyDown(XLib::VirtualKey key)
 {
 	return false;
@@ -42,4 +35,41 @@ bool Input::IsMouseButtonDown(XLib::MouseButton button)
 InputHandler::~InputHandler()
 {
 	Input::RemoveHandler(this);
+}
+
+void Input::OnMouseMove(sint16x2 delta)
+{
+	ScopedLock lock(handlersListLock);
+	for (InputHandler& handler : handlersList)
+		handler.onMouseMove(delta);
+}
+void Input::OnMouseButton(XLib::MouseButton button, bool state)
+{
+	ScopedLock lock(handlersListLock);
+	for (InputHandler& handler : handlersList)
+		handler.onMouseButton(button, state);
+}
+void Input::OnMouseWheel(float32 delta)
+{
+	ScopedLock lock(handlersListLock);
+	for (InputHandler& handler : handlersList)
+		handler.onMouseWheel(delta);
+}
+void Input::OnKeyboard(XLib::VirtualKey key, bool state)
+{
+	ScopedLock lock(handlersListLock);
+	for (InputHandler& handler : handlersList)
+		handler.onKeyboard(key, state);
+}
+void Input::OnCharacter(wchar character)
+{
+	ScopedLock lock(handlersListLock);
+	for (InputHandler& handler : handlersList)
+		handler.onCharacter(character);
+}
+void Input::OnCloseRequest()
+{
+	ScopedLock lock(handlersListLock);
+	for (InputHandler& handler : handlersList)
+		handler.onCloseRequest();
 }

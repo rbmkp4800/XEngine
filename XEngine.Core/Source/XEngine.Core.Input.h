@@ -1,5 +1,6 @@
 #pragma once
 
+#include <XLib.Vectors.h>
 #include <XLib.Containers.IntrusiveDoublyLinkedList.h>
 #include <XLib.System.Window.h>
 
@@ -15,10 +16,11 @@ namespace XEngine::Core
 		XLib::IntrusiveDoublyLinkedListItemHook handlersListItemHook;
 
 	protected:
-		virtual void onKeyboard() {}
-		virtual void onMouse() {}
-		virtual void onChar() {}
-		virtual void onFocusChange() {}
+		virtual void onMouseMove(sint16x2 delta) {}
+		virtual void onMouseButton(XLib::MouseButton button, bool state) {}
+		virtual void onMouseWheel(float32 delta) {}
+		virtual void onKeyboard(XLib::VirtualKey key, bool state) {}
+		virtual void onCharacter(wchar character) {}
 		virtual void onCloseRequest() {}
 
 	public:
@@ -37,10 +39,11 @@ namespace XEngine::Core
 		static HandlersList handlersList;
 
 	private:
-		static void OnKeyboard();
-		static void OnMouse();
-		static void OnChar();
-		static void OnFocusChange();
+		static void OnMouseMove(sint16x2 delta);
+		static void OnMouseButton(XLib::MouseButton button, bool state);
+		static void OnMouseWheel(float32 delta);
+		static void OnKeyboard(XLib::VirtualKey key, bool state);
+		static void OnCharacter(wchar character);
 		static void OnCloseRequest();
 
 	public:
