@@ -9,7 +9,7 @@
 #include "XEngine.Render.Device.DescriptorHeap.h"
 #include "XEngine.Render.Device.UploadEngine.h"
 #include "XEngine.Render.Device.SceneRenderer.h"
-#include "XEngine.Render.Device.GeometryHeap.h"
+#include "XEngine.Render.Device.BufferHeap.h"
 #include "XEngine.Render.Device.TextureHeap.h"
 #include "XEngine.Render.Device.EffectHeap.h"
 #include "XEngine.Render.Device.MaterialHeap.h"
@@ -26,7 +26,7 @@ namespace XEngine::Render { class SwapChain; }
 
 namespace XEngine::Render
 {
-	using GeometryHeap = Device_::GeometryHeap;
+	using GeometryHeap = Device_::BufferHeap;
 	using TextureHeap = Device_::TextureHeap;
 	using EffectHeap = Device_::EffectHeap;
 	using MaterialHeap = Device_::MaterialHeap;
@@ -49,10 +49,10 @@ namespace XEngine::Render
 
 		Device_::UploadEngine uploadEngine;
 
-		Device_::GeometryHeap geometryHeap;
-		Device_::TextureHeap textureHeap;
-		Device_::EffectHeap effectHeap;
-		Device_::MaterialHeap materialHeap;
+		Device_::BufferHeap		bufferHeap;
+		Device_::TextureHeap	textureHeap;
+		Device_::EffectHeap		effectHeap;
+		Device_::MaterialHeap	materialHeap;
 		
 	private:
 		
@@ -68,7 +68,7 @@ namespace XEngine::Render
 		void renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 			Target& target, rectu16 viewport);
 
-		inline GeometryHeap&	getGeometryHeap()	{ return geometryHeap; }
+		inline GeometryHeap&	getBufferHeap()		{ return bufferHeap;   }
 		inline TextureHeap&		getTextureHeap()	{ return textureHeap;  }
 		inline EffectHeap&		getEffectHeap()		{ return effectHeap;   }
 		inline MaterialHeap&	getMaterialHeap()	{ return materialHeap; }

@@ -167,14 +167,16 @@
     <ClInclude Include="Source\XEngine.Core.DiskWorker.h" />
     <ClInclude Include="Source\XEngine.Core.GeometryResource.h" />
     <ClInclude Include="Source\XEngine.Core.Engine.h" />
-    <ClInclude Include="Source\XEngine.Core.UserIOManager.h" />
+    <ClInclude Include="Source\XEngine.Core.Input.h" />
+    <ClInclude Include="Source\XEngine.Core.Output.h" />
     <ClInclude Include="Source\XEngine.Core.WorldController.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\XEngine.Core.DiskWorker.cpp" />
     <ClCompile Include="Source\XEngine.Core.Engine.cpp" />
     <ClCompile Include="Source\XEngine.Core.GeometryResource.cpp" />
-    <ClCompile Include="Source\XEngine.Core.UserIOManager.cpp" />
+    <ClCompile Include="Source\XEngine.Core.Output.cpp" />
+    <ClCompile Include="Source\XEngine.Core.Input.cpp" />
     <ClCompile Include="Source\XEngine.Core.WorldController.cpp" />
   </ItemGroup>
   <ItemGroup>

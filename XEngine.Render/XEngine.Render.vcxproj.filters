@@ -24,9 +24,6 @@
     <ClInclude Include="Source\XEngine.Render.Base.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\XEngine.Render.Device.GeometryHeap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Device.TextureHeap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -52,6 +49,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Device.UploadEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.Device.BufferHeap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

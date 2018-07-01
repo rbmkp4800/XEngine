@@ -168,7 +168,7 @@
     <ClInclude Include="Source\XEngine.Render.Device.DescriptorHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.EffectHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.h" />
-    <ClInclude Include="Source\XEngine.Render.Device.GeometryHeap.h" />
+    <ClInclude Include="Source\XEngine.Render.Device.BufferHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.MaterialHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.SceneRenderer.h" />
     <ClInclude Include="Source\XEngine.Render.Device.UploadEngine.h" />

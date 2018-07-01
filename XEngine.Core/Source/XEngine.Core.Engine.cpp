@@ -4,44 +4,41 @@
 #include "XEngine.Core.Engine.h"
 
 #include "XEngine.Core.DiskWorker.h"
-#include "XEngine.Core.UserIOManager.h"
+#include "XEngine.Core.Input.h"
+#include "XEngine.Core.Output.h"
 
 using namespace XLib;
 using namespace XEngine;
 using namespace XEngine::Core;
 
-namespace
-{
-	DiskWorker diskWorker;
-	UserIOManager userIOManager;
-	Render::Device renderDevice;
+static DiskWorker diskWorker;
+static Render::Device renderDevice;
 
-	Render::SwapChain outputSwapChain;
-}
+static Render::SwapChain outputSwapChain;
 
 void Engine::Run(GameBase* gameBase)
 {
-	userIOManager.initialize();
+	Output::Initialize();
 	renderDevice.initialize();
-	diskWorker.initialize(0x10000);
+	//diskWorker.initialize(0x40000);
 
-	gameBase->onInitialize();
+	gameBase->initialize();
 
-	outputSwapChain.initialize(renderDevice, userIOManager.getOutputViewWindowHandle(0),
-		userIOManager.getOutputViewResolution(0));
+	outputSwapChain.initialize(renderDevice,
+		Output::GetViewWindowHandle(0), Output::GetViewResolution(0));
 
 	for (;;)
 	{
-		if (outputSwapChain.getSize() != userIOManager.getOutputViewResolution(0))
-			outputSwapChain.resize(userIOManager.getOutputViewResolution(0));
+		if (outputSwapChain.getSize() != Output::GetViewResolution(0))
+			outputSwapChain.resize(Output::GetViewResolution(0));
 
-		userIOManager.update();
-		gameBase->onUpdate(0.0f);
+		gameBase->update(0.0f);
+
+		outputSwapChain.present();
 	}
 }
 
 DiskWorker& Engine::GetDiskWorker() { return diskWorker; }
-UserIOManager& Engine::GetUserIOManager() { return userIOManager; }
 Render::Device& Engine::GetRenderDevice() { return renderDevice; }
 
 uint32 Engine::GetOutputViewCount() { return 1; }

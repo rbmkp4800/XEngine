@@ -23,8 +23,17 @@ namespace XEngine::Render
 		struct InstancesTableEntry
 		{
 			uint32 baseTransformIndex;
-			GeometryHandle geometry;
+
+			BufferHandle vertexBufferHandle;
+			uint32 vertexDataOffset;
+			BufferHandle indexBufferHandle;
+			uint32 indexDataOffset;
+
+			uint8 vertexStride;
+			bool indexIs32Bit;
 			MaterialHandle material;
+
+			uint32 indexCount;
 		};
 
 		struct GeometryInstanceRecord
@@ -66,9 +75,12 @@ namespace XEngine::Render
 		TransformHandle createTransformGroup(uint32 transformCount);
 		void releaseTransformGroup(TransformHandle handle);
 
-		GeometryInstanceHandle createGeometryInstance(GeometryHandle geometry, MaterialHandle material,
+		GeometryInstanceHandle createGeometryInstance(
+			BufferHandle vertexBufferHandle, uint32 vertexDataOffset,
+			BufferHandle indexBufferHandle, uint32 indexDataOffset,
+			uint8 vertexStride, bool indexIs32Bit, uint32 indexCount, MaterialHandle material,
 			uint32 transformCount = 1, const XLib::Matrix3x4* intialTransforms = nullptr);
-		void releaseGeometryInstance(GeometryInstanceHandle handle);
+		void removeGeometryInstance(GeometryInstanceHandle handle);
 
 		void updateTransform(TransformHandle handle, const XLib::Matrix3x4& transform);
 		void updateTransform(GeometryInstanceHandle handle,

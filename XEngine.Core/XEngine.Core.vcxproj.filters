@@ -30,7 +30,10 @@
     <ClInclude Include="Source\XEngine.Core.Engine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\XEngine.Core.UserIOManager.h">
+    <ClInclude Include="Source\XEngine.Core.Output.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Core.Input.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -47,7 +50,10 @@
     <ClCompile Include="Source\XEngine.Core.GeometryResource.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\XEngine.Core.UserIOManager.cpp">
+    <ClCompile Include="Source\XEngine.Core.Input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Core.Output.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
