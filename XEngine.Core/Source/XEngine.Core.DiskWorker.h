@@ -19,16 +19,18 @@ namespace XEngine::Core
 	private:
 		struct OperationEntry
 		{
-			XLib::IntrusiveDoublyLinkedListNodeHook entriesListNodeHook;
+			XLib::IntrusiveDoublyLinkedListItemHook entriesListItemHook;
 
 			DiskReadHandler handler;
 		};
 
 		using OperationEntriesAllocator =
-			XLib::PoolAllocator<OperationEntry, XLib::PoolAllocatorHeapUsagePolicy::MultipleStaticChunks<5, 12>>;
+			XLib::PoolAllocator<OperationEntry,
+				XLib::PoolAllocatorHeapUsagePolicy::MultipleStaticChunks<5, 12>>;
 
 		using OperationEntriesList =
-			XLib::IntrusiveDoublyLinkedList<OperationEntry, &OperationEntry::entriesListNodeHook>;
+			XLib::IntrusiveDoublyLinkedList<OperationEntry,
+				&OperationEntry::entriesListItemHook>;
 
 	private:
 		OperationEntriesAllocator operationEntriesAllocator;

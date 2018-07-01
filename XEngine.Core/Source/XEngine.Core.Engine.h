@@ -30,6 +30,7 @@ namespace XEngine::Core
 		static Render::Target& GetOutputViewRenderTarget(uint32 outputViewIndex);
 		static uint16x2 GetOutputViewRenderTargetSize(uint32 outputViewIndex);
 
-		static void Run(GameBase* gameBase);
+		static void Run(GameBase* game);
+		static void Shutdown();
 	};
 }

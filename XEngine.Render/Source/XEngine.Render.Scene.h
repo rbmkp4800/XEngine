@@ -11,6 +11,7 @@
 struct ID3D12GraphicsCommandList2;
 struct ID3D12Resource;
 
+namespace XEngine::Render { class Device; }
 namespace XEngine::Render::Device_ { class SceneRenderer; }
 
 namespace XEngine::Render

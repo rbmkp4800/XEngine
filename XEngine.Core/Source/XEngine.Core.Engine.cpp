@@ -11,31 +11,39 @@ using namespace XLib;
 using namespace XEngine;
 using namespace XEngine::Core;
 
+static bool running = false;
 static DiskWorker diskWorker;
 static Render::Device renderDevice;
 
 static Render::SwapChain outputSwapChain;
 
-void Engine::Run(GameBase* gameBase)
+void Engine::Run(GameBase* game)
 {
+	running = true;
+
 	Output::Initialize();
 	renderDevice.initialize();
 	//diskWorker.initialize(0x40000);
 
-	gameBase->initialize();
+	game->initialize();
 
 	outputSwapChain.initialize(renderDevice,
 		Output::GetViewWindowHandle(0), Output::GetViewResolution(0));
 
-	for (;;)
+	while (running)
 	{
 		if (outputSwapChain.getSize() != Output::GetViewResolution(0))
 			outputSwapChain.resize(Output::GetViewResolution(0));
 
-		gameBase->update(0.0f);
+		game->update(0.0f);
 
 		outputSwapChain.present();
 	}
+}
+
+void Engine::Shutdown()
+{
+	running = false;
 }
 
 DiskWorker& Engine::GetDiskWorker() { return diskWorker; }

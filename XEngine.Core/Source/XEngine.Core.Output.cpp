@@ -6,6 +6,21 @@
 
 #include "XEngine.Core.Output.h"
 
+#include "XEngine.Core.Input.h"
+
+namespace XEngine::Core
+{
+	class InputProxy abstract final
+	{
+	public:
+		//static inline void OnKeyboard() { Input::OnKeyboard(); }
+		//static inline void OnMouse() { Input::OnMouse(); }
+		//static inline void OnChar() { Input::OnChar(); }
+		//static inline void OnFocusChange() { Input::OnFocusChange(); }
+		static inline void OnCloseRequest() { Input::OnCloseRequest(); }
+	};
+}
+
 using namespace XLib;
 using namespace XEngine::Core;
 
@@ -15,7 +30,22 @@ static HWND hWnd = nullptr;
 
 static LRESULT __stdcall WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	switch (message)
+	{
+	case WM_CREATE:
+		break;
 
+	case WM_CLOSE:
+		InputProxy::OnCloseRequest();
+		break;
+
+	case WM_INPUT:
+		break;
+
+	default:
+		return DefWindowProc(hWnd, message, wParam, lParam);
+		break;
+	}
 }
 
 static uint32 __stdcall DispatchThreadMain(void*)
@@ -48,6 +78,10 @@ static uint32 __stdcall DispatchThreadMain(void*)
 	hWnd = CreateWindow(windowClassName, L"XEngine", WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top,
 		nullptr, nullptr, hInstance, nullptr);
+
+	controlEvent.set();
+
+	ShowWindow(hWnd, SW_SHOW);
 
 	MSG message = { 0 };
 	while (GetMessage(&message, nullptr, 0, 0))

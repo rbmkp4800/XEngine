@@ -1,6 +1,7 @@
 #pragma once
 
 #include <XLib.Types.h>
+#include <XLib.Vectors.h>
 #include <XLib.NonCopyable.h>
 #include <XLib.Platform.COMPtr.h>
 
@@ -11,9 +12,11 @@ struct ID3D12RootSignature;
 struct ID3D12PipelineState;
 struct ID3D12GraphicsCommandList2;
 struct ID3D12CommandAllocator;
+struct ID3D12Resource;
 
 namespace XEngine::Render { class Device; }
 namespace XEngine::Render { class Scene; }
+namespace XEngine::Render { class Camera; }
 namespace XEngine::Render { class Target; }
 namespace XEngine::Render { class GBuffer; }
 

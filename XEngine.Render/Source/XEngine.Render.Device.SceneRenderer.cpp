@@ -16,6 +16,7 @@
 
 using namespace XLib;
 using namespace XLib::Platform;
+using namespace XEngine::Render;
 using namespace XEngine::Render::Device_;
 
 namespace

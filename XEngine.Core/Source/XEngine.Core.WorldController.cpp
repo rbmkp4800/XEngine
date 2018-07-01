@@ -1,6 +1,6 @@
 #include "XEngine.Core.WorldController.h"
 
-#include "XEngine.Core.GeometryManager.h"
+#include "XEngine.Core.GeometryResource.h"
 
 using namespace XEngine::Core;
 
