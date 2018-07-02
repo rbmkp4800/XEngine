@@ -2,42 +2,45 @@
 
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
-#include <XLib.System.Threading.h>
-#include <XLib.System.Threading.Lock.h>
 #include <XLib.Delegate.h>
 #include <XLib.PoolAllocator.h>
 #include <XLib.Containers.IntrusiveDoublyLinkedList.h>
+#include <XLib.System.Threading.h>
+#include <XLib.System.Threading.Lock.h>
+#include <XLib.System.Threading.Event.h>
+#include <XLib.Heap.h>
 
 namespace XEngine::Core
 {
 	using DiskOperationHandle = uint32;
-
 	using DiskReadHandler = XLib::Delegate<void, bool, const void*, uint32, void*>;
 
 	class DiskWorker : public XLib::NonCopyable
 	{
 	private:
-		struct OperationEntry
+		struct Operation
 		{
-			XLib::IntrusiveDoublyLinkedListItemHook entriesListItemHook;
-
+			XLib::IntrusiveDoublyLinkedListItemHook operationsQueueItemHook;
 			DiskReadHandler handler;
+			void *handlerContext = nullptr;
 		};
 
-		using OperationEntriesAllocator =
-			XLib::PoolAllocator<OperationEntry,
-				XLib::PoolAllocatorHeapUsagePolicy::MultipleStaticChunks<5, 12>>;
+		using OperationsAllocator = XLib::PoolAllocator<Operation,
+			XLib::PoolAllocatorHeapUsagePolicy::MultipleStaticChunks<5, 12>>;
 
-		using OperationEntriesList =
-			XLib::IntrusiveDoublyLinkedList<OperationEntry,
-				&OperationEntry::entriesListItemHook>;
+		using OperationsQueue = XLib::IntrusiveDoublyLinkedList<
+			Operation, &Operation::operationsQueueItemHook>;
 
 	private:
-		OperationEntriesAllocator operationEntriesAllocator;
-		OperationEntriesList operationEntriesList;
+		OperationsAllocator operationsAllocator;
+		OperationsQueue operationsQueue;
+		XLib::Lock operationsQueueLock;
 
 		XLib::Thread dispatchThread;
-		XLib::Lock lock;
+		XLib::Event operationsWaitEvent;
+
+		XLib::HeapPtr<byte> buffer;
+		uint32 bufferSize;
 
 	private:
 		static uint32 __stdcall DispatchThreadMain(DiskWorker* self);
@@ -45,11 +48,13 @@ namespace XEngine::Core
 
 	public:
 		DiskWorker() = default;
-		~DiskWorker() = default;
+		~DiskWorker();
 
-		void initialize(uint32 bufferSize);
+		void startup(uint32 bufferSize);
+		void shutdown();
 
-		DiskOperationHandle readFile(const char* filename, DiskReadHandler handler, void* context);
+		DiskOperationHandle readFile(const char* filename,
+			DiskReadHandler handler, void* context);
 		
 		void cancelOperation(DiskOperationHandle handle);
 	};

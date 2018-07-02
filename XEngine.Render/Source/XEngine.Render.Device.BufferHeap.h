@@ -22,6 +22,9 @@ namespace XEngine::Render::Device_
 		void initialize();
 
 	public:
+		BufferHandle createBuffer(uint32 size);
+		void releaseBuffer(BufferHandle handle);
 
+		uint64 getBufferGPUAddress(BufferHandle handle) const;
 	};
 }

@@ -39,7 +39,7 @@ namespace XEngine::Render::Device_
 		SceneRenderer() = default;
 		~SceneRenderer() = default;
 
-		void inititalize(ID3D12Device* d3dDevice);
+		void initialize(ID3D12Device* d3dDevice);
 		void destroy();
 
 		void render(ID3D12GraphicsCommandList2* d3dCommandList,

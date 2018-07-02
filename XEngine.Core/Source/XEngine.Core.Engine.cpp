@@ -23,7 +23,7 @@ void Engine::Run(GameBase* game)
 
 	Output::Initialize();
 	renderDevice.initialize();
-	//diskWorker.initialize(0x40000);
+	diskWorker.startup(0x40000);
 
 	game->initialize();
 

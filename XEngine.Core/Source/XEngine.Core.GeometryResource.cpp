@@ -1,6 +1,10 @@
 #include <XLib.PoolAllocator.h>
+#include <XEngine.Render.Device.h>
+#include <XEngine.Render.Vertices.h>
 
 #include "XEngine.Core.GeometryResource.h"
+
+#include "XEngine.Core.Engine.h"
 
 using namespace XLib;
 using namespace XEngine::Core;
@@ -10,7 +14,7 @@ namespace
 {
 	struct Request
 	{
-		GeometryResource *resource;
+		GeometryResource *resource = nullptr;
 	};
 
 	using RequestsAllocator = PoolAllocator<Request,
@@ -31,7 +35,41 @@ bool GeometryResource::createFromFileAsync(const char* filename)
 
 void GeometryResource::createCube()
 {
+	static VertexBase vertices[] =
+	{
+		{ { -1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f, -1.0f } },
+		{ {  1.0f,  1.0f, -1.0f }, { 0.0f, 0.0f, -1.0f } },
+		{ {  1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f, -1.0f } },
+		{ { -1.0f,  1.0f, -1.0f }, { 0.0f, 0.0f, -1.0f } },
 
+		{ { -1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f, 1.0f } },
+		{ {  1.0f,  1.0f,  1.0f }, { 0.0f, 0.0f, 1.0f } },
+		{ {  1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f, 1.0f } },
+		{ { -1.0f,  1.0f,  1.0f }, { 0.0f, 0.0f, 1.0f } },
+
+		{ { -1.0f,  1.0f, -1.0f }, { 0.0f, 1.0f, 0.0f } },
+		{ {  1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f, 0.0f } },
+		{ { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f, 0.0f } },
+		{ {  1.0f,  1.0f, -1.0f }, { 0.0f, 1.0f, 0.0f } },
+
+		{ { -1.0f, -1.0f, -1.0f }, { 0.0f, -1.0f, 0.0f } },
+		{ {  1.0f, -1.0f,  1.0f }, { 0.0f, -1.0f, 0.0f } },
+		{ {  1.0f, -1.0f, -1.0f }, { 0.0f, -1.0f, 0.0f } },
+		{ { -1.0f, -1.0f,  1.0f }, { 0.0f, -1.0f, 0.0f } },
+
+		{ { -1.0f, -1.0f, -1.0f }, { -1.0f, 0.0f, 0.0f } },
+		{ { -1.0f,  1.0f,  1.0f }, { -1.0f, 0.0f, 0.0f } },
+		{ { -1.0f, -1.0f,  1.0f }, { -1.0f, 0.0f, 0.0f } },
+		{ { -1.0f,  1.0f, -1.0f }, { -1.0f, 0.0f, 0.0f } },
+
+		{ {  1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f, 0.0f } },
+		{ {  1.0f,  1.0f,  1.0f }, { 1.0f, 0.0f, 0.0f } },
+		{ {  1.0f,  1.0f, -1.0f }, { 1.0f, 0.0f, 0.0f } },
+		{ {  1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f, 0.0f } },
+	};
+
+	BufferHandle buffer = Engine::GetRenderDevice().createBuffer(sizeof(vertices));
+	//Engine::GetRenderDevice().uploadBuffer();
 }
 
 void GeometryResource::cancelCreation()

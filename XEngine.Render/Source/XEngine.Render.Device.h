@@ -14,9 +14,10 @@
 #include "XEngine.Render.Device.EffectHeap.h"
 #include "XEngine.Render.Device.MaterialHeap.h"
 
-struct ID3D12Device;
 struct IDXGIFactory5;
-struct ID3D12DescriptorHeap;
+
+struct ID3D12Device;
+struct ID3D12CommandQueue;
 
 namespace XEngine::Render { class Camera; }
 namespace XEngine::Render { class Scene; }
@@ -26,11 +27,6 @@ namespace XEngine::Render { class SwapChain; }
 
 namespace XEngine::Render
 {
-	using GeometryHeap = Device_::BufferHeap;
-	using TextureHeap = Device_::TextureHeap;
-	using EffectHeap = Device_::EffectHeap;
-	using MaterialHeap = Device_::MaterialHeap;
-
 	class Device : public XLib::NonCopyable
 	{
 		friend Device_::SceneRenderer;
@@ -38,24 +34,24 @@ namespace XEngine::Render
 		friend SwapChain;
 
 	private:
-		XLib::Platform::COMPtr<ID3D12Device> d3dDevice;
 		static XLib::Platform::COMPtr<IDXGIFactory5> dxgiFactory;
+
+		XLib::Platform::COMPtr<ID3D12Device> d3dDevice;
+
+		XLib::Platform::COMPtr<ID3D12CommandQueue> d3dGraphicsQueue;
+		XLib::Platform::COMPtr<ID3D12CommandQueue> d3dCopyQueue;
 
 		Device_::DescriptorHeap srvHeap;
 		Device_::DescriptorHeap rtvHeap;
 		Device_::DescriptorHeap dsvHeap;
 
 		Device_::SceneRenderer sceneRenderer;
-
 		Device_::UploadEngine uploadEngine;
 
 		Device_::BufferHeap		bufferHeap;
 		Device_::TextureHeap	textureHeap;
 		Device_::EffectHeap		effectHeap;
 		Device_::MaterialHeap	materialHeap;
-		
-	private:
-		
 
 	public:
 		Device() = default;
@@ -68,9 +64,7 @@ namespace XEngine::Render
 		void renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 			Target& target, rectu16 viewport);
 
-		inline GeometryHeap&	getBufferHeap()		{ return bufferHeap;   }
-		inline TextureHeap&		getTextureHeap()	{ return textureHeap;  }
-		inline EffectHeap&		getEffectHeap()		{ return effectHeap;   }
-		inline MaterialHeap&	getMaterialHeap()	{ return materialHeap; }
+		inline BufferHandle createBuffer(uint32 size);
+		inline void releaseBuffer(BufferHandle handle);
 	};
 }

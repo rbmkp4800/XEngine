@@ -15,7 +15,11 @@ namespace XEngine::Core
 	class GeometryResource : public XLib::NonCopyable
 	{
 	private:
-		Render::GeometryHandle geometry = Render::GeometryHandle(0);
+		Render::BufferHandle buffer = Render::BufferHandle(0);
+		uint32 vertexCount = 0;
+		uint32 indexCount = 0;
+		uint8 vertexStride = 0;
+		bool indexIs32Bit = false;
 
 	public:
 		GeometryResource() = default;
@@ -30,7 +34,7 @@ namespace XEngine::Core
 		bool isReady() const;
 		void setReadyCallback() const;
 
-		inline Render::GeometryHandle getGeometry() const { return geometry; }
+		inline Render::BufferHandle getBufferHandle() const { return buffer; }
 	};
 
 	using GeometryResourceManager = AbstractResourceManager<

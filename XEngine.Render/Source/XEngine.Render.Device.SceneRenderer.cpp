@@ -28,7 +28,7 @@ namespace
 	};
 }
 
-void SceneRenderer::inititalize(ID3D12Device* d3dDevice)
+void SceneRenderer::initialize(ID3D12Device* d3dDevice)
 {
 	// G-buffer pass RS
 	{

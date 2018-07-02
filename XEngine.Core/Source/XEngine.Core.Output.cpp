@@ -85,7 +85,7 @@ static void HandleRawInput(WPARAM wParam, LPARAM lParam)
 			InputProxy::OnMouseButton(MouseButton::Right, false);
 
 		if (data.usButtonFlags & RI_MOUSE_WHEEL)
-			InputProxy::OnMouseWheel(float32(sint16(data.usButtonData)) / 120.0f);
+			InputProxy::OnMouseWheel(float32(sint16(data.usButtonData)) / float32(WHEEL_DELTA));
 
 		if (data.lLastX || data.lLastY)
 			InputProxy::OnMouseMove({ sint16(data.lLastX), sint16(data.lLastY) });

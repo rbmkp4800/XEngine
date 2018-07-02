@@ -176,6 +176,7 @@
     <ClInclude Include="Source\XEngine.Render.GBuffer.h" />
     <ClInclude Include="Source\XEngine.Render.Device.TextureHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Target.h" />
+    <ClInclude Include="Source\XEngine.Render.Vertices.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\XEngine.Render.Device.cpp" />
