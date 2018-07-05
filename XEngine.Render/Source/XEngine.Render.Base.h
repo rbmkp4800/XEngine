@@ -4,8 +4,8 @@
 
 namespace XEngine::Render
 {
-	using BufferHandle = uint32;
-	using TextureHandle = uint32;
+	using BufferHandle = uint16;
+	using TextureHandle = uint16;
 	using EffectHandle = uint16;
 	using MaterialHandle = uint16;
 

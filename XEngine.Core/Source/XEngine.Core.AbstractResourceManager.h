@@ -10,7 +10,7 @@ namespace XEngine::Core
 	template <typename ResourceUID,
 		typename ResourceHandle,
 		typename Resource>
-	class AbstractResourceManager abstract : public XLib::NonCopyable
+	class AbstractResourceManager : public XLib::NonCopyable
 	{
 	private:
 		struct ResourceEntry

@@ -16,6 +16,20 @@ namespace XEngine::Render::Device_ { class SceneRenderer; }
 
 namespace XEngine::Render
 {
+	struct GeometryDesc
+	{
+		BufferHandle vertexBufferHandle;
+		BufferHandle indexBufferHandle;
+		uint32 vertexDataOffset;
+		uint32 indexDataOffset;
+		uint32 vertexCount;
+		uint32 indexCount;
+		uint8 vertexStride;
+		bool indexIs32Bit;
+	};
+
+	static constexpr int a = sizeof(GeometryDesc);
+
     class Scene : public XLib::NonCopyable
     {
 		friend Device_::SceneRenderer;
@@ -26,8 +40,8 @@ namespace XEngine::Render
 			uint32 baseTransformIndex;
 
 			BufferHandle vertexBufferHandle;
+            BufferHandle indexBufferHandle;
 			uint32 vertexDataOffset;
-			BufferHandle indexBufferHandle;
 			uint32 indexDataOffset;
 
 			uint8 vertexStride;
@@ -77,9 +91,7 @@ namespace XEngine::Render
 		void releaseTransformGroup(TransformHandle handle);
 
 		GeometryInstanceHandle createGeometryInstance(
-			BufferHandle vertexBufferHandle, uint32 vertexDataOffset,
-			BufferHandle indexBufferHandle, uint32 indexDataOffset,
-			uint8 vertexStride, bool indexIs32Bit, uint32 indexCount, MaterialHandle material,
+			const GeometryDesc& geometryDesc, MaterialHandle material,
 			uint32 transformCount = 1, const XLib::Matrix3x4* intialTransforms = nullptr);
 		void removeGeometryInstance(GeometryInstanceHandle handle);
 

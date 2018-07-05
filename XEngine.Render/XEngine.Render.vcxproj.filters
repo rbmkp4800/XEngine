@@ -48,13 +48,16 @@
     <ClInclude Include="Source\XEngine.Render.Device.DescriptorHeap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\XEngine.Render.Device.UploadEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Device.BufferHeap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Vertices.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.Device.Uploader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.Internal.GPUQueueSynchronizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -72,6 +75,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\XEngine.Render.GBuffer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.Device.Uploader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.Internal.GPUQueueSynchronizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.Device.BufferHeap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

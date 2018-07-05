@@ -22,7 +22,7 @@ namespace XEngine::Render { class GBuffer; }
 
 namespace XEngine::Render::Device_
 {
-	class SceneRenderer final : public XLib::NonCopyable
+	class SceneRenderer : public XLib::NonCopyable
 	{
 	private:
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dGBufferPassRS;

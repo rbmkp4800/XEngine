@@ -4,20 +4,21 @@
 #include <XLib.NonCopyable.h>
 
 #include <XEngine.Render.Base.h>
+#include <XEngine.Render.Scene.h>
 
 #include "XEngine.Core.AbstractResourceManager.h"
 
 namespace XEngine::Core
 {
 	using GeometryResourceUID = uint64;
-	using GeometryResourceHandle = uint32;
+	using GeometryResourceHandle = uint16;
 
 	class GeometryResource : public XLib::NonCopyable
 	{
 	private:
-		Render::BufferHandle buffer = Render::BufferHandle(0);
 		uint32 vertexCount = 0;
 		uint32 indexCount = 0;
+        Render::BufferHandle buffer = Render::BufferHandle(0);
 		uint8 vertexStride = 0;
 		bool indexIs32Bit = false;
 
@@ -34,7 +35,19 @@ namespace XEngine::Core
 		bool isReady() const;
 		void setReadyCallback() const;
 
-		inline Render::BufferHandle getBufferHandle() const { return buffer; }
+		inline Render::GeometryDesc getGeometryDesc() const
+		{
+			GeometryDesc result;
+			result.vertexBufferHandle = buffer;
+			result.indexBufferHandle = buffer;
+			result.vertexDataOffset = 0;
+			result.indexDataOffset = indexCount * (indexIs32Bit ? 4 : 2);
+			result.vertexCount = vertexCount;
+			result.indexCount = indexCount;
+			result.vertexStride = vertexStride;
+			result.indexIs32Bit = indexIs32Bit;
+			return result;
+		}
 	};
 
 	using GeometryResourceManager = AbstractResourceManager<

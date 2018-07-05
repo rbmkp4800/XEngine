@@ -7,7 +7,7 @@
 
 #include "XEngine.Render.Base.h"
 #include "XEngine.Render.Device.DescriptorHeap.h"
-#include "XEngine.Render.Device.UploadEngine.h"
+#include "XEngine.Render.Device.Uploader.h"
 #include "XEngine.Render.Device.SceneRenderer.h"
 #include "XEngine.Render.Device.BufferHeap.h"
 #include "XEngine.Render.Device.TextureHeap.h"
@@ -29,7 +29,10 @@ namespace XEngine::Render
 {
 	class Device : public XLib::NonCopyable
 	{
+		friend Device_::Uploader;
 		friend Device_::SceneRenderer;
+        friend Device_::BufferHeap;
+
 		friend GBuffer;
 		friend SwapChain;
 
@@ -45,8 +48,8 @@ namespace XEngine::Render
 		Device_::DescriptorHeap rtvHeap;
 		Device_::DescriptorHeap dsvHeap;
 
+		Device_::Uploader uploader;
 		Device_::SceneRenderer sceneRenderer;
-		Device_::UploadEngine uploadEngine;
 
 		Device_::BufferHeap		bufferHeap;
 		Device_::TextureHeap	textureHeap;
@@ -66,5 +69,8 @@ namespace XEngine::Render
 
 		inline BufferHandle createBuffer(uint32 size);
 		inline void releaseBuffer(BufferHandle handle);
+
+		inline void updateBuffer(BufferHandle buffer, uint32 destOffset,
+			const void* srcData, uint32 size);
 	};
 }

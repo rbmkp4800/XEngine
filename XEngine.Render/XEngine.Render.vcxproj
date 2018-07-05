@@ -171,7 +171,8 @@
     <ClInclude Include="Source\XEngine.Render.Device.BufferHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.MaterialHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.SceneRenderer.h" />
-    <ClInclude Include="Source\XEngine.Render.Device.UploadEngine.h" />
+    <ClInclude Include="Source\XEngine.Render.Device.Uploader.h" />
+    <ClInclude Include="Source\XEngine.Render.Internal.GPUQueueSynchronizer.h" />
     <ClInclude Include="Source\XEngine.Render.Scene.h" />
     <ClInclude Include="Source\XEngine.Render.GBuffer.h" />
     <ClInclude Include="Source\XEngine.Render.Device.TextureHeap.h" />
@@ -179,8 +180,11 @@
     <ClInclude Include="Source\XEngine.Render.Vertices.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\XEngine.Render.Device.BufferHeap.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.SceneRenderer.cpp" />
+    <ClCompile Include="Source\XEngine.Render.Device.Uploader.cpp" />
+    <ClCompile Include="Source\XEngine.Render.Internal.GPUQueueSynchronizer.cpp" />
     <ClCompile Include="Source\XEngine.Render.Scene.cpp" />
     <ClCompile Include="Source\XEngine.Render.GBuffer.cpp" />
     <ClCompile Include="Source\XEngine.Render.Target.cpp" />

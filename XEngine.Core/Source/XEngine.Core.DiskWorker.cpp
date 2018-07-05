@@ -29,6 +29,8 @@ void DiskWorker::dispatchThreadMain()
 
 		file.read();
 
+		operation->handler.call(true, , 0, operation->handlerContext);
+
 		operationsAllocator.release(operation);
 	}
 }
