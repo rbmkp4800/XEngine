@@ -37,7 +37,7 @@ namespace XEngine::Core
 
 		inline Render::GeometryDesc getGeometryDesc() const
 		{
-			GeometryDesc result;
+			Render::GeometryDesc result;
 			result.vertexBufferHandle = buffer;
 			result.indexBufferHandle = buffer;
 			result.vertexDataOffset = 0;

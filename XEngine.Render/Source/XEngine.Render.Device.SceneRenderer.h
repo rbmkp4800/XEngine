@@ -25,12 +25,16 @@ namespace XEngine::Render::Device_
 	class SceneRenderer : public XLib::NonCopyable
 	{
 	private:
+		struct FrameConstants;
+
+	private:
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dGBufferPassRS;
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dLightingPassRS;
 
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
 
-		XLib::Platform::COMPtr<ID3D12Resource> d3dConstantBuffer;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dFrameConstantsBuffer;
+		FrameConstants *mappedFrameConstants = nullptr;
 
 	private:
 		inline Device& getDevice();
@@ -39,11 +43,13 @@ namespace XEngine::Render::Device_
 		SceneRenderer() = default;
 		~SceneRenderer() = default;
 
-		void initialize(ID3D12Device* d3dDevice);
+		void initialize();
 		void destroy();
 
 		void render(ID3D12GraphicsCommandList2* d3dCommandList,
 			ID3D12CommandAllocator* d3dCommandAllocator, Scene& scene,
 			const Camera& camera, GBuffer& gBuffer, Target& target, rectu16 viewport);
+
+		inline ID3D12RootSignature* getGBufferPassD3DRS() { return d3dGBufferPassRS; }
 	};
 }

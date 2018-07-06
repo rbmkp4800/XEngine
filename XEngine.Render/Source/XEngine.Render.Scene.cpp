@@ -5,7 +5,6 @@
 #include "XEngine.Render.Scene.h"
 
 #include "XEngine.Render.Device.h"
-#include "XEngine.Render.Internal.RootSignaturesConfig.h"
 
 using namespace XLib;
 using namespace XEngine::Render;
@@ -14,10 +13,9 @@ using namespace XEngine::Render::Internal;
 void Scene::initialize(Device& device, uint32 initialTransformBufferSize = 256)
 {
 	this->device = &device;
-
 	transformBufferSize = initialTransformBufferSize;
 
-	ID3D12Device *d3dDevice = ;
+	ID3D12Device *d3dDevice = device.d3dDevice;
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
 		&D3D12ResourceDesc_Buffer(sizeof(Matrix3x4) * transformBufferSize),
@@ -38,7 +36,7 @@ void Scene::populateCommandList(ID3D12GraphicsCommandList2* d3dCommandList)
 
 	for (EffectData& effectData : effectsData)
 	{
-		ID3D12PipelineState *d3dPSO = device->getEffectHeap().getPSO(effectData.effect);
+		ID3D12PipelineState *d3dPSO = device->effectHeap.getD3DPSO(effectData.effect);
 		d3dCommandList->SetPipelineState(d3dPSO);
 
 		for (GeometryInstanceRecord& record : effectData.visibleGeometryInstances)

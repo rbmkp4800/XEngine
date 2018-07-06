@@ -42,16 +42,34 @@ bool Device::initialize()
 
 	d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
 		d3dCommandAllocator.uuid(), d3dCommandAllocator.voidInitRef());
-	d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-		d3dCommandAllocator, nullptr, d3dCommandList.uuid(), d3dCommandList.voidInitRef());
+	d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3dCommandAllocator, nullptr,
+		d3dCommandList.uuid(), d3dCommandList.voidInitRef());
 	d3dCommandList->Close();
 
-	sceneRenderer.inititalize(d3dDevice);
+	uploader.initialize();
+	sceneRenderer.initialize();
 
-	geometryHeap .initialize();
-	//textureHeap  .initialize();
-	//effectHeap   .initialize();
-	//materialHeap .initialize();
+	bufferHeap.initialize();
+	//textureHeap.initialize();
+	effectHeap.initialize();
+	//materialHeap.initialize();
 
 	return true;
+}
+
+void Device::updateBuffer(BufferHandle buffer, uint32 destOffset, const void* srcData, uint32 size)
+{
+	uploader.uploadBuffer(bufferHeap.getD3DResource(buffer), destOffset, srcData, size);
+}
+
+void Device::clearTarget(Target& target, XLib::Color color)
+{
+
+}
+
+void Device::renderScene(Scene& scene, const Camera& camera,
+	GBuffer& gBuffer, Target& target, rectu16 viewport)
+{
+	sceneRenderer.render(d3dCommandList, d3dCommandAllocator,
+		scene, camera, gBuffer, target, viewport);
 }

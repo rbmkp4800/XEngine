@@ -2,35 +2,37 @@
 
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
+#include <XLib.Platform.COMPtr.h>
 
 #include "XEngine.Render.Base.h"
 
+// NOTE: Temporary implementation
+
 struct ID3D12PipelineState;
+
+namespace XEngine::Render { class Device; }
 
 namespace XEngine::Render::Device_
 {
-	// NOTE: Temporary solution.
-	enum class EffectType
-	{
-		None = 0,
-		Colored,
-		Textured,
-	};
-
 	class EffectHeap final : public XLib::NonCopyable
 	{
-		friend Device;
+	private:
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dPSOs[16];
+		uint32 effectCount = 0;
 
 	private:
+		inline Device& getDevice();
+
+	public:
 		EffectHeap() = default;
 		~EffectHeap() = default;
 
-		inline Device* getDevice();
+		void initialize();
 
-	public:
-		EffectHandle createEffect(EffectType type);
+		EffectHandle createEffect_color();
+		EffectHandle createEffect_textured();
+		void releaseEffect(EffectHandle handle);
 
-	// internal:
-		ID3D12PipelineState* getPSO(EffectHandle handle);
+		ID3D12PipelineState* getD3DPSO(EffectHandle handle);
 	};
 }

@@ -60,6 +60,9 @@
     <ClInclude Include="Source\XEngine.Render.Internal.GPUQueueSynchronizer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.Internal.Shaders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\XEngine.Render.Scene.cpp">
@@ -86,5 +89,15 @@
     <ClCompile Include="Source\XEngine.Render.Device.BufferHeap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.Device.EffectHeap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.Internal.Shaders.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Source\Shaders\LightingPassPS.hlsl" />
+    <FxCompile Include="Source\Shaders\ScreenQuadVS.hlsl" />
   </ItemGroup>
 </Project>

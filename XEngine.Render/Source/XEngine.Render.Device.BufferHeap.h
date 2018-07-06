@@ -23,7 +23,7 @@ namespace XEngine::Render::Device_
 	private:
 		inline Device& getDevice();
 
-	private:
+	public:
 		BufferHeap() = default;
 		~BufferHeap() = default;
 
@@ -33,5 +33,6 @@ namespace XEngine::Render::Device_
 		void releaseBuffer(BufferHandle handle);
 
 		uint64 getBufferGPUAddress(BufferHandle handle);
+		ID3D12Resource* getD3DResource(BufferHandle handle);
 	};
 }

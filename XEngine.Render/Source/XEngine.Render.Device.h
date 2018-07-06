@@ -18,6 +18,8 @@ struct IDXGIFactory5;
 
 struct ID3D12Device;
 struct ID3D12CommandQueue;
+struct ID3D12GraphicsCommandList2;
+struct ID3D12CommandAllocator;
 
 namespace XEngine::Render { class Camera; }
 namespace XEngine::Render { class Scene; }
@@ -31,8 +33,10 @@ namespace XEngine::Render
 	{
 		friend Device_::Uploader;
 		friend Device_::SceneRenderer;
-        friend Device_::BufferHeap;
+		friend Device_::BufferHeap;
+		friend Device_::EffectHeap;
 
+		friend Scene;
 		friend GBuffer;
 		friend SwapChain;
 
@@ -43,6 +47,9 @@ namespace XEngine::Render
 
 		XLib::Platform::COMPtr<ID3D12CommandQueue> d3dGraphicsQueue;
 		XLib::Platform::COMPtr<ID3D12CommandQueue> d3dCopyQueue;
+
+		XLib::Platform::COMPtr<ID3D12GraphicsCommandList2> d3dCommandList;
+		XLib::Platform::COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
 
 		Device_::DescriptorHeap srvHeap;
 		Device_::DescriptorHeap rtvHeap;
@@ -63,14 +70,12 @@ namespace XEngine::Render
 		bool initialize();
 		void destroy();
 
+		void updateBuffer(BufferHandle buffer, uint32 destOffset, const void* srcData, uint32 size);
 		void clearTarget(Target& target, XLib::Color color);
-		void renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
-			Target& target, rectu16 viewport);
+		void renderScene(Scene& scene, const Camera& camera,
+			GBuffer& gBuffer, Target& target, rectu16 viewport);
 
-		inline BufferHandle createBuffer(uint32 size);
+		inline BufferHandle createBuffer(uint32 size) { bufferHeap.createBuffer(size); }
 		inline void releaseBuffer(BufferHandle handle);
-
-		inline void updateBuffer(BufferHandle buffer, uint32 destOffset,
-			const void* srcData, uint32 size);
 	};
 }

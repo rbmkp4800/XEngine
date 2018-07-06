@@ -30,8 +30,8 @@ namespace XEngine::Render
 
 	static constexpr int a = sizeof(GeometryDesc);
 
-    class Scene : public XLib::NonCopyable
-    {
+	class Scene : public XLib::NonCopyable
+	{
 		friend Device_::SceneRenderer;
 
 	private:
@@ -40,7 +40,7 @@ namespace XEngine::Render
 			uint32 baseTransformIndex;
 
 			BufferHandle vertexBufferHandle;
-            BufferHandle indexBufferHandle;
+			BufferHandle indexBufferHandle;
 			uint32 vertexDataOffset;
 			uint32 indexDataOffset;
 
@@ -80,7 +80,7 @@ namespace XEngine::Render
 	private:
 		void populateCommandList(ID3D12GraphicsCommandList2* d3dCommandList);
 
-    public:
+	public:
 		Scene() = default;
 		~Scene() = default;
 
@@ -99,5 +99,5 @@ namespace XEngine::Render
 		void updateTransform(GeometryInstanceHandle handle,
 			const XLib::Matrix3x4& transform, uint16 transformIndex = 0);
 		void updateTransforms(TransformHandle handle, const XLib::Matrix3x4* transforms, uint32 transformCount);
-    };
+	};
 }

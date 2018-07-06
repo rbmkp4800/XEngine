@@ -36,3 +36,8 @@ uint64 BufferHeap::getBufferGPUAddress(BufferHandle handle)
 {
 	return d3dBuffers[handle]->GetGPUVirtualAddress();
 }
+
+ID3D12Resource* BufferHeap::getD3DResource(BufferHandle handle)
+{
+	return d3dBuffers[handle];
+}
