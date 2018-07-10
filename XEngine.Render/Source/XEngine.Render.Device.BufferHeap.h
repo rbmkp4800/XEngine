@@ -14,7 +14,7 @@ namespace XEngine::Render { class Device; }
 
 namespace XEngine::Render::Device_
 {
-	class BufferHeap final : public XLib::NonCopyable
+	class BufferHeap : public XLib::NonCopyable
 	{
 	private:
 		XLib::Platform::COMPtr<ID3D12Resource> d3dBuffers[16];

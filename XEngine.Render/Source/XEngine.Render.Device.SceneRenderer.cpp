@@ -21,11 +21,14 @@ using namespace XEngine::Render;
 using namespace XEngine::Render::Internal;
 using namespace XEngine::Render::Device_;
 
-struct SceneRenderer::FrameConstants
+struct SceneRenderer::CameraTransformConstants
 {
 	Matrix4x4 view;
 	Matrix4x4 viewProjection;
+};
 
+struct SceneRenderer::LightingPassConstants
+{
 	float32 ndcToViewDepthConversionA;
 	float32 ndcToViewDepthConversionB;
 	float32 aspect;
@@ -34,7 +37,7 @@ struct SceneRenderer::FrameConstants
 
 void SceneRenderer::initialize()
 {
-	ID3D12Device* d3dDevice = device.d3dDevice;
+	ID3D12Device *d3dDevice = device.d3dDevice;
 
 	// G-buffer pass RS
 	{
@@ -45,13 +48,14 @@ void SceneRenderer::initialize()
 
 		D3D12_ROOT_PARAMETER rootParameters[] =
 		{
-			D3D12RootParameter_CBV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
-			D3D12RootParameter_Constants(1, 1, 0, D3D12_SHADER_VISIBILITY_VERTEX),
+				// t0 transforms buffer
 			D3D12RootParameter_SRV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
+				// b0 material constant buffer
+			D3D12RootParameter_CBV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
+				// b1 camera transform constant buffer
+			D3D12RootParameter_CBV(1, 0, D3D12_SHADER_VISIBILITY_VERTEX),
+				// t1
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
-			// TODO: need this for objects pass (transforms). Maybe move to separate RS
-			D3D12RootParameter_UAV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
-			// TODO: remove after moving OC to CPU
 		};
 
 		D3D12_STATIC_SAMPLER_DESC staticSamplers[] =
@@ -60,8 +64,10 @@ void SceneRenderer::initialize()
 		};
 
 		COMPtr<ID3DBlob> d3dSignature, d3dError;
-		D3D12SerializeRootSignature(&D3D12RootSignatureDesc(countof(rootParameters), rootParameters,
-			countof(staticSamplers), staticSamplers, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),
+		D3D12SerializeRootSignature(
+			&D3D12RootSignatureDesc(countof(rootParameters), rootParameters,
+				countof(staticSamplers), staticSamplers,
+				D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),
 			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
 		d3dDevice->CreateRootSignature(0, d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
 			d3dGBufferPassRS.uuid(), d3dGBufferPassRS.voidInitRef());
@@ -108,13 +114,13 @@ void SceneRenderer::initialize()
 			d3dLightingPassPSO.uuid(), d3dLightingPassPSO.voidInitRef());
 	}
 
-	// Frame constants buffer
+	// Camera transform constants buffer
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-		&D3D12ResourceDesc_Buffer(sizeof(FrameConstants)),
+		&D3D12ResourceDesc_Buffer(sizeof(CameraTransformConstants)),
 		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		d3dFrameConstantsBuffer.uuid(), d3dFrameConstantsBuffer.voidInitRef());
-	d3dFrameConstantsBuffer->Map(0, &D3D12Range(), to<void**>(&mappedFrameConstants));
+		d3dCameraTransformCB.uuid(), d3dCameraTransformCB.voidInitRef());
+	d3dCameraTransformCB->Map(0, &D3D12Range(), to<void**>(&mappedCameraTransformCB));
 }
 
 void SceneRenderer::destroy()
@@ -134,14 +140,14 @@ void SceneRenderer::render(ID3D12GraphicsCommandList2* d3dCommandList,
 		float32 aspect = viewportSizeF.x / viewportSizeF.y;
 		Matrix4x4 view = camera.getViewMatrix();
 		Matrix4x4 viewProjection = view * camera.getProjectionMatrix(aspect);
-		mappedFrameConstants->view = view;
-		mappedFrameConstants->viewProjection = viewProjection;
+		mappedCameraTransformCB->view = view;
+		mappedCameraTransformCB->viewProjection = viewProjection;
 
-		float32 cameraClipPlanesDelta = camera.zFar - camera.zNear;
-		mappedFrameConstants->ndcToViewDepthConversionA = (camera.zFar * camera.zNear) / cameraClipPlanesDelta;
-		mappedFrameConstants->ndcToViewDepthConversionB = camera.zFar / cameraClipPlanesDelta;
-		mappedFrameConstants->aspect = aspect;
-		mappedFrameConstants->halfFOVTan = Math::Tan(camera.fov * 0.5f);
+		//float32 cameraClipPlanesDelta = camera.zFar - camera.zNear;
+		//mappedLightingPassCB->ndcToViewDepthConversionA = (camera.zFar * camera.zNear) / cameraClipPlanesDelta;
+		//mappedLightingPassCB->ndcToViewDepthConversionB = camera.zFar / cameraClipPlanesDelta;
+		//mappedLightingPassCB->aspect = aspect;
+		//mappedLightingPassCB->halfFOVTan = Math::Tan(camera.fov * 0.5f);
 	}
 
 	// Basic initialization =================================================================//
@@ -169,7 +175,7 @@ void SceneRenderer::render(ID3D12GraphicsCommandList2* d3dCommandList,
 		d3dCommandList->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		d3dCommandList->SetGraphicsRootSignature(d3dGBufferPassRS);
-		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dFrameConstantsBuffer->GetGPUVirtualAddress());
+		d3dCommandList->SetGraphicsRootConstantBufferView(2, d3dCameraTransformCB->GetGPUVirtualAddress());
 		d3dCommandList->SetGraphicsRootDescriptorTable(3, device.srvHeap.getGPUHandle(0));
 
 		scene.populateCommandList(d3dCommandList);

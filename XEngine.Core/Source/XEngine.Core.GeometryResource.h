@@ -42,7 +42,7 @@ namespace XEngine::Core
 			result.indexBufferHandle = buffer;
 			result.vertexDataOffset = 0;
 			result.indexDataOffset = indexCount * (indexIs32Bit ? 4 : 2);
-			result.vertexCount = vertexCount;
+			result.vertexDataSize = vertexCount;
 			result.indexCount = indexCount;
 			result.vertexStride = vertexStride;
 			result.indexIs32Bit = indexIs32Bit;

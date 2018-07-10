@@ -95,9 +95,14 @@
     <ClCompile Include="Source\XEngine.Render.Internal.Shaders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.Device.MaterialHeap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Source\Shaders\LightingPassPS.hlsl" />
     <FxCompile Include="Source\Shaders\ScreenQuadVS.hlsl" />
+    <FxCompile Include="Source\Shaders\EffectPlainVS.hlsl" />
+    <FxCompile Include="Source\Shaders\EffectPlainPS.hlsl" />
   </ItemGroup>
 </Project>

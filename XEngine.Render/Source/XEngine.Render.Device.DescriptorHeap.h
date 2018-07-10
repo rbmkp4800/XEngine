@@ -23,7 +23,7 @@ namespace XEngine::Render::Device_
 		void initalize(ID3D12Device* d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 size, bool shaderVisible);
 
 	public:
-		uint32 allocate(uint32 count);
+		uint16 allocate(uint16 count);
 
 		D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandle(uint32 descriptor);
 		D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(uint32 descriptor);

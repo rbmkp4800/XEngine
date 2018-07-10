@@ -7,17 +7,10 @@
 
 namespace XEngine::Render::Device_
 {
-	class TextureHeap final : public XLib::NonCopyable
+	class TextureHeap : public XLib::NonCopyable
 	{
-		friend Device;
-
-	private:
+	public:
 		TextureHeap() = default;
 		~TextureHeap() = default;
-
-		inline Device* getDevice();
-
-	public:
-
 	};
 }

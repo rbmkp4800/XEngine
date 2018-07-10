@@ -2,7 +2,6 @@
 
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
-#include <XLib.Math.Matrix3x4.h>
 #include <XLib.Containers.Vector.h>
 #include <XLib.Platform.COMPtr.h>
 
@@ -11,71 +10,72 @@
 struct ID3D12GraphicsCommandList2;
 struct ID3D12Resource;
 
+namespace XLib { struct Matrix3x4; }
 namespace XEngine::Render { class Device; }
 namespace XEngine::Render::Device_ { class SceneRenderer; }
 
 namespace XEngine::Render
 {
-	struct GeometryDesc
+	struct GeometryDesc // 20 bytes
 	{
 		BufferHandle vertexBufferHandle;
 		BufferHandle indexBufferHandle;
 		uint32 vertexDataOffset;
 		uint32 indexDataOffset;
-		uint32 vertexCount;
 		uint32 indexCount;
-		uint8 vertexStride;
-		bool indexIs32Bit;
+		struct
+		{
+			uint indexIs32Bit : 1;
+			uint vertexStride : 7;
+			uint vertexDataSize : 24;
+		};
 	};
-
-	static constexpr int a = sizeof(GeometryDesc);
 
 	class Scene : public XLib::NonCopyable
 	{
 		friend Device_::SceneRenderer;
 
 	private:
-		struct InstancesTableEntry
+		struct Instance // 28 bytes
 		{
+			GeometryDesc geometryDesc;
 			uint32 baseTransformIndex;
-
-			BufferHandle vertexBufferHandle;
-			BufferHandle indexBufferHandle;
-			uint32 vertexDataOffset;
-			uint32 indexDataOffset;
-
-			uint8 vertexStride;
-			bool indexIs32Bit;
 			MaterialHandle material;
+		};
 
+		struct CachedInstance // 32 bytes
+		{
+			uint64 vertexDataGPUAddress;
+			uint64 indexDataGPUAddress;
 			uint32 indexCount;
-		};
+			struct
+			{
+				uint indexIs32Bit : 1;
+				uint vertexStride : 7;
+				uint vertexDataSize : 24;
+			};
 
-		struct GeometryInstanceRecord
-		{
-			uint64 vertexBufferGPUAddress;
-			uint64 indexBufferGPUAddress;
 			uint32 baseTransformIndex;
 			MaterialHandle material;
-			uint8 vertexStide;
-			bool indexIs32Bit;
 		};
 
-		struct EffectData
+		struct EffectInstancesData
 		{
 			EffectHandle effect;
-			XLib::Vector<GeometryInstanceRecord> visibleGeometryInstances;
+			XLib::Vector<CachedInstance> visibleInstances;
 		};
 
 	private:
 		Device *device = nullptr;
 
-		XLib::Vector<InstancesTableEntry> instancesTable;
-		XLib::Vector<EffectData> effectsData;
+		XLib::Vector<Instance> instances;
+		XLib::Vector<EffectInstancesData> effectInstancesDatas;
 
 		XLib::Platform::COMPtr<ID3D12Resource> d3dTransformBuffer;
 
+		XLib::Matrix3x4 *mappedTransformBuffer = nullptr;
 		uint32 transformBufferSize = 0;
+		uint32 allocatedTansformCount = 0;
 
 	private:
 		void populateCommandList(ID3D12GraphicsCommandList2* d3dCommandList);
@@ -95,9 +95,9 @@ namespace XEngine::Render
 			uint32 transformCount = 1, const XLib::Matrix3x4* intialTransforms = nullptr);
 		void removeGeometryInstance(GeometryInstanceHandle handle);
 
-		void updateTransform(TransformHandle handle, const XLib::Matrix3x4& transform);
-		void updateTransform(GeometryInstanceHandle handle,
+		void updateGeometryInstanceTransform(GeometryInstanceHandle handle,
 			const XLib::Matrix3x4& transform, uint16 transformIndex = 0);
+		void updateTransform(TransformHandle handle, const XLib::Matrix3x4& transform);
 		void updateTransforms(TransformHandle handle, const XLib::Matrix3x4* transforms, uint32 transformCount);
 	};
 }

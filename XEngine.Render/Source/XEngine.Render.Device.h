@@ -9,10 +9,10 @@
 #include "XEngine.Render.Device.DescriptorHeap.h"
 #include "XEngine.Render.Device.Uploader.h"
 #include "XEngine.Render.Device.SceneRenderer.h"
-#include "XEngine.Render.Device.BufferHeap.h"
-#include "XEngine.Render.Device.TextureHeap.h"
 #include "XEngine.Render.Device.EffectHeap.h"
 #include "XEngine.Render.Device.MaterialHeap.h"
+#include "XEngine.Render.Device.BufferHeap.h"
+#include "XEngine.Render.Device.TextureHeap.h"
 
 struct IDXGIFactory5;
 
@@ -58,10 +58,10 @@ namespace XEngine::Render
 		Device_::Uploader uploader;
 		Device_::SceneRenderer sceneRenderer;
 
-		Device_::BufferHeap		bufferHeap;
-		Device_::TextureHeap	textureHeap;
 		Device_::EffectHeap		effectHeap;
 		Device_::MaterialHeap	materialHeap;
+		Device_::BufferHeap		bufferHeap;
+		Device_::TextureHeap	textureHeap;
 
 	public:
 		Device() = default;
@@ -75,7 +75,9 @@ namespace XEngine::Render
 		void renderScene(Scene& scene, const Camera& camera,
 			GBuffer& gBuffer, Target& target, rectu16 viewport);
 
-		inline BufferHandle createBuffer(uint32 size) { bufferHeap.createBuffer(size); }
+		inline BufferHandle createBuffer(uint32 size) { return bufferHeap.createBuffer(size); }
+		inline EffectHandle createEffect_plain() { return effectHeap.createEffect_plain(); }
+		inline MaterialHandle createMaterial(EffectHandle effect) { return materialHeap.createMaterial(effect); }
 		inline void releaseBuffer(BufferHandle handle);
 	};
 }

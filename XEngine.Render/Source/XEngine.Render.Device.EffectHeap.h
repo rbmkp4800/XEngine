@@ -14,7 +14,7 @@ namespace XEngine::Render { class Device; }
 
 namespace XEngine::Render::Device_
 {
-	class EffectHeap final : public XLib::NonCopyable
+	class EffectHeap : public XLib::NonCopyable
 	{
 	private:
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dPSOs[16];
@@ -29,7 +29,7 @@ namespace XEngine::Render::Device_
 
 		void initialize();
 
-		EffectHandle createEffect_color();
+		EffectHandle createEffect_plain();
 		EffectHandle createEffect_textured();
 		void releaseEffect(EffectHandle handle);
 

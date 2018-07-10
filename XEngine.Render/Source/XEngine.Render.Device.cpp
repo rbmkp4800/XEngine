@@ -49,10 +49,10 @@ bool Device::initialize()
 	uploader.initialize();
 	sceneRenderer.initialize();
 
+	effectHeap.initialize();
+	materialHeap.initialize();
 	bufferHeap.initialize();
 	//textureHeap.initialize();
-	effectHeap.initialize();
-	//materialHeap.initialize();
 
 	return true;
 }

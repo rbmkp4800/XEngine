@@ -5,19 +5,25 @@
 
 #include "XEngine.Render.Base.h"
 
+// NOTE: Temporary implementation
+
+namespace XEngine::Render { class Device; }
+
 namespace XEngine::Render::Device_
 {
-	class MaterialHeap final : public XLib::NonCopyable
+	class MaterialHeap : public XLib::NonCopyable
 	{
-		friend Device;
+	private:
 
 	private:
-		MaterialHeap() = default;
-		~MaterialHeap() = default;
-
 		inline Device* getDevice();
 
 	public:
+		MaterialHeap() = default;
+		~MaterialHeap() = default;
+
+		void initialize();
+
 		MaterialHandle createMaterial(EffectHandle effect,
 			const void* initialConstants = nullptr,
 			const TextureHandle* intialTextures = nullptr);
@@ -26,7 +32,7 @@ namespace XEngine::Render::Device_
 		void updateMaterialConstants(MaterialHandle handle, uint32 offset, const void* data, uint32 size);
 		void updateMaterialTexture(MaterialHandle handle, uint32 slot, TextureHandle textureHandle);
 
-	// internal:
-		inline uint64 translateHandleToGPUAddress(MaterialHandle handle) const;
+		EffectHandle getEffect(MaterialHandle handle) const;
+		uint64 translateHandleToGPUAddress(MaterialHandle handle) const;
 	};
 }

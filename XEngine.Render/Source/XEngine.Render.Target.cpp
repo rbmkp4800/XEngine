@@ -30,7 +30,7 @@ void SwapChain::initialize(Device& device, void* hWnd, uint16x2 size)
 	this->device = &device;
 
 	COMPtr<IDXGISwapChain1> dxgiSwapChain1;
-	Device::dxgiFactory->CreateSwapChainForHwnd(device.gpuGraphicsQueue.getD3DCommandQueue(), HWND(hWnd),
+	Device::dxgiFactory->CreateSwapChainForHwnd(device.d3dGraphicsQueue, HWND(hWnd),
 		&DXGISwapChainDesc1(size.x, size.y, DXGI_FORMAT_R8G8B8A8_UNORM, bufferCount,
 			DXGI_SWAP_EFFECT_FLIP_DISCARD), nullptr, nullptr, dxgiSwapChain1.initRef());
 	dxgiSwapChain1->QueryInterface(dxgiSwapChain.uuid(), dxgiSwapChain.voidInitRef());

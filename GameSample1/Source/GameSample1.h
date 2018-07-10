@@ -4,6 +4,7 @@
 #include <XEngine.Core.Input.h>
 #include <XEngine.Core.GeometryResource.h>
 #include <XEngine.Render.Scene.h>
+#include <XEngine.Render.GBuffer.h>
 
 namespace GameSample1
 {
@@ -12,10 +13,13 @@ namespace GameSample1
 		public XEngine::Core::InputHandler
 	{
 	private:
+		XEngine::Render::Scene scene;
+		XEngine::Render::GBuffer gBuffer;
+		XEngine::Render::EffectHandle plainEffect;
+		XEngine::Render::MaterialHandle plainMaterial;
+
 		//XEngine::Core::GeometryResourceManager geometryResourceManager;
 		XEngine::Core::GeometryResource cubeGeometryResource;
-		XEngine::Render::Scene scene;
-
 		XEngine::Render::GeometryInstanceHandle cubeGeometryInstance;
 
 	public:

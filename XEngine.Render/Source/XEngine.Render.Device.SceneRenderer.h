@@ -25,7 +25,8 @@ namespace XEngine::Render::Device_
 	class SceneRenderer : public XLib::NonCopyable
 	{
 	private:
-		struct FrameConstants;
+		struct CameraTransformConstants;
+		struct LightingPassConstants;
 
 	private:
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dGBufferPassRS;
@@ -33,8 +34,8 @@ namespace XEngine::Render::Device_
 
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
 
-		XLib::Platform::COMPtr<ID3D12Resource> d3dFrameConstantsBuffer;
-		FrameConstants *mappedFrameConstants = nullptr;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dCameraTransformCB;
+		CameraTransformConstants *mappedCameraTransformCB = nullptr;
 
 	private:
 		inline Device& getDevice();

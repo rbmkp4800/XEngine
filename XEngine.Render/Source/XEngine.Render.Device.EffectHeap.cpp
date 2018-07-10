@@ -6,10 +6,12 @@
 #include "XEngine.Render.Device.EffectHeap.h"
 
 #include "XEngine.Render.Device.h"
+#include "XEngine.Render.Internal.Shaders.h"
 
 #define device this->getDevice()
 
 using namespace XEngine::Render;
+using namespace XEngine::Render::Internal;
 using namespace XEngine::Render::Device_;
 
 void EffectHeap::initialize()
@@ -17,7 +19,7 @@ void EffectHeap::initialize()
 
 }
 
-EffectHandle EffectHeap::createEffect_color()
+EffectHandle EffectHeap::createEffect_plain()
 {
 	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 	{
@@ -48,4 +50,9 @@ EffectHandle EffectHeap::createEffect_color()
 	EffectHandle result = EffectHandle(effectCount);
 	effectCount++;
 	return result;
+}
+
+ID3D12PipelineState* EffectHeap::getD3DPSO(EffectHandle handle)
+{
+	return d3dPSOs[handle];
 }

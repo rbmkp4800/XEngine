@@ -13,5 +13,8 @@ namespace XEngine::Render::Internal
 	public:
 		static const ShaderData ScreenQuadVS;
 		static const ShaderData LightingPassPS;
+
+		static const ShaderData EffectPlainVS;
+		static const ShaderData EffectPlainPS;
 	};
 }
