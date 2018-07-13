@@ -16,7 +16,7 @@ namespace XEngine::Render::Device_
 	private:
 
 	private:
-		inline Device* getDevice();
+		inline Device& getDevice();
 
 	public:
 		MaterialHeap() = default;

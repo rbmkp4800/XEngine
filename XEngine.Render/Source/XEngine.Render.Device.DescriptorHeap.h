@@ -17,16 +17,19 @@ namespace XEngine::Render::Device_
 	{
 	private:
 		XLib::Platform::COMPtr<ID3D12DescriptorHeap> d3dDescriptorHeap;
-		uint16 allocatedDescriptorsCount;
-		uint16 descritorSize;
-
-		void initalize(ID3D12Device* d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32 size, bool shaderVisible);
+		uint16 allocatedDescriptorsCount = 0;
+		uint16 descritorSize = 0;
 
 	public:
+		DescriptorHeap() = default;
+		~DescriptorHeap() = default;
+
+		void initalize(ID3D12Device* d3dDevice,
+			D3D12_DESCRIPTOR_HEAP_TYPE type, uint16 size, bool shaderVisible);
 		uint16 allocate(uint16 count);
 
-		D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandle(uint32 descriptor);
-		D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(uint32 descriptor);
+		D3D12_CPU_DESCRIPTOR_HANDLE getCPUHandle(uint16 descriptor);
+		D3D12_GPU_DESCRIPTOR_HANDLE getGPUHandle(uint16 descriptor);
 		inline ID3D12DescriptorHeap* getD3D12DescriptorHeap() { return d3dDescriptorHeap; }
 	};
 }

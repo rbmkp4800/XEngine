@@ -23,7 +23,7 @@ void Scene::initialize(Device& device, uint32 initialTransformBufferSize)
 		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
 		d3dTransformBuffer.uuid(), d3dTransformBuffer.voidInitRef());
 
-
+	d3dTransformBuffer->Map(0, &D3D12Range(), to<void**>(&mappedTransformBuffer));
 }
 
 void Scene::destroy()
@@ -33,7 +33,7 @@ void Scene::destroy()
 
 GeometryInstanceHandle Scene::createGeometryInstance(
 	const GeometryDesc& geometryDesc, MaterialHandle material,
-	uint32 transformCount, const XLib::Matrix3x4* intialTransforms)
+	uint32 transformCount, const Matrix3x4* intialTransforms)
 {
 	uint32 baseTransformIndex = allocatedTansformCount;
 	allocatedTansformCount++;
@@ -110,4 +110,11 @@ void Scene::populateCommandList(ID3D12GraphicsCommandList2* d3dCommandList)
 			d3dCommandList->DrawIndexedInstanced(instance.indexCount, 1, 0, 0, 0);
 		}
 	}
+}
+
+void Scene::updateGeometryInstanceTransform(GeometryInstanceHandle handle,
+	const Matrix3x4& transform, uint16 transformIndex)
+{
+	uint32 globalTransformIndex = instances[handle].baseTransformIndex + transformIndex;
+	mappedTransformBuffer[globalTransformIndex] = transform;
 }

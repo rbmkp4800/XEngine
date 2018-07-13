@@ -111,6 +111,9 @@
       <ObjectFileOutput />
       <ShaderModel>5.1</ShaderModel>
     </FxCompile>
+    <Lib>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -189,6 +192,7 @@
   <ItemGroup>
     <ClInclude Include="Source\XEngine.Render.Base.h" />
     <ClInclude Include="Source\XEngine.Render.Camera.h" />
+    <ClInclude Include="Source\XEngine.Render.ClassLinkage.h" />
     <ClInclude Include="Source\XEngine.Render.Device.DescriptorHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.EffectHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.h" />
@@ -207,6 +211,7 @@
   <ItemGroup>
     <ClCompile Include="Source\XEngine.Render.Device.BufferHeap.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.cpp" />
+    <ClCompile Include="Source\XEngine.Render.Device.DescriptorHeap.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.EffectHeap.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.SceneRenderer.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.Uploader.cpp" />

@@ -5,6 +5,11 @@
 using namespace XEngine::Render;
 using namespace XEngine::Render::Device_;
 
+void MaterialHeap::initialize()
+{
+
+}
+
 MaterialHandle MaterialHeap::createMaterial(EffectHandle effect,
 	const void* initialConstants, const TextureHandle* intialTextures)
 {

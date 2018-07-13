@@ -45,8 +45,9 @@ static HWND hWnd = nullptr;
 static bool windowClassRegistered = false;
 static bool rawInputRegistered = false;
 
-constexpr wchar windowClassName[] = L"XEngine.OutputWindow";
-constexpr wchar windowTitle[] = L"XEngine";
+static constexpr uint16x2 resolution = { 1440, 900 };
+static constexpr wchar windowClassName[] = L"XEngine.OutputWindow";
+static constexpr wchar windowTitle[] = L"XEngine";
 
 static void HandleRawInput(WPARAM wParam, LPARAM lParam)
 {
@@ -128,10 +129,7 @@ static LRESULT __stdcall WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 static uint32 __stdcall DispatchThreadMain(void*)
 {
-	uint32 width = 1440;
-	uint32 height = 900;
-
-	RECT rect = { 0, 0, LONG(width), LONG(height) };
+	RECT rect = { 0, 0, LONG(resolution.x), LONG(resolution.y) };
 	AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, false);
 
 	hWnd = CreateWindow(windowClassName, windowTitle, WS_OVERLAPPEDWINDOW,
@@ -215,3 +213,7 @@ void Output::Destroy()
 	dispatchThread.destroy();
 	controlEvent.destroy();
 }
+
+uint32 Output::GetViewCount() { return 1; }
+uint16x2 Output::GetViewResolution(uint32 viewIndex) { return resolution; }
+void* Output::GetViewWindowHandle(uint32 viewIndex) { return hWnd; }

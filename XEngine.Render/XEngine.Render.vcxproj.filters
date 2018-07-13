@@ -63,6 +63,9 @@
     <ClInclude Include="Source\XEngine.Render.Internal.Shaders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.ClassLinkage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\XEngine.Render.Scene.cpp">
@@ -96,6 +99,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\XEngine.Render.Device.MaterialHeap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.Device.DescriptorHeap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

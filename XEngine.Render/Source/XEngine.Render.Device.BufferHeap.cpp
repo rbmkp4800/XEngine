@@ -5,6 +5,7 @@
 #include "XEngine.Render.Device.BufferHeap.h"
 
 #include "XEngine.Render.Device.h"
+#include "XEngine.Render.ClassLinkage.h"
 
 #define device this->getDevice()
 

@@ -33,8 +33,9 @@ namespace XEngine::Render
 	{
 		friend Device_::Uploader;
 		friend Device_::SceneRenderer;
-		friend Device_::BufferHeap;
 		friend Device_::EffectHeap;
+		friend Device_::MaterialHeap;
+		friend Device_::BufferHeap;
 
 		friend Scene;
 		friend GBuffer;

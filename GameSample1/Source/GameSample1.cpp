@@ -9,6 +9,8 @@ using namespace GameSample1;
 
 void Game::initialize()
 {
+	Core::Input::AddHandler(this);
+
 	Render::Device& renderDevice = Core::Engine::GetRenderDevice();
 
 	plainEffect = renderDevice.createEffect_plain();
@@ -25,6 +27,8 @@ void Game::initialize()
 
 void Game::update(float32 timeDelta)
 {
+	Render::Device& renderDevice = Core::Engine::GetRenderDevice();
+	Render::Target& renderTarget = Core::Engine::GetOutputViewRenderTarget(0);
 
 }
 

@@ -7,6 +7,7 @@
 
 #include "XEngine.Render.Device.h"
 #include "XEngine.Render.Internal.Shaders.h"
+#include "XEngine.Render.ClassLinkage.h"
 
 #define device this->getDevice()
 

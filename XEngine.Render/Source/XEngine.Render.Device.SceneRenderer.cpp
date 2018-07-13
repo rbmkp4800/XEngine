@@ -12,6 +12,7 @@
 #include "XEngine.Render.Target.h"
 #include "XEngine.Render.GBuffer.h"
 #include "XEngine.Render.Internal.Shaders.h"
+#include "XEngine.Render.ClassLinkage.h"
 
 #define device this->getDevice()
 

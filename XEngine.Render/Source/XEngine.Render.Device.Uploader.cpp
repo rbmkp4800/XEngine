@@ -7,6 +7,7 @@
 #include "XEngine.Render.Device.Uploader.h"
 
 #include "XEngine.Render.Device.h"
+#include "XEngine.Render.ClassLinkage.h"
 
 #define device this->getDevice()
 
@@ -46,7 +47,7 @@ void Uploader::uploadBuffer(ID3D12Resource* d3dDestBuffer,
 	{
 		uint32 currentUploadSize = min(size - bytesUploaded, uploadBufferSize);
 
-		Memory::Copy(mappedUploadBuffer, to<byte*>(data) + bytesUploaded, uploadBufferSize);
+		Memory::Copy(mappedUploadBuffer, to<byte*>(data) + bytesUploaded, currentUploadSize);
 
 		d3dCommandAllocator->Reset();
 		d3dCommandList->Reset(d3dCommandAllocator, nullptr);

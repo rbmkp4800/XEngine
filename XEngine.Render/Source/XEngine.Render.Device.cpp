@@ -1,6 +1,8 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
+#include <XLib.Platform.D3D12.Helpers.h>
+
 #include "XEngine.Render.Device.h"
 
 using namespace XLib::Platform;
@@ -40,11 +42,20 @@ bool Device::initialize()
 			break;
 	}
 
+	d3dDevice->CreateCommandQueue(&D3D12CommandQueueDesc(D3D12_COMMAND_LIST_TYPE_DIRECT),
+		d3dGraphicsQueue.uuid(), d3dGraphicsQueue.voidInitRef());
+	d3dDevice->CreateCommandQueue(&D3D12CommandQueueDesc(D3D12_COMMAND_LIST_TYPE_COPY),
+		d3dCopyQueue.uuid(), d3dCopyQueue.voidInitRef());
+
 	d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
 		d3dCommandAllocator.uuid(), d3dCommandAllocator.voidInitRef());
 	d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3dCommandAllocator, nullptr,
 		d3dCommandList.uuid(), d3dCommandList.voidInitRef());
 	d3dCommandList->Close();
+
+	srvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 16, true);
+	rtvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 8, false);
+	dsvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 4, false);
 
 	uploader.initialize();
 	sceneRenderer.initialize();
