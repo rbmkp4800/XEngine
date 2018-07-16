@@ -172,7 +172,9 @@
     <ClInclude Include="Source\XEngine.Core.WorldController.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\XEngine.Core.DiskWorker.cpp" />
+    <ClCompile Include="Source\XEngine.Core.DiskWorker.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Source\XEngine.Core.Engine.cpp" />
     <ClCompile Include="Source\XEngine.Core.GeometryResource.cpp" />
     <ClCompile Include="Source\XEngine.Core.Output.cpp" />

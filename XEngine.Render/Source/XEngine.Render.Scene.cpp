@@ -79,7 +79,7 @@ GeometryInstanceHandle Scene::createGeometryInstance(
 	return result;
 }
 
-void Scene::populateCommandList(ID3D12GraphicsCommandList2* d3dCommandList)
+void Scene::populateCommandList(ID3D12GraphicsCommandList* d3dCommandList)
 {
 	uint64 transformBufferGPUAddress = d3dTransformBuffer->GetGPUVirtualAddress();
 

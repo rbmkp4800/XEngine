@@ -24,8 +24,8 @@ using namespace XEngine::Render::Device_;
 
 struct SceneRenderer::CameraTransformConstants
 {
-	Matrix4x4 view;
 	Matrix4x4 viewProjection;
+	Matrix4x4 view;
 };
 
 struct SceneRenderer::LightingPassConstants
@@ -83,7 +83,9 @@ void SceneRenderer::initialize()
 
 		D3D12_ROOT_PARAMETER rootParameters[] =
 		{
+				// b0 lighting pass constants
 			D3D12RootParameter_CBV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
+				// t0-t3 G-buffer textures
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
@@ -115,13 +117,25 @@ void SceneRenderer::initialize()
 			d3dLightingPassPSO.uuid(), d3dLightingPassPSO.voidInitRef());
 	}
 
-	// Camera transform constants buffer
-	d3dDevice->CreateCommittedResource(
-		&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-		&D3D12ResourceDesc_Buffer(sizeof(CameraTransformConstants)),
-		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		d3dCameraTransformCB.uuid(), d3dCameraTransformCB.voidInitRef());
-	d3dCameraTransformCB->Map(0, &D3D12Range(), to<void**>(&mappedCameraTransformCB));
+	// Constant buffers
+	{
+		d3dDevice->CreateCommittedResource(
+			&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+			&D3D12ResourceDesc_Buffer(sizeof(CameraTransformConstants)),
+			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+			d3dCameraTransformCB.uuid(), d3dCameraTransformCB.voidInitRef());
+
+		d3dDevice->CreateCommittedResource(
+			&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+			&D3D12ResourceDesc_Buffer(sizeof(LightingPassConstants)),
+			D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+			d3dLightingPassCB.uuid(), d3dLightingPassCB.voidInitRef());
+
+		d3dCameraTransformCB->Map(0, &D3D12Range(), to<void**>(&mappedCameraTransformCB));
+		d3dLightingPassCB->Map(0, &D3D12Range(), to<void**>(&mappedLightingPassCB));
+	}
+
+	gpuQueueSyncronizer.initialize(d3dDevice);
 }
 
 void SceneRenderer::destroy()
@@ -129,7 +143,7 @@ void SceneRenderer::destroy()
 
 }
 
-void SceneRenderer::render(ID3D12GraphicsCommandList2* d3dCommandList,
+void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 	ID3D12CommandAllocator* d3dCommandAllocator, Scene& scene,
 	const Camera& camera, GBuffer& gBuffer, Target& target, rectu16 viewport)
 {
@@ -141,14 +155,14 @@ void SceneRenderer::render(ID3D12GraphicsCommandList2* d3dCommandList,
 		float32 aspect = viewportSizeF.x / viewportSizeF.y;
 		Matrix4x4 view = camera.getViewMatrix();
 		Matrix4x4 viewProjection = view * camera.getProjectionMatrix(aspect);
-		mappedCameraTransformCB->view = view;
 		mappedCameraTransformCB->viewProjection = viewProjection;
+		mappedCameraTransformCB->view = view;
 
-		//float32 cameraClipPlanesDelta = camera.zFar - camera.zNear;
-		//mappedLightingPassCB->ndcToViewDepthConversionA = (camera.zFar * camera.zNear) / cameraClipPlanesDelta;
-		//mappedLightingPassCB->ndcToViewDepthConversionB = camera.zFar / cameraClipPlanesDelta;
-		//mappedLightingPassCB->aspect = aspect;
-		//mappedLightingPassCB->halfFOVTan = Math::Tan(camera.fov * 0.5f);
+		float32 invCameraClipPlanesDelta = 1.0f / (camera.zFar - camera.zNear);
+		mappedLightingPassCB->ndcToViewDepthConversionA = (camera.zFar * camera.zNear) * invCameraClipPlanesDelta;
+		mappedLightingPassCB->ndcToViewDepthConversionB = camera.zFar * invCameraClipPlanesDelta;
+		mappedLightingPassCB->aspect = aspect;
+		mappedLightingPassCB->halfFOVTan = Math::Tan(camera.fov * 0.5f);
 	}
 
 	// Basic initialization =================================================================//
@@ -190,6 +204,8 @@ void SceneRenderer::render(ID3D12GraphicsCommandList2* d3dCommandList,
 				D3D12ResourceBarrier_Transition(gBuffer.d3dDiffuseTexture,	D3D12_RESOURCE_STATE_RENDER_TARGET,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalTexture,	D3D12_RESOURCE_STATE_RENDER_TARGET,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,	D3D12_RESOURCE_STATE_DEPTH_WRITE,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+					// TODO: remove from here. Temp solution
+				D3D12ResourceBarrier_Transition(target.d3dTexture,			D3D12_RESOURCE_STATE_COMMON,		D3D12_RESOURCE_STATE_RENDER_TARGET),
 			};
 			d3dCommandList->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
 		}
@@ -198,6 +214,9 @@ void SceneRenderer::render(ID3D12GraphicsCommandList2* d3dCommandList,
 		d3dCommandList->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
 
 		d3dCommandList->SetGraphicsRootSignature(d3dLightingPassRS);
+		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dLightingPassCB->GetGPUVirtualAddress());
+		d3dCommandList->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex));
+
 		d3dCommandList->SetPipelineState(d3dLightingPassPSO);
 		d3dCommandList->DrawInstanced(3, 1, 0, 0);
 
@@ -207,8 +226,21 @@ void SceneRenderer::render(ID3D12GraphicsCommandList2* d3dCommandList,
 				D3D12ResourceBarrier_Transition(gBuffer.d3dDiffuseTexture,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	D3D12_RESOURCE_STATE_RENDER_TARGET),
 				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalTexture,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	D3D12_RESOURCE_STATE_RENDER_TARGET),
 				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	D3D12_RESOURCE_STATE_DEPTH_WRITE),
+					// TODO: remove from here. Temp solution
+				D3D12ResourceBarrier_Transition(target.d3dTexture,			D3D12_RESOURCE_STATE_RENDER_TARGET,			D3D12_RESOURCE_STATE_COMMON),
 			};
 			d3dCommandList->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
 		}
+	}
+
+	// Finalize =============================================================================//
+	{
+		d3dCommandList->Close();
+
+		ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
+		device.d3dGraphicsQueue->ExecuteCommandLists(
+			countof(d3dCommandListsToExecute), d3dCommandListsToExecute);
+
+		gpuQueueSyncronizer.synchronize(device.d3dGraphicsQueue);
 	}
 }

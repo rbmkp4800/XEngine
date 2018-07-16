@@ -1,13 +1,3 @@
-static const float specularPower = 100.0f;
-static const float abmientIntensity = 0.3f;
-
-struct Light
-{
-	float3 viewSpacePosition;
-	float3 color;
-	float intensity;
-};
-
 cbuffer Constants : register(b0)
 {
 	float ndcToViewDepthConversionA;
@@ -60,6 +50,6 @@ float4 main(PSInput input) : SV_Target
 		float3 normal = float3(normalTexture[texPosition], 0.0f);
 		normal.z = -sqrt(saturate(1.0f - sqr(normal.x) - sqr(normal.y)));
 
-		return float4(normal, 1.0f);
+		return float4(float3(1.0f, 1.0f, 1.0f) + normal * 0.5f, 1.0f);
 	}
 }

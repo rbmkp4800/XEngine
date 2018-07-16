@@ -5,6 +5,7 @@
 #include <XEngine.Core.GeometryResource.h>
 #include <XEngine.Render.Scene.h>
 #include <XEngine.Render.GBuffer.h>
+#include <XEngine.Render.Camera.h>
 
 namespace GameSample1
 {
@@ -21,6 +22,8 @@ namespace GameSample1
 		//XEngine::Core::GeometryResourceManager geometryResourceManager;
 		XEngine::Core::GeometryResource cubeGeometryResource;
 		XEngine::Render::GeometryInstanceHandle cubeGeometryInstance;
+
+		XEngine::Render::Camera camera;
 
 	public:
 		Game() = default;

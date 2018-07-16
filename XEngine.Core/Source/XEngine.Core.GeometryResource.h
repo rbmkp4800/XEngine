@@ -6,7 +6,7 @@
 #include <XEngine.Render.Base.h>
 #include <XEngine.Render.Scene.h>
 
-#include "XEngine.Core.AbstractResourceManager.h"
+//#include "XEngine.Core.AbstractResourceManager.h"
 
 namespace XEngine::Core
 {
@@ -41,8 +41,8 @@ namespace XEngine::Core
 			result.vertexBufferHandle = buffer;
 			result.indexBufferHandle = buffer;
 			result.vertexDataOffset = 0;
-			result.indexDataOffset = indexCount * (indexIs32Bit ? 4 : 2);
-			result.vertexDataSize = vertexCount;
+			result.indexDataOffset = vertexCount * vertexStride;
+			result.vertexDataSize = result.indexDataOffset;
 			result.indexCount = indexCount;
 			result.vertexStride = vertexStride;
 			result.indexIs32Bit = indexIs32Bit;
@@ -50,6 +50,6 @@ namespace XEngine::Core
 		}
 	};
 
-	using GeometryResourceManager = AbstractResourceManager<
-		GeometryResourceUID, GeometryResourceHandle, GeometryResource>;
+	//using GeometryResourceManager = AbstractResourceManager<
+	//	GeometryResourceUID, GeometryResourceHandle, GeometryResource>;
 }

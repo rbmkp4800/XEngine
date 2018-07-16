@@ -1,4 +1,4 @@
-#include <XLib.PoolAllocator.h>
+//#include <XLib.PoolAllocator.h>
 #include <XEngine.Render.Device.h>
 #include <XEngine.Render.Vertices.h>
 
@@ -10,7 +10,7 @@ using namespace XLib;
 using namespace XEngine::Core;
 using namespace XEngine::Render;
 
-namespace
+/*namespace
 {
 	struct Request
 	{
@@ -21,17 +21,17 @@ namespace
 		PoolAllocatorHeapUsagePolicy::SingleDynamicChunk>;
 
 	RequestsAllocator requestsAllocator;
-}
+}*/
 
 GeometryResource::~GeometryResource()
 {
 
 }
 
-bool GeometryResource::createFromFileAsync(const char* filename)
-{
-
-}
+//bool GeometryResource::createFromFileAsync(const char* filename)
+//{
+//
+//}
 
 void GeometryResource::createCube()
 {

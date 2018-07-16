@@ -6,11 +6,12 @@
 #include <XLib.Platform.COMPtr.h>
 
 #include "XEngine.Render.Base.h"
+#include "XEngine.Render.Internal.GPUQueueSynchronizer.h"
 
 struct ID3D12Device;
 struct ID3D12RootSignature;
 struct ID3D12PipelineState;
-struct ID3D12GraphicsCommandList2;
+struct ID3D12GraphicsCommandList;
 struct ID3D12CommandAllocator;
 struct ID3D12Resource;
 
@@ -35,7 +36,11 @@ namespace XEngine::Render::Device_
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
 
 		XLib::Platform::COMPtr<ID3D12Resource> d3dCameraTransformCB;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dLightingPassCB;
 		CameraTransformConstants *mappedCameraTransformCB = nullptr;
+		LightingPassConstants *mappedLightingPassCB = nullptr;
+
+		Internal::GPUQueueSynchronizer gpuQueueSyncronizer;
 
 	private:
 		inline Device& getDevice();
@@ -47,7 +52,7 @@ namespace XEngine::Render::Device_
 		void initialize();
 		void destroy();
 
-		void render(ID3D12GraphicsCommandList2* d3dCommandList,
+		void render(ID3D12GraphicsCommandList* d3dCommandList,
 			ID3D12CommandAllocator* d3dCommandAllocator, Scene& scene,
 			const Camera& camera, GBuffer& gBuffer, Target& target, rectu16 viewport);
 

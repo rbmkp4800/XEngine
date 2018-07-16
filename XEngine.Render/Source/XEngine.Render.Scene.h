@@ -7,7 +7,7 @@
 
 #include "XEngine.Render.Base.h"
 
-struct ID3D12GraphicsCommandList2;
+struct ID3D12GraphicsCommandList;
 struct ID3D12Resource;
 
 namespace XLib { struct Matrix3x4; }
@@ -78,7 +78,7 @@ namespace XEngine::Render
 		uint32 allocatedTansformCount = 0;
 
 	private:
-		void populateCommandList(ID3D12GraphicsCommandList2* d3dCommandList);
+		void populateCommandList(ID3D12GraphicsCommandList* d3dCommandList);
 
 	public:
 		Scene() = default;

@@ -18,7 +18,7 @@ struct IDXGIFactory5;
 
 struct ID3D12Device;
 struct ID3D12CommandQueue;
-struct ID3D12GraphicsCommandList2;
+struct ID3D12GraphicsCommandList;
 struct ID3D12CommandAllocator;
 
 namespace XEngine::Render { class Camera; }
@@ -49,7 +49,7 @@ namespace XEngine::Render
 		XLib::Platform::COMPtr<ID3D12CommandQueue> d3dGraphicsQueue;
 		XLib::Platform::COMPtr<ID3D12CommandQueue> d3dCopyQueue;
 
-		XLib::Platform::COMPtr<ID3D12GraphicsCommandList2> d3dCommandList;
+		XLib::Platform::COMPtr<ID3D12GraphicsCommandList> d3dCommandList;
 		XLib::Platform::COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
 
 		Device_::DescriptorHeap srvHeap;

@@ -23,6 +23,9 @@ void Game::initialize()
 	cubeGeometryInstance = scene.createGeometryInstance(
 		cubeGeometryResource.getGeometryDesc(), plainMaterial);
 	scene.updateGeometryInstanceTransform(cubeGeometryInstance, Matrix3x4::Identity());
+
+	camera.position = { 0.0f, -10.0f, -10.0f };
+	camera.forward = { 0.0f, 1.0f, 1.0f };
 }
 
 void Game::update(float32 timeDelta)
@@ -30,6 +33,7 @@ void Game::update(float32 timeDelta)
 	Render::Device& renderDevice = Core::Engine::GetRenderDevice();
 	Render::Target& renderTarget = Core::Engine::GetOutputViewRenderTarget(0);
 
+	renderDevice.renderScene(scene, camera, gBuffer, renderTarget, { 0, 0, 1440, 900 });
 }
 
 void Game::onKeyboard(XLib::VirtualKey key, bool state)
