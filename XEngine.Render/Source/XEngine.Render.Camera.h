@@ -8,7 +8,7 @@
 
 namespace XEngine::Render
 {
-	class Camera
+	struct Camera
 	{
 	public:
 		float32x3 position, forward, up;

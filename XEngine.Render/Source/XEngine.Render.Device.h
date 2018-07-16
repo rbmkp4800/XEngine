@@ -21,7 +21,7 @@ struct ID3D12CommandQueue;
 struct ID3D12GraphicsCommandList;
 struct ID3D12CommandAllocator;
 
-namespace XEngine::Render { class Camera; }
+namespace XEngine::Render { struct Camera; }
 namespace XEngine::Render { class Scene; }
 namespace XEngine::Render { class Target; }
 namespace XEngine::Render { class GBuffer; }
