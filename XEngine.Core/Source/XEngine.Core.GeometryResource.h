@@ -28,7 +28,7 @@ namespace XEngine::Core
 
 		bool createFromFileAsync(const char* filename);
 		void createCube();
-		void createSphere();
+		void createCubicSphere(uint32 detalizationLevel);
 
 		void cancelCreation();
 
