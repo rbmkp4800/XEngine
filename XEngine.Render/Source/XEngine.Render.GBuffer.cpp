@@ -25,9 +25,9 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R16G16_SNORM, size.x, size.y,
+		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R16G16B16A16_SNORM, size.x, size.y,
 			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), D3D12_RESOURCE_STATE_RENDER_TARGET,
-		nullptr, d3dNormalTexture.uuid(), d3dNormalTexture.voidInitRef());
+		nullptr, d3dNormalRoughnessMetalnessTexture.uuid(), d3dNormalRoughnessMetalnessTexture.voidInitRef());
 
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
@@ -38,7 +38,7 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 	srvDescriptorsBaseIndex = device.srvHeap.allocate(3);
 	d3dDevice->CreateShaderResourceView(d3dDiffuseTexture, nullptr,
 		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 0));
-	d3dDevice->CreateShaderResourceView(d3dNormalTexture, nullptr,
+	d3dDevice->CreateShaderResourceView(d3dNormalRoughnessMetalnessTexture, nullptr,
 		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 1));
 	d3dDevice->CreateShaderResourceView(d3dDepthTexture,
 		&D3D12ShaderResourceViewDesc_Texture2D(DXGI_FORMAT_R24_UNORM_X8_TYPELESS),
@@ -47,7 +47,7 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 	rtvDescriptorsBaseIndex = device.rtvHeap.allocate(2);
 	d3dDevice->CreateRenderTargetView(d3dDiffuseTexture, nullptr,
 		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + 0));
-	d3dDevice->CreateRenderTargetView(d3dNormalTexture, nullptr,
+	d3dDevice->CreateRenderTargetView(d3dNormalRoughnessMetalnessTexture, nullptr,
 		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + 1));
 
 	dsvDescriptorIndex = device.dsvHeap.allocate(1);

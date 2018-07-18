@@ -19,18 +19,45 @@ void Game::initialize()
 	Render::Device& renderDevice = Core::Engine::GetRenderDevice();
 
 	plainEffect = renderDevice.createEffect_plain();
-	plainMaterial = renderDevice.createMaterial(plainEffect);
+	//plainMaterial = renderDevice.createMaterial(plainEffect);
 
 	scene.initialize(renderDevice);
 	gBuffer.initialize(renderDevice, { 1440, 900 });
 
-	cubeGeometryResource.createCube();
-	cubeGeometryInstance = scene.createGeometryInstance(
-		cubeGeometryResource.getGeometryDesc(), plainMaterial);
-	scene.updateGeometryInstanceTransform(cubeGeometryInstance, Matrix3x4::Identity());
+	cubeGeometryResource.createCubicSphere(6);
 
-	camera.position = { -10.0f, 0.0f, 0.0f };
-	cameraRotation = { 0.0f, 0.0f };
+	for (uint32 i = 0; i < 8; i++)
+	{
+		for (uint32 j = 0; j < 8; j++)
+		{
+			Render::MaterialHandle mat = renderDevice.createMaterial(plainEffect);
+
+			struct
+			{
+				float32x4 color;
+				float32x4 roughtnessMetalness;
+			} c;
+
+			c.color = { 1.0f, 0.0f, 0.0f, 0.0f };
+			c.roughtnessMetalness = { max(float32(i) / 8.0f, 0.05f), float32(j) / 8.0f, 0.0f, 0.0f };
+
+			renderDevice.updateMaterial(mat, 0, &c, sizeof(c));
+
+			Render::GeometryInstanceHandle inst = scene.createGeometryInstance(
+				cubeGeometryResource.getGeometryDesc(), mat);
+
+			scene.updateGeometryInstanceTransform(inst,
+				Matrix3x4::Translation(i * 3.0f - 10.0f, j * 3.0f - 10.0f, 0.0f));
+		}
+	}
+
+	
+	//cubeGeometryInstance = scene.createGeometryInstance(
+	//	cubeGeometryResource.getGeometryDesc(), plainMaterial);
+	//scene.updateGeometryInstanceTransform(cubeGeometryInstance, Matrix3x4::RotationX(cubeRotation));
+
+	camera.position = { -13.0f, -7.0f, -10.0f };
+	cameraRotation = { 0.0f, 0.7f };
 }
 
 void Game::update(float32 timeDelta)

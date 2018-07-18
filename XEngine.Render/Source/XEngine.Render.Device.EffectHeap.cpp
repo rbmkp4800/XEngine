@@ -40,7 +40,7 @@ EffectHandle EffectHeap::createEffect_plain()
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	psoDesc.NumRenderTargets = 2;
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	psoDesc.RTVFormats[1] = DXGI_FORMAT_R16G16_SNORM;
+	psoDesc.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_SNORM;
 	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	psoDesc.SampleDesc.Count = 1;
 	psoDesc.SampleDesc.Quality = 0;
@@ -56,4 +56,9 @@ EffectHandle EffectHeap::createEffect_plain()
 ID3D12PipelineState* EffectHeap::getD3DPSO(EffectHandle handle)
 {
 	return d3dPSOs[handle];
+}
+
+uint32 EffectHeap::getMaterialConstantsSize(EffectHandle handle) const
+{
+	return 32;
 }

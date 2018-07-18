@@ -34,5 +34,6 @@ namespace XEngine::Render::Device_
 		void releaseEffect(EffectHandle handle);
 
 		ID3D12PipelineState* getD3DPSO(EffectHandle handle);
+		uint32 getMaterialConstantsSize(EffectHandle handle) const;
 	};
 }

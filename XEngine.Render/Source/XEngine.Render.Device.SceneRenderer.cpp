@@ -34,6 +34,19 @@ struct SceneRenderer::LightingPassConstants
 	float32 ndcToViewDepthConversionB;
 	float32 aspect;
 	float32 halfFOVTan;
+
+	uint32 lightCount;
+	uint32 _padding0;
+	uint32 _padding1;
+	uint32 _padding2;
+
+	struct Light
+	{
+		float32x3 viewSpacePosition;
+		uint32 _padding0;
+		float32x3 color;
+		uint32 _padding1;
+	} lights[4];
 };
 
 void SceneRenderer::initialize()
@@ -51,10 +64,12 @@ void SceneRenderer::initialize()
 		{
 				// t0 transforms buffer
 			D3D12RootParameter_SRV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
-				// b0 material constant buffer
-			D3D12RootParameter_CBV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
-				// b1 camera transform constant buffer
-			D3D12RootParameter_CBV(1, 0, D3D12_SHADER_VISIBILITY_VERTEX),
+				// b0 material index
+			D3D12RootParameter_Constants(1, 0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
+				// b1 materials table
+			D3D12RootParameter_CBV(1, 0, D3D12_SHADER_VISIBILITY_PIXEL),
+				// b2 camera transform constant buffer
+			D3D12RootParameter_CBV(2, 0, D3D12_SHADER_VISIBILITY_VERTEX),
 				// t1
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
@@ -163,6 +178,16 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		mappedLightingPassCB->ndcToViewDepthConversionB = camera.zFar * invCameraClipPlanesDelta;
 		mappedLightingPassCB->aspect = aspect;
 		mappedLightingPassCB->halfFOVTan = Math::Tan(camera.fov * 0.5f);
+
+		mappedLightingPassCB->lightCount = 4;
+		mappedLightingPassCB->lights[0].viewSpacePosition = (float32x3( 5.0f,  5.0f, 10.0f) * view).xyz;
+		mappedLightingPassCB->lights[0].color = float32x3(1000.0f, 1000.0f, 1000.0f);
+		mappedLightingPassCB->lights[1].viewSpacePosition = (float32x3( 5.0f, -5.0f, 10.0f) * view).xyz;
+		mappedLightingPassCB->lights[1].color = float32x3(1000.0f, 1000.0f, 1000.0f);
+		mappedLightingPassCB->lights[2].viewSpacePosition = (float32x3(-5.0f,  5.0f, 10.0f) * view).xyz;
+		mappedLightingPassCB->lights[2].color = float32x3(1000.0f, 1000.0f, 1000.0f);
+		mappedLightingPassCB->lights[3].viewSpacePosition = (float32x3(-5.0f, -5.0f, 10.0f) * view).xyz;
+		mappedLightingPassCB->lights[3].color = float32x3(1000.0f, 1000.0f, 1000.0f);
 	}
 
 	// Basic initialization =================================================================//
@@ -190,8 +215,8 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		d3dCommandList->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		d3dCommandList->SetGraphicsRootSignature(d3dGBufferPassRS);
-		d3dCommandList->SetGraphicsRootConstantBufferView(2, d3dCameraTransformCB->GetGPUVirtualAddress());
-		d3dCommandList->SetGraphicsRootDescriptorTable(3, device.srvHeap.getGPUHandle(0));
+		d3dCommandList->SetGraphicsRootConstantBufferView(3, d3dCameraTransformCB->GetGPUVirtualAddress());
+		d3dCommandList->SetGraphicsRootDescriptorTable(4, device.srvHeap.getGPUHandle(0));
 
 		scene.populateCommandList(d3dCommandList);
 	}
@@ -201,11 +226,16 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		{
 			D3D12_RESOURCE_BARRIER d3dBarriers[] =
 			{
-				D3D12ResourceBarrier_Transition(gBuffer.d3dDiffuseTexture,	D3D12_RESOURCE_STATE_RENDER_TARGET,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
-				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalTexture,	D3D12_RESOURCE_STATE_RENDER_TARGET,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
-				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,	D3D12_RESOURCE_STATE_DEPTH_WRITE,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
-					// TODO: remove from here. Temp solution
-				D3D12ResourceBarrier_Transition(target.d3dTexture,			D3D12_RESOURCE_STATE_COMMON,		D3D12_RESOURCE_STATE_RENDER_TARGET),
+				D3D12ResourceBarrier_Transition(gBuffer.d3dDiffuseTexture,
+					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalRoughnessMetalnessTexture,
+					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
+					D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+
+				// TODO: remove from here. Temp solution
+				D3D12ResourceBarrier_Transition(target.d3dTexture,
+					D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET),
 			};
 			d3dCommandList->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
 		}
@@ -223,11 +253,16 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		{
 			D3D12_RESOURCE_BARRIER d3dBarriers[] =
 			{
-				D3D12ResourceBarrier_Transition(gBuffer.d3dDiffuseTexture,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	D3D12_RESOURCE_STATE_RENDER_TARGET),
-				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalTexture,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	D3D12_RESOURCE_STATE_RENDER_TARGET),
-				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,	D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,	D3D12_RESOURCE_STATE_DEPTH_WRITE),
-					// TODO: remove from here. Temp solution
-				D3D12ResourceBarrier_Transition(target.d3dTexture,			D3D12_RESOURCE_STATE_RENDER_TARGET,			D3D12_RESOURCE_STATE_COMMON),
+				D3D12ResourceBarrier_Transition(gBuffer.d3dDiffuseTexture,
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
+				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalRoughnessMetalnessTexture,
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
+				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
+
+				// TODO: remove from here. Temp solution
+				D3D12ResourceBarrier_Transition(target.d3dTexture,
+					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON),
 			};
 			d3dCommandList->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
 		}

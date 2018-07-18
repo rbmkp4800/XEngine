@@ -73,6 +73,11 @@ void Device::updateBuffer(BufferHandle buffer, uint32 destOffset, const void* sr
 	uploader.uploadBuffer(bufferHeap.getD3DResource(buffer), destOffset, srcData, size);
 }
 
+void Device::updateMaterial(MaterialHandle material, uint32 offset, const void* data, uint32 size)
+{
+	materialHeap.updateMaterialConstants(material, offset, data, size);
+}
+
 void Device::clearTarget(Target& target, XLib::Color color)
 {
 

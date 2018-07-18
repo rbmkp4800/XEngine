@@ -72,6 +72,7 @@ namespace XEngine::Render
 		void destroy();
 
 		void updateBuffer(BufferHandle buffer, uint32 destOffset, const void* srcData, uint32 size);
+		void updateMaterial(MaterialHandle material, uint32 offset, const void* data, uint32 size);
 		void clearTarget(Target& target, XLib::Color color);
 		void renderScene(Scene& scene, const Camera& camera,
 			GBuffer& gBuffer, Target& target, rectu16 viewport);

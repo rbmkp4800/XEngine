@@ -2,6 +2,7 @@
 
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
+#include <XLib.Platform.COMPtr.h>
 
 #include "XEngine.Render.Base.h"
 
@@ -14,6 +15,9 @@ namespace XEngine::Render::Device_
 	class MaterialHeap : public XLib::NonCopyable
 	{
 	private:
+		XLib::Platform::COMPtr<ID3D12Resource> d3dMaterialsTable;
+		byte* mappedMaterialsTable = nullptr;
+		uint16 materialCount = 0;
 
 	private:
 		inline Device& getDevice();
@@ -33,6 +37,6 @@ namespace XEngine::Render::Device_
 		void updateMaterialTexture(MaterialHandle handle, uint32 slot, TextureHandle textureHandle);
 
 		EffectHandle getEffect(MaterialHandle handle) const;
-		uint64 translateHandleToGPUAddress(MaterialHandle handle) const;
+		uint64 getMaterialsTableGPUAddress(EffectHandle effectHandle);
 	};
 }

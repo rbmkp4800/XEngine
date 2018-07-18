@@ -4,7 +4,7 @@ struct CameraTransform
 	float4x4 view;
 };
 
-ConstantBuffer<CameraTransform> cameraTransform : register(b1);
+ConstantBuffer<CameraTransform> cameraTransform : register(b2);
 StructuredBuffer<float4x3> transformsBuffer : register(t0);
 
 struct VSInput

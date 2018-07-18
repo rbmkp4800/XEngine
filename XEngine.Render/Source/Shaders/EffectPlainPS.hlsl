@@ -1,3 +1,22 @@
+struct MaterialIndexBuffer
+{
+	uint index;
+};
+
+struct Material
+{
+	float3 albedo;
+	float2 roughtnessMetalness;
+};
+
+struct MaterialsTable
+{
+	Material items[1024];
+};
+
+ConstantBuffer<MaterialIndexBuffer> materialIndexBuffer : register(b0);
+ConstantBuffer<MaterialsTable> materialsTable : register(b1);
+
 struct PSInput
 {
 	float4 position : SV_Position;
@@ -6,14 +25,17 @@ struct PSInput
 
 struct PSOutput
 {
-	float4 diffuse : SV_Target0;
-	float2 normal : SV_Target1;
+	float4 albedo : SV_Target0;
+	float4 normalRoughnessMetalness : SV_Target1;
 };
 
 PSOutput main(PSInput input)
 {
+	uint materialIndex = materialIndexBuffer.index;
+
 	PSOutput output;
-	output.diffuse = float4(1.0f, 1.0f, 1.0f, 1.0f);
-	output.normal = normalize(input.normal).xy;
+	output.albedo = float4(materialsTable.items[materialIndex].albedo, 1.0f);
+	output.normalRoughnessMetalness.xy = normalize(input.normal).xy;
+	output.normalRoughnessMetalness.zw = float2(materialsTable.items[materialIndex].roughtnessMetalness);
 	return output;
 }

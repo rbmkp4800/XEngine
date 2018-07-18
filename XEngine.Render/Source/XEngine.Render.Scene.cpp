@@ -88,6 +88,9 @@ void Scene::populateCommandList(ID3D12GraphicsCommandList* d3dCommandList)
 		ID3D12PipelineState *d3dPSO = device->effectHeap.getD3DPSO(effectInstancesData.effect);
 		d3dCommandList->SetPipelineState(d3dPSO);
 
+		d3dCommandList->SetGraphicsRootConstantBufferView(2,
+			device->materialHeap.getMaterialsTableGPUAddress(effectInstancesData.effect));
+
 		for (CachedInstance& instance : effectInstancesData.visibleInstances)
 		{
 			d3dCommandList->IASetVertexBuffers(0, 1,
@@ -104,8 +107,7 @@ void Scene::populateCommandList(ID3D12GraphicsCommandList* d3dCommandList)
 			//	https://gpuopen.com/performance-root-signature-descriptor-sets/
 			d3dCommandList->SetGraphicsRootShaderResourceView(0,
 				transformBufferGPUAddress + sizeof(Matrix3x4) * instance.baseTransformIndex);
-			d3dCommandList->SetGraphicsRootConstantBufferView(1,
-				device->materialHeap.translateHandleToGPUAddress(instance.material));
+			d3dCommandList->SetGraphicsRoot32BitConstant(1, uint32(instance.material), 0);
 
 			d3dCommandList->DrawIndexedInstanced(instance.indexCount, 1, 0, 0, 0);
 		}
