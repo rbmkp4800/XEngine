@@ -42,20 +42,14 @@ float NDCDepthToViewSpaceDepth(float ndcDepth)
 // https://github.com/KhronosGroup/glTF-WebGL-PBR
 // http://graphicrants.blogspot.com/2013/08/specular-brdf-reference.html
 
-float DistributionGGX(float roughness, float NdotH)
+float DistributionGGX(float alphaRoughnessSqr, float NdotH)
 {
-	float alphaRoughness = sqr(roughness);
-	float alphaRoughnessSqr = sqr(alphaRoughness);
 	float f = (NdotH * alphaRoughnessSqr - NdotH) * NdotH + 1.0f;
 	return alphaRoughnessSqr / (3.141592654f * sqr(f));
 }
 
-float GeometrySmithSchlick(float roughness, float NdotL, float NdotV)
+float GeometrySmithSchlick(float k, float NdotL, float NdotV)
 {
-	float k = sqr(roughness + 1.0f) / 8.0f;
-	// float k = sqr(roughness) / 2.0f;
-	// float k = sqr(roughness) * sqrt(2.0f / 3.141592654f);
-
 	float l = NdotL * (1.0f - k) + k;
 	float v = NdotV * (1.0f - k) + k;
 
@@ -87,6 +81,14 @@ float4 main(PSInput input) : SV_Target
 	float roughness = normalRoughnessMetalness.z;
 	float metalness = normalRoughnessMetalness.w;
 
+	// Precompute values:
+	//		for DistributionGGX:
+	float alphaRoughnessSqr = sqr(sqr(roughness));
+	//		for GeometrySmithSchlick:
+	float k = sqr(roughness + 1.0f) / 8.0f;
+	// float k = sqr(roughness) / 2.0f;
+	// float k = sqr(roughness) * sqrt(2.0f / 3.141592654f);
+
 	float3 diffuseColor = albedo * (1.0f - metalness) / 3.141592654f;
 	float3 specularColor = lerp(0.04f, albedo, metalness);
 
@@ -104,8 +106,8 @@ float4 main(PSInput input) : SV_Target
 		float NdotH = saturate(dot(normal, H));
 		float NdotL = saturate(dot(normal, L));
 
-		float D = DistributionGGX(roughness, NdotH);
-		float G = GeometrySmithSchlick(roughness, NdotL, NdotV);
+		float D = DistributionGGX(alphaRoughnessSqr, NdotH);
+		float G = GeometrySmithSchlick(k, NdotL, NdotV);
 		float3 F = FresnelSchlick(specularColor, NdotH);
 
 		float3 specularContribution = (D * G * F) * 0.25f; // NdotL * NdotV divistion is optimized
