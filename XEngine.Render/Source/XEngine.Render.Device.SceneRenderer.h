@@ -6,7 +6,6 @@
 #include <XLib.Platform.COMPtr.h>
 
 #include "XEngine.Render.Base.h"
-#include "XEngine.Render.Internal.GPUQueueSynchronizer.h"
 
 struct ID3D12Device;
 struct ID3D12RootSignature;
@@ -40,8 +39,6 @@ namespace XEngine::Render::Device_
 		CameraTransformConstants *mappedCameraTransformCB = nullptr;
 		LightingPassConstants *mappedLightingPassCB = nullptr;
 
-		Internal::GPUQueueSynchronizer gpuQueueSyncronizer;
-
 	private:
 		inline Device& getDevice();
 
@@ -54,7 +51,8 @@ namespace XEngine::Render::Device_
 
 		void render(ID3D12GraphicsCommandList* d3dCommandList,
 			ID3D12CommandAllocator* d3dCommandAllocator, Scene& scene,
-			const Camera& camera, GBuffer& gBuffer, Target& target, rectu16 viewport);
+			const Camera& camera, GBuffer& gBuffer, Target& target,
+			rectu16 viewport, bool finalizeTarget);
 
 		inline ID3D12RootSignature* getGBufferPassD3DRS() { return d3dGBufferPassRS; }
 	};

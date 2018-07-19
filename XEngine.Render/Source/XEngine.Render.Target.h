@@ -12,16 +12,20 @@ namespace XEngine::Render { class Device; }
 namespace XEngine::Render { class SwapChain; }
 namespace XEngine::Render::Device_ { class SceneRenderer; }
 
+namespace XEngine::Render::UI { class Batch; }
+
 namespace XEngine::Render
 {
 	class Target : public XLib::NonCopyable
 	{
 		friend SwapChain;
+		friend UI::Batch;
 		friend Device_::SceneRenderer;
 
 	private:
 		XLib::Platform::COMPtr<ID3D12Resource> d3dTexture;
 		uint16 rtvDescriptorIndex = 0;
+		bool stateRenderTarget = false;
 		
 	public:
 		Target() = default;

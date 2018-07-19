@@ -5,6 +5,8 @@
 
 #include "XEngine.Render.Device.h"
 
+#include "XEngine.Render.UI.Batch.h"
+
 using namespace XLib::Platform;
 using namespace XEngine::Render;
 
@@ -65,6 +67,10 @@ bool Device::initialize()
 	bufferHeap.initialize();
 	//textureHeap.initialize();
 
+	uiResources.initialize(d3dDevice);
+
+	gpuQueueSyncronizer.initialize(d3dDevice);
+
 	return true;
 }
 
@@ -84,8 +90,18 @@ void Device::clearTarget(Target& target, XLib::Color color)
 }
 
 void Device::renderScene(Scene& scene, const Camera& camera,
-	GBuffer& gBuffer, Target& target, rectu16 viewport)
+	GBuffer& gBuffer, Target& target, rectu16 viewport, bool finalizeTarget)
 {
 	sceneRenderer.render(d3dCommandList, d3dCommandAllocator,
-		scene, camera, gBuffer, target, viewport);
+		scene, camera, gBuffer, target, viewport, finalizeTarget);
+
+	gpuQueueSyncronizer.synchronize(d3dGraphicsQueue);
+}
+
+void Device::renderUI(UI::Batch& uiBatch)
+{
+	ID3D12CommandList *d3dCommandListsToExecute[] = { uiBatch.d3dCommandList };
+	d3dGraphicsQueue->ExecuteCommandLists(1, d3dCommandListsToExecute);
+
+	gpuQueueSyncronizer.synchronize(d3dGraphicsQueue);
 }

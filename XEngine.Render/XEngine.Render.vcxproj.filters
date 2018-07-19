@@ -66,6 +66,12 @@
     <ClInclude Include="Source\XEngine.Render.ClassLinkage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.UI.Batch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.Device.UIResources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\XEngine.Render.Scene.cpp">
@@ -104,11 +110,19 @@
     <ClCompile Include="Source\XEngine.Render.Device.DescriptorHeap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.UI.Batch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.Device.UIResources.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Source\Shaders\LightingPassPS.hlsl" />
     <FxCompile Include="Source\Shaders\ScreenQuadVS.hlsl" />
     <FxCompile Include="Source\Shaders\EffectPlainVS.hlsl" />
     <FxCompile Include="Source\Shaders\EffectPlainPS.hlsl" />
+    <FxCompile Include="Source\Shaders\UIColorVS.hlsl" />
+    <FxCompile Include="Source\Shaders\UIColorPS.hlsl" />
   </ItemGroup>
 </Project>

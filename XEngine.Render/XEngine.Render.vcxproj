@@ -199,7 +199,9 @@
     <ClInclude Include="Source\XEngine.Render.Device.BufferHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.MaterialHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.SceneRenderer.h" />
+    <ClInclude Include="Source\XEngine.Render.Device.UIResources.h" />
     <ClInclude Include="Source\XEngine.Render.Device.Uploader.h" />
+    <ClInclude Include="Source\XEngine.Render.UI.Batch.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.GPUQueueSynchronizer.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.Shaders.h" />
     <ClInclude Include="Source\XEngine.Render.Scene.h" />
@@ -214,6 +216,7 @@
     <ClCompile Include="Source\XEngine.Render.Device.DescriptorHeap.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.EffectHeap.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.SceneRenderer.cpp" />
+    <ClCompile Include="Source\XEngine.Render.Device.UIResources.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.Uploader.cpp" />
     <ClCompile Include="Source\XEngine.Render.Internal.GPUQueueSynchronizer.cpp" />
     <ClCompile Include="Source\XEngine.Render.Internal.Shaders.cpp" />
@@ -221,6 +224,7 @@
     <ClCompile Include="Source\XEngine.Render.GBuffer.cpp" />
     <ClCompile Include="Source\XEngine.Render.Target.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.MaterialHeap.cpp" />
+    <ClCompile Include="Source\XEngine.Render.UI.Batch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Source\Shaders\EffectPlainPS.hlsl">
@@ -262,6 +266,18 @@
       </ObjectFileOutput>
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </ObjectFileOutput>
+    </FxCompile>
+    <FxCompile Include="Source\Shaders\UIColorPS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
+    <FxCompile Include="Source\Shaders\UIColorVS.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

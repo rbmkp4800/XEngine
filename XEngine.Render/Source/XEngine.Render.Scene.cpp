@@ -1,5 +1,6 @@
 #include <d3d12.h>
 
+#include <XLib.Util.h>
 #include <XLib.Math.Matrix3x4.h>
 #include <XLib.Platform.D3D12.Helpers.h>
 

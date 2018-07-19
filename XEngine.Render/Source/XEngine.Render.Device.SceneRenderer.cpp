@@ -149,8 +149,6 @@ void SceneRenderer::initialize()
 		d3dCameraTransformCB->Map(0, &D3D12Range(), to<void**>(&mappedCameraTransformCB));
 		d3dLightingPassCB->Map(0, &D3D12Range(), to<void**>(&mappedLightingPassCB));
 	}
-
-	gpuQueueSyncronizer.initialize(d3dDevice);
 }
 
 void SceneRenderer::destroy()
@@ -160,7 +158,8 @@ void SceneRenderer::destroy()
 
 void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 	ID3D12CommandAllocator* d3dCommandAllocator, Scene& scene,
-	const Camera& camera, GBuffer& gBuffer, Target& target, rectu16 viewport)
+	const Camera& camera, GBuffer& gBuffer, Target& target,
+	rectu16 viewport, bool finalizeTarget)
 {
 	uint16x2 viewportSize = viewport.getSize();
 	float32x2 viewportSizeF = float32x2(viewportSize);
@@ -232,12 +231,18 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
 					D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
-
-				// TODO: remove from here. Temp solution
+				// Optional:
 				D3D12ResourceBarrier_Transition(target.d3dTexture,
 					D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET),
 			};
-			d3dCommandList->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
+
+			uint32 barrierCount = countof(d3dBarriers);
+			if (target.stateRenderTarget)
+				barrierCount--;
+			else
+				target.stateRenderTarget = true;
+
+			d3dCommandList->ResourceBarrier(barrierCount, d3dBarriers);
 		}
 
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle = device.rtvHeap.getCPUHandle(target.rtvDescriptorIndex);
@@ -259,12 +264,18 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
 				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
 					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
-
-				// TODO: remove from here. Temp solution
+				// Optional:
 				D3D12ResourceBarrier_Transition(target.d3dTexture,
 					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON),
 			};
-			d3dCommandList->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
+
+			uint32 barrierCount = countof(d3dBarriers);
+			if (finalizeTarget)
+				target.stateRenderTarget = false;
+			else
+				barrierCount--;
+
+			d3dCommandList->ResourceBarrier(barrierCount, d3dBarriers);
 		}
 	}
 
@@ -275,7 +286,5 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
 		device.d3dGraphicsQueue->ExecuteCommandLists(
 			countof(d3dCommandListsToExecute), d3dCommandListsToExecute);
-
-		gpuQueueSyncronizer.synchronize(device.d3dGraphicsQueue);
 	}
 }

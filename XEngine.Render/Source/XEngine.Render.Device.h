@@ -13,6 +13,8 @@
 #include "XEngine.Render.Device.MaterialHeap.h"
 #include "XEngine.Render.Device.BufferHeap.h"
 #include "XEngine.Render.Device.TextureHeap.h"
+#include "XEngine.Render.Device.UIResources.h"
+#include "XEngine.Render.Internal.GPUQueueSynchronizer.h"
 
 struct IDXGIFactory5;
 
@@ -26,6 +28,7 @@ namespace XEngine::Render { class Scene; }
 namespace XEngine::Render { class Target; }
 namespace XEngine::Render { class GBuffer; }
 namespace XEngine::Render { class SwapChain; }
+namespace XEngine::Render::UI { class Batch; }
 
 namespace XEngine::Render
 {
@@ -40,6 +43,7 @@ namespace XEngine::Render
 		friend Scene;
 		friend GBuffer;
 		friend SwapChain;
+		friend UI::Batch;
 
 	private:
 		static XLib::Platform::COMPtr<IDXGIFactory5> dxgiFactory;
@@ -64,6 +68,10 @@ namespace XEngine::Render
 		Device_::BufferHeap		bufferHeap;
 		Device_::TextureHeap	textureHeap;
 
+		Device_::UIResources uiResources;
+
+		Internal::GPUQueueSynchronizer gpuQueueSyncronizer;
+
 	public:
 		Device() = default;
 		~Device() = default;
@@ -74,8 +82,9 @@ namespace XEngine::Render
 		void updateBuffer(BufferHandle buffer, uint32 destOffset, const void* srcData, uint32 size);
 		void updateMaterial(MaterialHandle material, uint32 offset, const void* data, uint32 size);
 		void clearTarget(Target& target, XLib::Color color);
-		void renderScene(Scene& scene, const Camera& camera,
-			GBuffer& gBuffer, Target& target, rectu16 viewport);
+		void renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
+			Target& target, rectu16 viewport, bool finalizeTarget);
+		void renderUI(UI::Batch& uiBatch);
 
 		inline BufferHandle createBuffer(uint32 size) { return bufferHeap.createBuffer(size); }
 		inline EffectHandle createEffect_plain() { return effectHeap.createEffect_plain(); }

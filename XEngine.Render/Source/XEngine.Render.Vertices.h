@@ -32,10 +32,10 @@ namespace XEngine::Render
 		uint32 color;
 	};
 
-	struct VertexUIFont
+	struct VertexUIColorTexture
 	{
 		float32x2 position;
-		uint16x2 texture;
 		uint32 color;
+		uint16x2 texture;
 	};
 }
