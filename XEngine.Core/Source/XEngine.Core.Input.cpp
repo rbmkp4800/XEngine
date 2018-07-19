@@ -17,6 +17,8 @@ static constexpr uint32 keyIndexLast = 0x91;
 static bool mouseButtonsState[mouseButtonIndexLast - mouseButtonIndexFirst + 1] = {};
 static bool keysState[keyIndexLast - keyIndexFirst + 1] = {};
 
+extern void Output_SetCursorState(CursorState state);
+
 void Input::AddHandler(InputHandler* handler)
 {
 	ScopedLock lock(handlersListLock);
@@ -96,3 +98,5 @@ void Input::OnCloseRequest()
 	for (InputHandler& handler : handlersList)
 		handler.onCloseRequest();
 }
+
+void Input::SetCursorState(CursorState state) { Output_SetCursorState(state); }

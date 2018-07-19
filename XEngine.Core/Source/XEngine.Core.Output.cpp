@@ -14,6 +14,7 @@
 #define HID_KEYBOARD_USAGE_ID			0x06
 
 #define WM_XENGINE_OUTPUT_DESTROY		(WM_USER + 1)
+#define WM_XENGINE_CURSOR_STATE_CHANGE	(WM_USER + 2)
 
 namespace XEngine::Core
 {
@@ -41,6 +42,8 @@ using namespace XEngine::Core;
 static Thread dispatchThread;
 static Event controlEvent;
 static HWND hWnd = nullptr;
+static CursorState cursorState = CursorState::Default;
+static bool cursorIsHidden = false;
 
 static bool windowClassRegistered = false;
 static bool rawInputRegistered = false;
@@ -48,6 +51,42 @@ static bool rawInputRegistered = false;
 static constexpr uint16x2 resolution = { 1440, 900 };
 static constexpr wchar windowClassName[] = L"XEngine.OutputWindow";
 static constexpr wchar windowTitle[] = L"XEngine";
+
+// https://docs.microsoft.com/en-us/windows/desktop/menurc/wm-syscommand
+
+static void ClipCursorToClientRect()
+{
+	RECT clipRect;
+	GetClientRect(hWnd, &clipRect);
+	ClientToScreen(hWnd, (POINT*) &clipRect.left);
+	ClientToScreen(hWnd, (POINT*) &clipRect.right);
+	ClipCursor(&clipRect);
+}
+
+static void ResetCursor()
+{
+	if (cursorIsHidden)
+	{
+		ShowCursor(TRUE);
+		cursorIsHidden = false;
+	}
+	ClipCursor(nullptr);
+}
+
+static void ApplyCursorState()
+{
+	if (cursorState == CursorState::Default)
+		ResetCursor();
+	else if (cursorState == CursorState::Disabled)
+	{
+		if (!cursorIsHidden)
+		{
+			ShowCursor(FALSE);
+			cursorIsHidden = true;
+		}
+		ClipCursorToClientRect();
+	}
+}
 
 static void HandleRawInput(WPARAM wParam, LPARAM lParam)
 {
@@ -107,6 +146,36 @@ static LRESULT __stdcall WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 			DestroyWindow(hWnd);
 			break;
 
+		case WM_XENGINE_CURSOR_STATE_CHANGE:
+			cursorState = CursorState(wParam);
+			ApplyCursorState();
+			break;
+
+		case WM_ACTIVATE:
+			if (LOWORD(wParam) != WA_INACTIVE)
+				ApplyCursorState();
+			else
+				ResetCursor();
+			break;
+
+		case WM_SYSCOMMAND:
+			if (cursorState == CursorState::Disabled)
+			{
+				switch (wParam & 0xFFF0)
+				{
+					case SC_KEYMENU:
+					case SC_MOVE:
+					case SC_SIZE:
+						return 0;
+				}
+			}
+			break;
+
+		case WM_SIZE:
+		case WM_MOVE:
+			ApplyCursorState();
+			break;
+
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			break;
@@ -119,12 +188,9 @@ static LRESULT __stdcall WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 			HandleRawInput(wParam, lParam);
 			[[fallthrough]];
 			// DefWindowProc must be called to cleaunup after WM_INPUT
-
-		default:
-			return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 
-	return 0;
+	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 static uint32 __stdcall DispatchThreadMain(void*)
@@ -150,6 +216,11 @@ static uint32 __stdcall DispatchThreadMain(void*)
 	hWnd = nullptr;
 
 	return 0;
+}
+
+void Output_SetCursorState(CursorState state)
+{
+	PostMessage(hWnd, WM_XENGINE_CURSOR_STATE_CHANGE, WPARAM(state), 0);
 }
 
 void Output::Initialize()

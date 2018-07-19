@@ -15,6 +15,7 @@ static constexpr float32 cameraSpeed = 0.1f;
 void Game::initialize()
 {
 	Core::Input::AddHandler(this);
+	Core::Input::SetCursorState(Core::CursorState::Disabled);
 
 	Render::Device& renderDevice = Core::Engine::GetRenderDevice();
 
@@ -100,8 +101,7 @@ void Game::update(float32 timeDelta)
 
 void Game::onMouseMove(sint16x2 delta)
 {
-	if (Core::Input::IsMouseButtonDown(MouseButton::Left))
-		cameraRotation += float32x2(delta) * 0.005f;
+	cameraRotation += float32x2(delta) * 0.005f;
 }
 
 void Game::onKeyboard(XLib::VirtualKey key, bool state)

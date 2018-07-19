@@ -8,6 +8,13 @@ namespace XEngine::Core { class Input; }
 
 namespace XEngine::Core
 {
+	enum class CursorState
+	{
+		Default = 0,
+		Disabled,
+		Hidden,
+	};
+
 	class InputHandler abstract : public XLib::NonCopyable
 	{
 		friend Input;
@@ -52,5 +59,7 @@ namespace XEngine::Core
 
 		static bool IsKeyDown(XLib::VirtualKey key);
 		static bool IsMouseButtonDown(XLib::MouseButton button);
+
+		static void SetCursorState(CursorState state);
 	};
 }
