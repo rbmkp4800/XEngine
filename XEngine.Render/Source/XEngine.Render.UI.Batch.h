@@ -5,8 +5,6 @@
 #include <XLib.Vectors.h>
 #include <XLib.Platform.COMPtr.h>
 
-#include "XEngine.Render.Vertices.h"
-
 struct ID3D12Resource;
 struct ID3D12GraphicsCommandList;
 struct ID3D12CommandAllocator;
@@ -39,6 +37,7 @@ namespace XEngine::Render::UI
 		uint32 vertexBufferSize = 0;
 
 		Target *target = nullptr;
+		float32x2 ndcScale = { 0.0f, 0.0f };
 		uint32 vertexBufferUsedBytes = 0;
 		uint32 currentGeometryVertexBufferOffset = 0;
 		GeometryType currentGeometryType = GeometryType::None;
@@ -60,5 +59,7 @@ namespace XEngine::Render::UI
 		void setTexture(Texture& texture);
 
 		void* allocateVertices(GeometryType type, uint32 count);
+
+		inline float32x2 getNDCScale() const { return ndcScale; }
 	};
 }

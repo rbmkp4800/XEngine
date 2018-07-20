@@ -1,19 +1,21 @@
 #include <d3d12.h>
 
 #include <XLib.Util.h>
+#include <XLib.Vectors.Arithmetics.h>
 #include <XLib.Platform.D3D12.Helpers.h>
 
 #include "XEngine.Render.UI.Batch.h"
 
 #include "XEngine.Render.Device.h"
 #include "XEngine.Render.Target.h"
+#include "XEngine.Render.Vertices.h"
 
 using namespace XEngine::Render;
 using namespace XEngine::Render::UI;
 
 static constexpr uint32 defaultVertexBufferSize = 0x10000;
 
-static inline uint32 VertexStrideFromGeometryType(GeometryType type)
+static inline uint8 VertexStrideFromGeometryType(GeometryType type)
 {
 	switch (type)
 	{
@@ -82,6 +84,7 @@ void Batch::beginDraw(Target& target, rectu16 viewport)
 
 	uint16x2 viewportSize = viewport.getSize();
 	float32x2 viewportSizeF = float32x2(viewportSize);
+	ndcScale = float32x2(0.5f, -0.5f) / viewportSizeF;
 
 	d3dCommandAllocator->Reset();
 	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
@@ -98,12 +101,9 @@ void Batch::beginDraw(Target& target, rectu16 viewport)
 
 	if (!target.stateRenderTarget)
 	{
-		D3D12_RESOURCE_BARRIER d3dBarriers[] =
-		{
-			D3D12ResourceBarrier_Transition(target.d3dTexture,
-				D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET),
-		};
-		d3dCommandList->ResourceBarrier(1, d3dBarriers);
+		d3dCommandList->ResourceBarrier(1,
+			&D3D12ResourceBarrier_Transition(target.d3dTexture,
+				D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 		target.stateRenderTarget = true;
 	}
@@ -119,12 +119,9 @@ void Batch::endDraw(bool finalizeTarget)
 
 	if (finalizeTarget)
 	{
-		D3D12_RESOURCE_BARRIER d3dBarriers[] =
-		{
-			D3D12ResourceBarrier_Transition(target->d3dTexture,
-				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON),
-		};
-		d3dCommandList->ResourceBarrier(1, d3dBarriers);
+		d3dCommandList->ResourceBarrier(1,
+			&D3D12ResourceBarrier_Transition(target->d3dTexture,
+				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON));
 
 		target->stateRenderTarget = false;
 	}
@@ -132,6 +129,11 @@ void Batch::endDraw(bool finalizeTarget)
 	d3dCommandList->Close();
 
 	target = nullptr;
+}
+
+void Batch::setTexture(Texture& texture)
+{
+
 }
 
 void* Batch::allocateVertices(GeometryType type, uint32 count)

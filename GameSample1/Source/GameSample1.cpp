@@ -96,7 +96,7 @@ void Game::update(float32 timeDelta)
 		camera.position.z += viewSpaceTranslation.y;
 	}
 
-	renderDevice.renderScene(scene, camera, gBuffer, renderTarget, { 0, 0, 1440, 900 });
+	renderDevice.renderScene(scene, camera, gBuffer, renderTarget, { 0, 0, 1440, 900 }, true);
 }
 
 void Game::onMouseMove(sint16x2 delta)

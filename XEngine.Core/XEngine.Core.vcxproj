@@ -170,6 +170,8 @@
     <ClInclude Include="Source\XEngine.Core.Input.h" />
     <ClInclude Include="Source\XEngine.Core.Output.h" />
     <ClInclude Include="Source\XEngine.Core.WorldController.h" />
+    <ClInclude Include="Source\XEngine.UI.MonospacedFont.h" />
+    <ClInclude Include="Source\XEngine.UI.TextRenderer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\XEngine.Core.DiskWorker.cpp">
@@ -180,6 +182,7 @@
     <ClCompile Include="Source\XEngine.Core.Output.cpp" />
     <ClCompile Include="Source\XEngine.Core.Input.cpp" />
     <ClCompile Include="Source\XEngine.Core.WorldController.cpp" />
+    <ClCompile Include="Source\XEngine.UI.TextRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XEngine.Render\XEngine.Render.vcxproj">

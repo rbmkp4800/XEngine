@@ -186,7 +186,6 @@ static LRESULT __stdcall WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 		case WM_INPUT:
 			HandleRawInput(wParam, lParam);
-			[[fallthrough]];
 			// DefWindowProc must be called to cleaunup after WM_INPUT
 	}
 

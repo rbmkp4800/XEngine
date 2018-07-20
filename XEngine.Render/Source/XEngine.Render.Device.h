@@ -29,6 +29,7 @@ namespace XEngine::Render { class Target; }
 namespace XEngine::Render { class GBuffer; }
 namespace XEngine::Render { class SwapChain; }
 namespace XEngine::Render::UI { class Batch; }
+namespace XEngine::Render::UI { class Texture; }
 
 namespace XEngine::Render
 {
@@ -44,6 +45,7 @@ namespace XEngine::Render
 		friend GBuffer;
 		friend SwapChain;
 		friend UI::Batch;
+		friend UI::Texture;
 
 	private:
 		static XLib::Platform::COMPtr<IDXGIFactory5> dxgiFactory;
