@@ -8,6 +8,7 @@
 
 // NOTE: temporary implementation
 
+enum DXGI_FORMAT;
 struct ID3D12GraphicsCommandList;
 struct ID3D12CommandAllocator;
 struct ID3D12Resource;
@@ -29,6 +30,11 @@ namespace XEngine::Render::Device_
 	private:
 		inline Device& getDevice();
 
+		void flush();
+		void uploadTexture2DMIPLevel(DXGI_FORMAT format,
+			ID3D12Resource* d3dDstTexture, uint16 mipLevel, uint16 width, uint16 height,
+			uint16 pixelPitch, uint32 sourceRowPitch, const void* sourceData);
+
 	public:
 		Uploader() = default;
 		~Uploader() = default;
@@ -38,5 +44,7 @@ namespace XEngine::Render::Device_
 
 		void uploadBuffer(ID3D12Resource* d3dDestBuffer,
 			uint32 destOffset, const void* data, uint32 size);
+		void uploadTexture2DAndGenerateMIPs(ID3D12Resource* d3dDstTexture,
+			const void* sourceData, uint32 sourceRowPitch, void* mipsGenerationBuffer);
 	};
 }

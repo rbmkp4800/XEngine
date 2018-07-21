@@ -75,6 +75,9 @@
     <ClInclude Include="Source\XEngine.Render.UI.Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\XEngine.Render.MIPMapGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\XEngine.Render.Scene.cpp">

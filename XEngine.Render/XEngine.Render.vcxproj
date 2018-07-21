@@ -134,8 +134,11 @@
       <HeaderFileOutput>$(ProjectDir)Intermediate\Shaders\%(Filename).cso.h</HeaderFileOutput>
       <VariableName>%(Filename)Data</VariableName>
       <ObjectFileOutput />
-      <ShaderModel>4.0</ShaderModel>
+      <ShaderModel>5.1</ShaderModel>
     </FxCompile>
+    <Lib>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -160,8 +163,11 @@
       <HeaderFileOutput>$(ProjectDir)Intermediate\Shaders\%(Filename).cso.h</HeaderFileOutput>
       <VariableName>%(Filename)Data</VariableName>
       <ObjectFileOutput />
-      <ShaderModel>4.0</ShaderModel>
+      <ShaderModel>5.1</ShaderModel>
     </FxCompile>
+    <Lib>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -186,8 +192,11 @@
       <HeaderFileOutput>$(ProjectDir)Intermediate\Shaders\%(Filename).cso.h</HeaderFileOutput>
       <VariableName>%(Filename)Data</VariableName>
       <ObjectFileOutput />
-      <ShaderModel>4.0</ShaderModel>
+      <ShaderModel>5.1</ShaderModel>
     </FxCompile>
+    <Lib>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;</AdditionalDependencies>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Source\XEngine.Render.Base.h" />
@@ -201,6 +210,7 @@
     <ClInclude Include="Source\XEngine.Render.Device.SceneRenderer.h" />
     <ClInclude Include="Source\XEngine.Render.Device.UIResources.h" />
     <ClInclude Include="Source\XEngine.Render.Device.Uploader.h" />
+    <ClInclude Include="Source\XEngine.Render.MIPMapGenerator.h" />
     <ClInclude Include="Source\XEngine.Render.UI.Batch.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.GPUQueueSynchronizer.h" />
     <ClInclude Include="Source\XEngine.Render.Internal.Shaders.h" />
