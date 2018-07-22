@@ -1,7 +1,9 @@
+#include <XLib.Color.h>
 #include <XLib.Vectors.Math.h>
 #include <XLib.Vectors.Arithmetics.h>
 #include <XLib.Math.Matrix3x4.h>
 #include <XEngine.Render.Device.h>
+#include <XEngine.UI.TextRenderer.h>
 
 #include "GameSample1.h"
 
@@ -24,6 +26,9 @@ void Game::initialize()
 
 	scene.initialize(renderDevice);
 	gBuffer.initialize(renderDevice, { 1440, 900 });
+
+	uiBatch.initialize(renderDevice);
+	font.initializeDefault(renderDevice);
 
 	cubeGeometryResource.createCubicSphere(6);
 
@@ -96,7 +101,21 @@ void Game::update(float32 timeDelta)
 		camera.position.z += viewSpaceTranslation.y;
 	}
 
-	renderDevice.renderScene(scene, camera, gBuffer, renderTarget, { 0, 0, 1440, 900 }, true);
+	renderDevice.renderScene(scene, camera, gBuffer, renderTarget, { 0, 0, 1440, 900 }, false);
+
+	uiBatch.beginDraw(renderTarget, { 0, 0, 1440, 900 });
+	{
+		UI::TextRenderer textRenderer;
+		textRenderer.beginDraw(uiBatch);
+		textRenderer.setPosition({ 10.0f, 10.0f });
+		textRenderer.setFont(font);
+		textRenderer.setColor(0xFFFF00_rgb);
+		textRenderer.write("XEngine\nSample text");
+		textRenderer.endDraw();
+	}
+	uiBatch.endDraw(true);
+
+	renderDevice.renderUI(uiBatch);
 }
 
 void Game::onMouseMove(sint16x2 delta)

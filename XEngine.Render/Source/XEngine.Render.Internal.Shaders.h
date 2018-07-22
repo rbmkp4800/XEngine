@@ -19,5 +19,7 @@ namespace XEngine::Render::Internal
 
 		static const ShaderData UIColorVS;
 		static const ShaderData UIColorPS;
+		static const ShaderData UIColorAlphaTextureVS;
+		static const ShaderData UIColorAlphaTexturePS;
 	};
 }

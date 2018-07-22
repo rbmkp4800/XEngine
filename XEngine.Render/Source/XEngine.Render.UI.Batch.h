@@ -19,7 +19,7 @@ namespace XEngine::Render::UI
 	{
 		None = 0,
 		Color,
-		ColorTexture,
+		ColorAlphaTexture,
 	};
 
 	class Batch : public XLib::NonCopyable

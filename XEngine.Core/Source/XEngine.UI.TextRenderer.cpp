@@ -14,8 +14,6 @@ using namespace XEngine::Render::UI;
 void TextRenderer::beginDraw(Batch& batch)
 {
 	this->batch = &batch;
-
-
 }
 void TextRenderer::endDraw()
 {
@@ -62,7 +60,7 @@ void TextRenderer::write(const char* string, uint32 length)
 		
 		if (character == ' ' || character < firstCharCode || character >= lastCharCode)
 		{
-			position.x = left;
+			position.x += characterSize.x;
 			continue;
 		}
 
@@ -79,7 +77,7 @@ void TextRenderer::write(const char* string, uint32 length)
 		VertexUIColorTexture rightBottom = { { position.x, bottom }, color, { charTextureRight, 0xFFFF } };
 
 		VertexUIColorTexture *vertices = 
-			to<VertexUIColorTexture*>(batch->allocateVertices(GeometryType::ColorTexture, 6));
+			to<VertexUIColorTexture*>(batch->allocateVertices(GeometryType::ColorAlphaTexture, 6));
 
 		vertices[0] = leftTop;
 		vertices[1] = rightTop;

@@ -10,6 +10,8 @@
 
 #include "..\Intermediate\Shaders\UIColorVS.cso.h"
 #include "..\Intermediate\Shaders\UIColorPS.cso.h"
+#include "..\Intermediate\Shaders\UIColorAlphaTextureVS.cso.h"
+#include "..\Intermediate\Shaders\UIColorAlphaTexturePS.cso.h"
 
 using namespace XEngine::Render::Internal;
 
@@ -21,3 +23,5 @@ const ShaderData Shaders::EffectPlainPS = { EffectPlainPSData, sizeof(EffectPlai
 
 const ShaderData Shaders::UIColorVS = { UIColorVSData, sizeof(UIColorVSData) };
 const ShaderData Shaders::UIColorPS = { UIColorPSData, sizeof(UIColorPSData) };
+const ShaderData Shaders::UIColorAlphaTextureVS = { UIColorAlphaTextureVSData, sizeof(UIColorAlphaTextureVSData) };
+const ShaderData Shaders::UIColorAlphaTexturePS = { UIColorAlphaTexturePSData, sizeof(UIColorAlphaTexturePSData) };

@@ -8,6 +8,8 @@
 #include <XEngine.Render.Scene.h>
 #include <XEngine.Render.GBuffer.h>
 #include <XEngine.Render.Camera.h>
+#include <XEngine.Render.UI.Batch.h>
+#include <XEngine.UI.MonospacedFont.h>
 
 namespace GameSample1
 {
@@ -24,6 +26,9 @@ namespace GameSample1
 		//XEngine::Core::GeometryResourceManager geometryResourceManager;
 		XEngine::Core::GeometryResource cubeGeometryResource;
 		XEngine::Render::GeometryInstanceHandle cubeGeometryInstance;
+
+		XEngine::Render::UI::Batch uiBatch;
+		XEngine::UI::MonospacedFont font;
 
 		XEngine::Render::Camera camera;
 		float32x2 cameraRotation = { 0.0f, 0.0f };

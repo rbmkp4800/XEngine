@@ -8,6 +8,7 @@
 
 #include "XEngine.Render.Device.h"
 #include "XEngine.Render.Target.h"
+#include "XEngine.Render.UI.Resources.h"
 #include "XEngine.Render.Vertices.h"
 
 using namespace XEngine::Render;
@@ -19,8 +20,8 @@ static inline uint8 VertexStrideFromGeometryType(GeometryType type)
 {
 	switch (type)
 	{
-		case GeometryType::Color:			return sizeof(VertexUIColor);
-		case GeometryType::ColorTexture:	return sizeof(VertexUIColorTexture);
+		case GeometryType::Color:				return sizeof(VertexUIColor);
+		case GeometryType::ColorAlphaTexture:	return sizeof(VertexUIColorTexture);
 		default: throw;
 	}
 }
@@ -38,8 +39,8 @@ void Batch::flushCurrentGeometry()
 			d3dPSO = device->uiResources.getColorPSO();
 			break;
 
-		case GeometryType::ColorTexture:
-			d3dPSO = device->uiResources.getColorTexturePSO();
+		case GeometryType::ColorAlphaTexture:
+			d3dPSO = device->uiResources.getColorAlphaTexturePSO();
 			break;
 
 		default:
@@ -84,7 +85,7 @@ void Batch::beginDraw(Target& target, rectu16 viewport)
 
 	uint16x2 viewportSize = viewport.getSize();
 	float32x2 viewportSizeF = float32x2(viewportSize);
-	ndcScale = float32x2(0.5f, -0.5f) / viewportSizeF;
+	ndcScale = float32x2(2.0f, -2.0f) / viewportSizeF;
 
 	d3dCommandAllocator->Reset();
 	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
@@ -92,6 +93,9 @@ void Batch::beginDraw(Target& target, rectu16 viewport)
 	d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
 	d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportSize.x, viewportSize.y));
 	d3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	ID3D12DescriptorHeap *d3dDescriptorHeaps[] = { device->srvHeap.getD3D12DescriptorHeap() };
+	d3dCommandList->SetDescriptorHeaps(countof(d3dDescriptorHeaps), d3dDescriptorHeaps);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle =
 		device->rtvHeap.getCPUHandle(target.rtvDescriptorIndex);
@@ -133,7 +137,8 @@ void Batch::endDraw(bool finalizeTarget)
 
 void Batch::setTexture(Texture& texture)
 {
-
+	d3dCommandList->SetGraphicsRootDescriptorTable(0,
+		device->srvHeap.getGPUHandle(texture.srvDescriptorIndex));
 }
 
 void* Batch::allocateVertices(GeometryType type, uint32 count)

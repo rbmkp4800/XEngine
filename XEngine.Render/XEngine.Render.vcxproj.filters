@@ -133,5 +133,7 @@
     <FxCompile Include="Source\Shaders\EffectPlainPS.hlsl" />
     <FxCompile Include="Source\Shaders\UIColorVS.hlsl" />
     <FxCompile Include="Source\Shaders\UIColorPS.hlsl" />
+    <FxCompile Include="Source\Shaders\UIColorAlphaTextureVS.hlsl" />
+    <FxCompile Include="Source\Shaders\UIColorAlphaTexturePS.hlsl" />
   </ItemGroup>
 </Project>

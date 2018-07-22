@@ -14,7 +14,7 @@ namespace XEngine::Render::Device_
 	private:
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dDefaultRS;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dColorPSO;
-		XLib::Platform::COMPtr<ID3D12PipelineState> d3dColorTexturePSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dColorAlphaTexturePSO;
 
 	public:
 		UIResources() = default;
@@ -24,6 +24,6 @@ namespace XEngine::Render::Device_
 
 		inline ID3D12RootSignature* getDefaultRS() { return d3dDefaultRS; }
 		inline ID3D12PipelineState* getColorPSO() { return d3dColorPSO; }
-		inline ID3D12PipelineState* getColorTexturePSO() { return d3dColorTexturePSO; }
+		inline ID3D12PipelineState* getColorAlphaTexturePSO() { return d3dColorAlphaTexturePSO; }
 	};
 }

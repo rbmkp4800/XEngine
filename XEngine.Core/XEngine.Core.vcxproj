@@ -185,6 +185,7 @@
     <ClCompile Include="Source\XEngine.Core.Output.cpp" />
     <ClCompile Include="Source\XEngine.Core.Input.cpp" />
     <ClCompile Include="Source\XEngine.Core.WorldController.cpp" />
+    <ClCompile Include="Source\XEngine.UI.MonospacedFont.cpp" />
     <ClCompile Include="Source\XEngine.UI.TextRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>

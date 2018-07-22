@@ -65,5 +65,8 @@
     <ClCompile Include="Source\XEngine.UI.TextRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\XEngine.UI.MonospacedFont.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
