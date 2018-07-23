@@ -9,6 +9,7 @@
 
 struct ID3D12Device;
 struct ID3D12RootSignature;
+struct ID3D12CommandSignature;
 struct ID3D12PipelineState;
 struct ID3D12GraphicsCommandList;
 struct ID3D12CommandAllocator;
@@ -31,6 +32,8 @@ namespace XEngine::Render::Device_
 	private:
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dGBufferPassRS;
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dLightingPassRS;
+
+		XLib::Platform::COMPtr<ID3D12CommandSignature> d3dGBufferPassICS;
 
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
 

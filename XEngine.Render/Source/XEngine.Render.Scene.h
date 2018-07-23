@@ -7,8 +7,9 @@
 
 #include "XEngine.Render.Base.h"
 
-struct ID3D12GraphicsCommandList;
 struct ID3D12Resource;
+struct ID3D12GraphicsCommandList;
+struct ID3D12CommandSignature;
 
 namespace XLib { struct Matrix3x4; }
 namespace XEngine::Render { class Device; }
@@ -43,42 +44,32 @@ namespace XEngine::Render
 			MaterialHandle material;
 		};
 
-		struct CachedInstance // 32 bytes
-		{
-			uint64 vertexDataGPUAddress;
-			uint64 indexDataGPUAddress;
-			uint32 indexCount;
-			struct
-			{
-				uint indexIs32Bit : 1;
-				uint vertexStride : 7;
-				uint vertexDataSize : 24;
-			};
-
-			uint32 baseTransformIndex;
-			MaterialHandle material;
-		};
-
-		struct EffectInstancesData
+		struct CommandListDesc
 		{
 			EffectHandle effect;
-			XLib::Vector<CachedInstance> visibleInstances;
+			uint32 arenaBaseSegment;
+			uint32 length;
 		};
 
 	private:
 		Device *device = nullptr;
 
 		XLib::Vector<Instance> instances;
-		XLib::Vector<EffectInstancesData> effectInstancesDatas;
+		XLib::Vector<CommandListDesc> commandLists;
 
 		XLib::Platform::COMPtr<ID3D12Resource> d3dTransformBuffer;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dCommandListArena;
 
 		XLib::Matrix3x4 *mappedTransformBuffer = nullptr;
+		byte *mappedCommandListArena = nullptr;
+
 		uint32 transformBufferSize = 0;
 		uint32 allocatedTansformCount = 0;
+		uint32 allocatedCommandListArenaSegmentCount = 0;
 
 	private:
-		void populateCommandList(ID3D12GraphicsCommandList* d3dCommandList);
+		void populateCommandList(ID3D12GraphicsCommandList* d3dCommandList,
+			ID3D12CommandSignature* d3dICS);
 
 	public:
 		Scene() = default;

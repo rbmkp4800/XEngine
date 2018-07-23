@@ -130,9 +130,9 @@ void MonospacedFont::initializeDefault(Device& device)
 	charHeight = defaultFontHeight;
 	firstCharCode = defaultFontFirstCharCode;
 	charTableSize = defaultFontCharTableSize;
-	uint32 textureWidth = uint32(charWidth) * uint32(charTableSize);
+	uint16 textureWidth = uint16(charWidth) * uint16(charTableSize);
 
-	uint32 bitmapSize = textureWidth * charHeight;
+	uint32 bitmapSize = uint32(textureWidth) * uint32(charHeight);
 	HeapPtr<uint8> bitmap(bitmapSize);
 	uint8 *bitmapA1 = to<uint8*>(defaultFontBitmapA1);
 	for (uint32 i = 0; i < bitmapSize; i++)

@@ -53,7 +53,7 @@ EffectHandle EffectHeap::createEffect_plain()
 	return result;
 }
 
-ID3D12PipelineState* EffectHeap::getD3DPSO(EffectHandle handle)
+ID3D12PipelineState* EffectHeap::getPSO(EffectHandle handle)
 {
 	return d3dPSOs[handle];
 }

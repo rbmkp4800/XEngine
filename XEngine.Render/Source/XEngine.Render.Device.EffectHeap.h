@@ -33,7 +33,7 @@ namespace XEngine::Render::Device_
 		EffectHandle createEffect_textured();
 		void releaseEffect(EffectHandle handle);
 
-		ID3D12PipelineState* getD3DPSO(EffectHandle handle);
+		ID3D12PipelineState* getPSO(EffectHandle handle);
 		uint32 getMaterialConstantsSize(EffectHandle handle) const;
 	};
 }

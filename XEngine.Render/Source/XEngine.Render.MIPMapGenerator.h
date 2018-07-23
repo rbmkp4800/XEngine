@@ -29,7 +29,7 @@ namespace XEngine::Render
 
 			uint16 width = sourceSize.x / 2;
 			uint16 height = sourceSize.y / 2;
-			using AverageType = getAverageType<Type>::ResultType;
+			using AverageType = typename getAverageType<Type>::ResultType;
 
 			if (width == 0 && height == 0) {}
 			else if (width != 0 && height == 0)

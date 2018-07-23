@@ -1,9 +1,15 @@
+struct Constants
+{
+	uint baseTransformIndex;
+};
+
 struct CameraTransform
 {
 	float4x4 viewProjection;
 	float4x4 view;
 };
 
+ConstantBuffer<Constants> constants : register(b0);
 ConstantBuffer<CameraTransform> cameraTransform : register(b2);
 StructuredBuffer<float4x3> transformsBuffer : register(t0);
 
@@ -21,7 +27,9 @@ struct VSOutput
 
 VSOutput main(VSInput input)
 {
-	float4x3 transform = transformsBuffer[0];
+	uint baseTransformIndex = constants.baseTransformIndex;
+
+	float4x3 transform = transformsBuffer[baseTransformIndex];
 	float3 worldSpacePosition = mul(float4(input.position, 1.0f), transform);
 	float3 worldSpaceNormal = mul(input.normal, (float3x3) transform);
 

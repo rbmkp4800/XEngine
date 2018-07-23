@@ -1,6 +1,6 @@
-struct MaterialIndexBuffer
+struct Constants
 {
-	uint index;
+	uint materialIndex;
 };
 
 struct Material
@@ -14,7 +14,7 @@ struct MaterialsTable
 	Material items[1024];
 };
 
-ConstantBuffer<MaterialIndexBuffer> materialIndexBuffer : register(b0);
+ConstantBuffer<Constants> constants : register(b0);
 ConstantBuffer<MaterialsTable> materialsTable : register(b1);
 
 struct PSInput
@@ -31,7 +31,7 @@ struct PSOutput
 
 PSOutput main(PSInput input)
 {
-	uint materialIndex = materialIndexBuffer.index;
+	uint materialIndex = constants.materialIndex;
 
 	PSOutput output;
 	output.albedo = float4(materialsTable.items[materialIndex].albedo, 1.0f);

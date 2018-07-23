@@ -12,19 +12,45 @@ using namespace XLib;
 using namespace XEngine::Render;
 using namespace XEngine::Render::Internal;
 
+static constexpr uint32 commandListArenaSegmentSize = 0x4000;
+
+#pragma pack(push, 1)
+
+namespace
+{
+	struct IndirectCommand
+	{
+		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
+		D3D12_INDEX_BUFFER_VIEW indexBufferView;
+		uint32 baseTransformIndex;
+		uint32 materialIndex;
+		D3D12_DRAW_INDEXED_ARGUMENTS drawIndexedArguments;
+	};
+}
+
+#pragma pack(pop)
+
 void Scene::initialize(Device& device, uint32 initialTransformBufferSize)
 {
 	this->device = &device;
 	transformBufferSize = initialTransformBufferSize;
 
 	ID3D12Device *d3dDevice = device.d3dDevice;
+
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
 		&D3D12ResourceDesc_Buffer(sizeof(Matrix3x4) * transformBufferSize),
 		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
 		d3dTransformBuffer.uuid(), d3dTransformBuffer.voidInitRef());
 
+	d3dDevice->CreateCommittedResource(
+		&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+		&D3D12ResourceDesc_Buffer(commandListArenaSegmentSize * 4),
+		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		d3dCommandListArena.uuid(), d3dCommandListArena.voidInitRef());
+
 	d3dTransformBuffer->Map(0, &D3D12Range(), to<void**>(&mappedTransformBuffer));
+	d3dCommandListArena->Map(0, &D3D12Range(), to<void**>(&mappedCommandListArena));
 }
 
 void Scene::destroy()
@@ -51,67 +77,74 @@ GeometryInstanceHandle Scene::createGeometryInstance(
 	{
 		EffectHandle effect = device->materialHeap.getEffect(material);
 
-		EffectInstancesData *effectInstancesData = nullptr;
-		for (EffectInstancesData& data : effectInstancesDatas)
+		CommandListDesc *commandListDesc = nullptr;
+		for (CommandListDesc& i : commandLists)
 		{
-			if (data.effect == effect)
+			if (i.effect == effect)
 			{
-				effectInstancesData = &data;
+				commandListDesc = &i;
 				break;
 			}
 		}
 
-		if (!effectInstancesData)
-			effectInstancesData = &effectInstancesDatas.allocateBack();
+		if (!commandListDesc)
+		{
+			commandListDesc = &commandLists.allocateBack();
+			commandListDesc->effect = effect;
+			commandListDesc->arenaBaseSegment = allocatedCommandListArenaSegmentCount;
+			commandListDesc->length = 0;
+			allocatedCommandListArenaSegmentCount++;
+		}
 
-		CachedInstance &instance = effectInstancesData->visibleInstances.allocateBack();
-		uint64 vbAddress = device->bufferHeap.getBufferGPUAddress(geometryDesc.vertexBufferHandle);
-		uint64 ibAddress = device->bufferHeap.getBufferGPUAddress(geometryDesc.indexBufferHandle);
-		instance.vertexDataGPUAddress = vbAddress + geometryDesc.vertexDataOffset;
-		instance.indexDataGPUAddress = ibAddress + geometryDesc.indexDataOffset;
-		instance.indexCount = geometryDesc.indexCount;
-		instance.indexIs32Bit = geometryDesc.indexIs32Bit;
-		instance.vertexStride = geometryDesc.vertexStride;
-		instance.vertexDataSize = geometryDesc.vertexDataSize;
-		instance.baseTransformIndex = baseTransformIndex;
-		instance.material = material;
+		uint32 commandIndex = commandListDesc->length;
+		commandListDesc->length++;
+
+		IndirectCommand *mappedCommandList = to<IndirectCommand*>(mappedCommandListArena +
+			commandListDesc->arenaBaseSegment * commandListArenaSegmentSize);
+
+		int a = sizeof(IndirectCommand);
+
+		IndirectCommand &command = mappedCommandList[commandIndex];
+			// VBV
+		command.vertexBufferView.BufferLocation =
+			device->bufferHeap.getBufferGPUAddress(geometryDesc.vertexBufferHandle) + geometryDesc.vertexDataOffset;
+		command.vertexBufferView.SizeInBytes = geometryDesc.vertexDataSize;
+		command.vertexBufferView.StrideInBytes = geometryDesc.vertexStride;
+			// IBV
+		command.indexBufferView.BufferLocation =
+			device->bufferHeap.getBufferGPUAddress(geometryDesc.indexBufferHandle) + geometryDesc.indexDataOffset;
+		command.indexBufferView.SizeInBytes = geometryDesc.indexCount * (geometryDesc.indexIs32Bit ? 4 : 2);
+		command.indexBufferView.Format = geometryDesc.indexIs32Bit ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
+			// Constats
+		command.baseTransformIndex = baseTransformIndex;
+		command.materialIndex = uint32(material);
+			// Draw arguments
+		command.drawIndexedArguments.IndexCountPerInstance = geometryDesc.indexCount;
+		command.drawIndexedArguments.InstanceCount = 1;
+		command.drawIndexedArguments.StartIndexLocation = 0;
+		command.drawIndexedArguments.BaseVertexLocation = 0;
+		command.drawIndexedArguments.StartInstanceLocation = 0;
 	}
 
 	return result;
 }
 
-void Scene::populateCommandList(ID3D12GraphicsCommandList* d3dCommandList)
+void Scene::populateCommandList(ID3D12GraphicsCommandList* d3dCommandList,
+	ID3D12CommandSignature* d3dICS)
 {
-	uint64 transformBufferGPUAddress = d3dTransformBuffer->GetGPUVirtualAddress();
+	d3dCommandList->SetGraphicsRootShaderResourceView(3,
+		d3dTransformBuffer->GetGPUVirtualAddress());
 
-	for (EffectInstancesData& effectInstancesData : effectInstancesDatas)
+	for (CommandListDesc& commandList : commandLists)
 	{
-		ID3D12PipelineState *d3dPSO = device->effectHeap.getD3DPSO(effectInstancesData.effect);
+		ID3D12PipelineState *d3dPSO = device->effectHeap.getPSO(commandList.effect);
 		d3dCommandList->SetPipelineState(d3dPSO);
 
 		d3dCommandList->SetGraphicsRootConstantBufferView(2,
-			device->materialHeap.getMaterialsTableGPUAddress(effectInstancesData.effect));
+			device->materialHeap.getMaterialsTableGPUAddress(commandList.effect));
 
-		for (CachedInstance& instance : effectInstancesData.visibleInstances)
-		{
-			d3dCommandList->IASetVertexBuffers(0, 1,
-				&D3D12VertexBufferView(instance.vertexDataGPUAddress,
-					instance.vertexDataSize, instance.vertexStride));
-
-			d3dCommandList->IASetIndexBuffer(
-				&D3D12IndexBufferView(instance.indexDataGPUAddress,
-					instance.indexCount * (instance.indexIs32Bit ? 4 : 2),
-					instance.indexIs32Bit ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT));
-
-			// TODO: check performace. Maybe replace with setting single constant and fixed
-			//	transforms buffer SRV.
-			//	https://gpuopen.com/performance-root-signature-descriptor-sets/
-			d3dCommandList->SetGraphicsRootShaderResourceView(0,
-				transformBufferGPUAddress + sizeof(Matrix3x4) * instance.baseTransformIndex);
-			d3dCommandList->SetGraphicsRoot32BitConstant(1, uint32(instance.material), 0);
-
-			d3dCommandList->DrawIndexedInstanced(instance.indexCount, 1, 0, 0, 0);
-		}
+		d3dCommandList->ExecuteIndirect(d3dICS, commandList.length, d3dCommandListArena,
+			commandList.arenaBaseSegment * commandListArenaSegmentSize, nullptr, 0);
 	}
 }
 

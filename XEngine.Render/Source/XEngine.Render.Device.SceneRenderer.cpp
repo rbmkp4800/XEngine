@@ -62,15 +62,17 @@ void SceneRenderer::initialize()
 
 		D3D12_ROOT_PARAMETER rootParameters[] =
 		{
-				// t0 transforms buffer
-			D3D12RootParameter_SRV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
-				// b0 material index
+				// VS b0 base transform index
+			D3D12RootParameter_Constants(1, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
+				// PS b0 base material index
 			D3D12RootParameter_Constants(1, 0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
-				// b1 materials table
+				// PS b1 materials table
 			D3D12RootParameter_CBV(1, 0, D3D12_SHADER_VISIBILITY_PIXEL),
-				// b2 camera transform constant buffer
+				// VS t0 transforms buffer
+			D3D12RootParameter_SRV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
+				// PS b2 camera transform constant buffer
 			D3D12RootParameter_CBV(2, 0, D3D12_SHADER_VISIBILITY_VERTEX),
-				// t1
+				// PS t1
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
@@ -85,7 +87,9 @@ void SceneRenderer::initialize()
 				countof(staticSamplers), staticSamplers,
 				D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT),
 			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
-		d3dDevice->CreateRootSignature(0, d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
+
+		d3dDevice->CreateRootSignature(0,
+			d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
 			d3dGBufferPassRS.uuid(), d3dGBufferPassRS.voidInitRef());
 	}
 
@@ -105,10 +109,43 @@ void SceneRenderer::initialize()
 		};
 
 		COMPtr<ID3DBlob> d3dSignature, d3dError;
-		D3D12SerializeRootSignature(&D3D12RootSignatureDesc(countof(rootParameters), rootParameters),
+		D3D12SerializeRootSignature(
+			&D3D12RootSignatureDesc(countof(rootParameters), rootParameters),
 			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
-		d3dDevice->CreateRootSignature(0, d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
+
+		d3dDevice->CreateRootSignature(0,
+			d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
 			d3dLightingPassRS.uuid(), d3dLightingPassRS.voidInitRef());
+	}
+
+	// G-buffer pass ICS
+	{
+		D3D12_INDIRECT_ARGUMENT_DESC indirectArgumentDescs[] =
+		{
+			D3D12IndirectArgumentDesc_VBV(0),
+			D3D12IndirectArgumentDesc_IBV(),
+			D3D12IndirectArgumentDesc_Constants(0, 0, 1),
+			D3D12IndirectArgumentDesc_Constants(1, 0, 1),
+			D3D12IndirectArgumentDesc_DrawIndexed(),
+		};
+
+#pragma pack(push, 1)
+		struct IndirectCommand
+		{
+			D3D12_VERTEX_BUFFER_VIEW vbv;
+			D3D12_INDEX_BUFFER_VIEW ibv;
+			uint32 constants0;
+			uint32 constants1;
+			D3D12_DRAW_INDEXED_ARGUMENTS args;
+		};
+#pragma pack(pop)
+
+		int a = sizeof(IndirectCommand);
+
+		d3dDevice->CreateCommandSignature(
+			&D3D12CommandSignatureDesc(sizeof(IndirectCommand),
+				countof(indirectArgumentDescs), indirectArgumentDescs),
+			d3dGBufferPassRS, d3dGBufferPassICS.uuid(), d3dGBufferPassICS.voidInitRef());
 	}
 
 	// Lighting pass PSO
@@ -214,10 +251,10 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		d3dCommandList->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		d3dCommandList->SetGraphicsRootSignature(d3dGBufferPassRS);
-		d3dCommandList->SetGraphicsRootConstantBufferView(3, d3dCameraTransformCB->GetGPUVirtualAddress());
-		d3dCommandList->SetGraphicsRootDescriptorTable(4, device.srvHeap.getGPUHandle(0));
+		d3dCommandList->SetGraphicsRootConstantBufferView(4, d3dCameraTransformCB->GetGPUVirtualAddress());
+		d3dCommandList->SetGraphicsRootDescriptorTable(5, device.srvHeap.getGPUHandle(0));
 
-		scene.populateCommandList(d3dCommandList);
+		scene.populateCommandList(d3dCommandList, d3dGBufferPassICS);
 	}
 
 	// Lighting pass ========================================================================//
