@@ -25,6 +25,7 @@ namespace GameSample1
 
 		//XEngine::Core::GeometryResourceManager geometryResourceManager;
 		XEngine::Core::GeometryResource cubeGeometryResource;
+		XEngine::Core::GeometryResource sphereGeometryResource;
 		XEngine::Render::GeometryInstanceHandle cubeGeometryInstance;
 
 		XEngine::Render::UI::Batch uiBatch;

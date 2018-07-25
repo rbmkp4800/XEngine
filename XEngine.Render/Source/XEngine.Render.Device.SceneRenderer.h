@@ -35,6 +35,7 @@ namespace XEngine::Render::Device_
 
 		XLib::Platform::COMPtr<ID3D12CommandSignature> d3dGBufferPassICS;
 
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dShadowPassPSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
 
 		XLib::Platform::COMPtr<ID3D12Resource> d3dCameraTransformCB;

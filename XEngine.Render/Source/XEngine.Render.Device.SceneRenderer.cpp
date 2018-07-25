@@ -30,23 +30,33 @@ struct SceneRenderer::CameraTransformConstants
 
 struct SceneRenderer::LightingPassConstants
 {
+	Matrix4x4 inverseView;
 	float32 ndcToViewDepthConversionA;
 	float32 ndcToViewDepthConversionB;
 	float32 aspect;
 	float32 halfFOVTan;
 
-	uint32 lightCount;
+	uint32 directionalLightCount;
+	uint32 pointLightCount;
 	uint32 _padding0;
 	uint32 _padding1;
-	uint32 _padding2;
 
-	struct Light
+	struct DirectionalLight
+	{
+		Matrix4x4 shadowTextureTransform;
+		float32x3 direction;
+		uint32 _padding0;
+		float32x3 color;
+		uint32 _padding1;
+	} directionalLights[2];
+
+	struct PointLight
 	{
 		float32x3 viewSpacePosition;
 		uint32 _padding0;
 		float32x3 color;
 		uint32 _padding1;
-	} lights[4];
+	} pointLights[4];
 };
 
 void SceneRenderer::initialize()
@@ -95,9 +105,13 @@ void SceneRenderer::initialize()
 
 	// Lighting pass RS
 	{
-		D3D12_DESCRIPTOR_RANGE ranges[] =
+		D3D12_DESCRIPTOR_RANGE gBufferRanges[] =
 		{
 			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 3, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+		};
+		D3D12_DESCRIPTOR_RANGE shadowMapRanges[] =
+		{
+			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
 		};
 
 		D3D12_ROOT_PARAMETER rootParameters[] =
@@ -105,12 +119,24 @@ void SceneRenderer::initialize()
 				// b0 lighting pass constants
 			D3D12RootParameter_CBV(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
 				// t0-t3 G-buffer textures
-			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
+			D3D12RootParameter_Table(countof(gBufferRanges), gBufferRanges, D3D12_SHADER_VISIBILITY_PIXEL),
+				// t4 shadow maps
+			D3D12RootParameter_Table(countof(shadowMapRanges), shadowMapRanges, D3D12_SHADER_VISIBILITY_PIXEL),
+		};
+
+		D3D12_STATIC_SAMPLER_DESC staticSamplers[] =
+		{
+				// s0 shadow sampler
+			D3D12StaticSamplerDesc(0, 0, D3D12_SHADER_VISIBILITY_PIXEL,
+				D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT,
+				D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+				D3D12_COMPARISON_FUNC_LESS),
 		};
 
 		COMPtr<ID3DBlob> d3dSignature, d3dError;
 		D3D12SerializeRootSignature(
-			&D3D12RootSignatureDesc(countof(rootParameters), rootParameters),
+			&D3D12RootSignatureDesc(countof(rootParameters), rootParameters,
+				countof(staticSamplers), staticSamplers),
 			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
 
 		d3dDevice->CreateRootSignature(0,
@@ -140,12 +166,35 @@ void SceneRenderer::initialize()
 		};
 #pragma pack(pop)
 
-		int a = sizeof(IndirectCommand);
-
 		d3dDevice->CreateCommandSignature(
 			&D3D12CommandSignatureDesc(sizeof(IndirectCommand),
 				countof(indirectArgumentDescs), indirectArgumentDescs),
 			d3dGBufferPassRS, d3dGBufferPassICS.uuid(), d3dGBufferPassICS.voidInitRef());
+	}
+
+	// Shadow pass PSO
+	{
+		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+		{
+			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		};
+
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dGBufferPassRS;
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::ShadowPassVS.data, Shaders::ShadowPassVS.size);
+		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
+		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Default();
+		psoDesc.InputLayout = D3D12InputLayoutDesc(inputElementDescs, countof(inputElementDescs));
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 0;
+		psoDesc.DSVFormat = DXGI_FORMAT_D16_UNORM;
+		psoDesc.SampleDesc.Count = 1;
+		psoDesc.SampleDesc.Quality = 0;
+
+		device.d3dDevice->CreateGraphicsPipelineState(&psoDesc,
+			d3dShadowPassPSO.uuid(), d3dShadowPassPSO.voidInitRef());
 	}
 
 	// Lighting pass PSO
@@ -210,29 +259,34 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		mappedCameraTransformCB->view = view;
 
 		float32 invCameraClipPlanesDelta = 1.0f / (camera.zFar - camera.zNear);
+		mappedLightingPassCB->inverseView.setInverse(view);
 		mappedLightingPassCB->ndcToViewDepthConversionA = (camera.zFar * camera.zNear) * invCameraClipPlanesDelta;
 		mappedLightingPassCB->ndcToViewDepthConversionB = camera.zFar * invCameraClipPlanesDelta;
 		mappedLightingPassCB->aspect = aspect;
 		mappedLightingPassCB->halfFOVTan = Math::Tan(camera.fov * 0.5f);
 
-		mappedLightingPassCB->lightCount = 4;
-		mappedLightingPassCB->lights[0].viewSpacePosition = (float32x3( 5.0f,  5.0f, 10.0f) * view).xyz;
-		mappedLightingPassCB->lights[0].color = float32x3(1000.0f, 1000.0f, 1000.0f);
-		mappedLightingPassCB->lights[1].viewSpacePosition = (float32x3( 5.0f, -5.0f, 10.0f) * view).xyz;
-		mappedLightingPassCB->lights[1].color = float32x3(1000.0f, 1000.0f, 1000.0f);
-		mappedLightingPassCB->lights[2].viewSpacePosition = (float32x3(-5.0f,  5.0f, 10.0f) * view).xyz;
-		mappedLightingPassCB->lights[2].color = float32x3(1000.0f, 1000.0f, 1000.0f);
-		mappedLightingPassCB->lights[3].viewSpacePosition = (float32x3(-5.0f, -5.0f, 10.0f) * view).xyz;
-		mappedLightingPassCB->lights[3].color = float32x3(1000.0f, 1000.0f, 1000.0f);
+		mappedLightingPassCB->pointLightCount = 1;
+		mappedLightingPassCB->pointLights[0].viewSpacePosition = (float32x3(10.0f, 10.0f, 10.0f) * view).xyz;
+		mappedLightingPassCB->pointLights[0].color = float32x3(1000.0f, 1000.0f, 1000.0f);
+		mappedLightingPassCB->directionalLightCount = scene.directionalLightCount;
+		for (uint8 i = 0; i < scene.directionalLightCount; i++)
+		{
+			const Scene::DirectionalLight& srcLight = scene.directionalLights[i];
+			LightingPassConstants::DirectionalLight& dstLight = mappedLightingPassCB->directionalLights[i];
+
+			dstLight.shadowTextureTransform =
+				Matrix4x4::LookAtCentered(srcLight.shadowVolumeOrigin, srcLight.desc.direction, { 0.0f, 0.0f, 1.0f }) *
+				Matrix4x4::Scale(float32x3(0.5f, -0.5f, 1.0f) / srcLight.shadowVolumeSize) *
+				Matrix4x4::Translation(0.5f, 0.5f, 0.0f);
+			dstLight.direction = VectorMath::Normalize(MultiplyBySubmatrix3x3(-srcLight.desc.direction, view));
+			dstLight.color = srcLight.desc.color;
+		}
 	}
 
 	// Basic initialization =================================================================//
 	{
 		d3dCommandAllocator->Reset();
 		d3dCommandList->Reset(d3dCommandAllocator, nullptr);
-
-		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
-		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportSize.x, viewportSize.y));
 
 		d3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -250,12 +304,18 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		d3dCommandList->ClearRenderTargetView(rtvDescriptorsHandle, clearColor, 0, nullptr);
 		d3dCommandList->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
+		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
+		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportSize.x, viewportSize.y));
+
 		d3dCommandList->SetGraphicsRootSignature(d3dGBufferPassRS);
 		d3dCommandList->SetGraphicsRootConstantBufferView(4, d3dCameraTransformCB->GetGPUVirtualAddress());
 		d3dCommandList->SetGraphicsRootDescriptorTable(5, device.srvHeap.getGPUHandle(0));
 
-		scene.populateCommandList(d3dCommandList, d3dGBufferPassICS);
+		scene.populateCommandListForGBufferPass(d3dCommandList, d3dGBufferPassICS);
 	}
+
+	// Shadow map pass ======================================================================//
+	scene.populateCommandListForShadowPass(d3dCommandList, d3dGBufferPassICS, d3dShadowPassPSO);
 
 	// Lighting pass ========================================================================//
 	{
@@ -267,6 +327,8 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalRoughnessMetalnessTexture,
 					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
+					D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+				D3D12ResourceBarrier_Transition(scene.d3dShadowMapAtlas,
 					D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 				// Optional:
 				D3D12ResourceBarrier_Transition(target.d3dTexture,
@@ -285,9 +347,13 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle = device.rtvHeap.getCPUHandle(target.rtvDescriptorIndex);
 		d3dCommandList->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
 
+		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
+		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportSize.x, viewportSize.y));
+
 		d3dCommandList->SetGraphicsRootSignature(d3dLightingPassRS);
 		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dLightingPassCB->GetGPUVirtualAddress());
 		d3dCommandList->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex));
+		d3dCommandList->SetGraphicsRootDescriptorTable(2, device.srvHeap.getGPUHandle(scene.shadowMapAtlasSRVDescriptorIndex));
 
 		d3dCommandList->SetPipelineState(d3dLightingPassPSO);
 		d3dCommandList->DrawInstanced(3, 1, 0, 0);
@@ -300,6 +366,8 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalRoughnessMetalnessTexture,
 					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
 				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
+				D3D12ResourceBarrier_Transition(scene.d3dShadowMapAtlas,
 					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
 				// Optional:
 				D3D12ResourceBarrier_Transition(target.d3dTexture,

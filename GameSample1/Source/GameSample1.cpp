@@ -30,7 +30,8 @@ void Game::initialize()
 	uiBatch.initialize(renderDevice);
 	font.initializeDefault(renderDevice);
 
-	cubeGeometryResource.createCubicSphere(6);
+	cubeGeometryResource.createCube();
+	sphereGeometryResource.createCubicSphere(6);
 
 	for (uint32 i = 0; i < 8; i++)
 	{
@@ -50,20 +51,50 @@ void Game::initialize()
 			renderDevice.updateMaterial(mat, 0, &c, sizeof(c));
 
 			Render::GeometryInstanceHandle inst = scene.createGeometryInstance(
-				cubeGeometryResource.getGeometryDesc(), mat);
+				sphereGeometryResource.getGeometryDesc(), mat);
 
 			scene.updateGeometryInstanceTransform(inst,
 				Matrix3x4::Translation(i * 3.0f - 10.0f, j * 3.0f - 10.0f, 0.0f));
 		}
 	}
 
-	
-	//cubeGeometryInstance = scene.createGeometryInstance(
-	//	cubeGeometryResource.getGeometryDesc(), plainMaterial);
-	//scene.updateGeometryInstanceTransform(cubeGeometryInstance, Matrix3x4::RotationX(cubeRotation));
+	Render::MaterialHandle mat = renderDevice.createMaterial(plainEffect);
 
-	camera.position = { -13.0f, -7.0f, -10.0f };
-	cameraRotation = { 0.0f, 0.7f };
+	struct
+	{
+		float32x4 color;
+		float32x4 roughtnessMetalness;
+	} c;
+
+	c.color = { 0.5f, 0.5f, 1.0f, 0.0f };
+	c.roughtnessMetalness = { 0.7f, 0.7f, 0.0f, 0.0f };
+
+	renderDevice.updateMaterial(mat, 0, &c, sizeof(c));
+
+	Render::GeometryInstanceHandle inst = scene.createGeometryInstance(
+		cubeGeometryResource.getGeometryDesc(), mat);
+	scene.updateGeometryInstanceTransform(inst,
+		Matrix3x4::Translation(3.0f, 3.0f, 0.0f) * Matrix3x4::Scale(3.0f, 3.0f, 3.0f));
+
+	inst = scene.createGeometryInstance(
+		cubeGeometryResource.getGeometryDesc(), mat);
+	scene.updateGeometryInstanceTransform(inst,
+		Matrix3x4::Translation(3.0f, 3.0f, 0.0f) * Matrix3x4::Scale(0.5f, 0.5f, 10.0f));
+
+	inst = scene.createGeometryInstance(
+		sphereGeometryResource.getGeometryDesc(), mat);
+	scene.updateGeometryInstanceTransform(inst,
+		Matrix3x4::Translation(-3.0f, -3.0f, -6.0f) * Matrix3x4::Scale(4.0f, 4.0f, 4.0f));
+
+	{
+		Render::DirectionalLightDesc desc;
+		desc.direction = { -1.0f, -1.0f, -1.0f };
+		desc.color = { 10.0f, 10.0f, 10.0f };
+		scene.createDirectionalLight(desc);
+	}
+
+	camera.position = { -13.0f, -7.0f, 10.0f };
+	cameraRotation = { 0.0f, -0.7f };
 }
 
 void Game::update(float32 timeDelta)
@@ -101,6 +132,12 @@ void Game::update(float32 timeDelta)
 		camera.position.z += viewSpaceTranslation.y;
 	}
 
+	static float32 a = 0.0f;
+	a += 0.01f;
+	float32x3 dir(Math::Sin(a), Math::Cos(a), -1.0f);
+
+	scene.updateDirectionalLightDirection(0, dir);
+
 	renderDevice.renderScene(scene, camera, gBuffer, renderTarget, { 0, 0, 1440, 900 }, false);
 
 	uiBatch.beginDraw(renderTarget, { 0, 0, 1440, 900 });
@@ -120,7 +157,8 @@ void Game::update(float32 timeDelta)
 
 void Game::onMouseMove(sint16x2 delta)
 {
-	cameraRotation += float32x2(delta) * 0.005f;
+	cameraRotation.x += delta.x * 0.005f;
+	cameraRotation.y -= delta.y * 0.005f;
 }
 
 void Game::onKeyboard(XLib::VirtualKey key, bool state)

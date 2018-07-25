@@ -87,7 +87,8 @@ bool XERSceneRender::initialize(XERDevice* device)
 		d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
 			&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R24G8_TYPELESS, initTempTargetBufferWidth, initTempTargetBufferHeight,
 			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL), D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			&D3D12ClearValue_D24S8(1.0f), d3dDepthTexture.uuid(), d3dDepthTexture.voidInitRef());
+			&D3D12ClearValue_DepthStencil(DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f),
+			d3dDepthTexture.uuid(), d3dDepthTexture.voidInitRef());
 
 		d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
 			&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_D32_FLOAT, initTempTargetBufferWidth / 4, initTempTargetBufferHeight / 4,

@@ -16,6 +16,7 @@ namespace XEngine::Render::Internal
 
 		static const ShaderData EffectPlainVS;
 		static const ShaderData EffectPlainPS;
+		static const ShaderData ShadowPassVS;
 
 		static const ShaderData UIColorVS;
 		static const ShaderData UIColorPS;
