@@ -131,10 +131,11 @@ float4 main(PSInput input) : SV_Target
 	float3 sum = 0.0f;
 
 	// directional lights
+	[loop]
 	for (uint i = 0; i < directionalLightCount; i++)
 	{
 		float3 shadowCoord = mul(directionalLights[i].shadowTextureTransform, float4(worldSpacePosition, 1.0f)).xyz;
-		float shadow = shadowMap.SampleCmp(shadowSampler, shadowCoord.xy, shadowCoord.z - 0.01f);
+		float shadow = shadowMap.SampleCmpLevelZero(shadowSampler, shadowCoord.xy, shadowCoord.z - 0.01f);
 
 		float3 lighting = ComputeLighting(diffuseColor, specularColor,
 			directionalLights[i].color, V, directionalLights[i].direction,
@@ -144,6 +145,7 @@ float4 main(PSInput input) : SV_Target
 	}
 
 	// point lights
+	[loop]
 	for (uint i = 0; i < pointLightCount; i++) 
 	{
 		float3 lightVector = pointLights[i].viewSpacePosition - viewSpacePosition;
