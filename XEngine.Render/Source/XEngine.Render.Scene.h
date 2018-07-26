@@ -18,6 +18,8 @@ namespace XEngine::Render::Device_ { class SceneRenderer; }
 
 namespace XEngine::Render
 {
+	using TransformGroupHandle = uint32;
+
 	struct PointLightDesc
 	{
 		float32x3 position;
@@ -53,6 +55,11 @@ namespace XEngine::Render
 	private:
 		static constexpr uint8 directionalLightsLimit = 2;
 
+		struct TransformGroup;
+		struct BVHNode;
+
+		struct ShadowCameraTransformConstants;
+		
 		struct Instance // 28 bytes
 		{
 			GeometryDesc geometryDesc;
@@ -82,10 +89,11 @@ namespace XEngine::Render
 			rectu16 shadowMapRect;
 		};
 
-		struct ShadowCameraTransformConstants;
-
 	private:
 		Device *device = nullptr;
+
+		XLib::Vector<TransformGroup> transformGroups;
+		XLib::Vector<BVHNode> bvhNodes;
 
 		XLib::Vector<Instance> instances;
 		XLib::Vector<CommandListDesc> commandLists;
@@ -105,6 +113,8 @@ namespace XEngine::Render
 		uint32 allocatedTansformCount = 0;
 		uint32 allocatedCommandListArenaSegmentCount = 0;
 
+		uint32 bvhRootIndex = uint32(-1);
+
 		uint16 shadowMapAtlasSRVDescriptorIndex = 0;
 		uint16 pointLightCount = 0;
 		uint8 directionalLightCount = 0;
@@ -122,13 +132,16 @@ namespace XEngine::Render
 		void initialize(Device& device, uint32 initialTransformBufferSize = 256);
 		void destroy();
 
-		GeometryInstanceHandle createGeometryInstance(
-			const GeometryDesc& geometryDesc, MaterialHandle material,
-			uint32 transformCount = 1, const XLib::Matrix3x4* intialTransforms = nullptr);
-		void removeGeometryInstance(GeometryInstanceHandle handle);
+		TransformGroupHandle createTransformGroup(uint32 size = 1);
+		void removeTransformGroup(TransformGroupHandle handle);
 
-		void updateGeometryInstanceTransform(GeometryInstanceHandle handle,
-			const XLib::Matrix3x4& transform, uint16 transformIndex = 0);
+		void updateTransform(TransformGroupHandle handle, uint32 index,
+			const XLib::Matrix3x4& transform);
+
+		GeometryInstanceHandle createGeometryInstance(const GeometryDesc& geometryDesc,
+			MaterialHandle material, TransformGroupHandle transformGroupHandle,
+			uint32 transformOffset = 0);
+		void removeGeometryInstance(GeometryInstanceHandle handle);
 
 		uint8 createDirectionalLight(const DirectionalLightDesc& desc);
 		uint16 createPointLight(const PointLightDesc& desc);

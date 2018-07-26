@@ -16,6 +16,8 @@ using namespace XEngine::Render::Internal;
 static constexpr uint32 commandListArenaSegmentSize = 0x4000;
 static constexpr uint16 shadowMapDim = 2048;
 
+static constexpr uint32 bvhLeafFlag = 0x80'00'00'00;
+
 #pragma pack(push, 1)
 
 namespace
@@ -32,11 +34,46 @@ namespace
 
 #pragma pack(pop)
 
+namespace
+{
+	struct AABB
+	{
+		float32x3 minPoint;
+		float32x3 maxPoint;
+
+		inline void fill(const AABB& a, const AABB& b)
+		{
+			minPoint.x = min<float32>(a.minPoint.x, b.minPoint.x);
+			minPoint.y = min<float32>(a.minPoint.y, b.minPoint.y);
+			minPoint.z = min<float32>(a.minPoint.z, b.minPoint.z);
+			maxPoint.x = max<float32>(a.maxPoint.x, b.maxPoint.x);
+			maxPoint.y = max<float32>(a.maxPoint.y, b.maxPoint.y);
+			maxPoint.z = max<float32>(a.maxPoint.z, b.maxPoint.z);
+		}
+	};
+}
+
+struct Scene::TransformGroup // 32 bytes
+{
+	AABB aabb;
+	uint32 baseTransformIndex;
+	uint32 parentBVHNode;
+};
+
+struct Scene::BVHNode // 36 bytes
+{
+	AABB aabb;
+	uint32 children[2];
+	uint32 parent;
+};
+
 struct alignas(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)
 	Scene::ShadowCameraTransformConstants
 {
 	Matrix4x4 transform;
 };
+
+// public ===================================================================================//
 
 void Scene::initialize(Device& device, uint32 initialTransformBufferSize)
 {
@@ -86,12 +123,65 @@ void Scene::destroy()
 
 }
 
-GeometryInstanceHandle Scene::createGeometryInstance(
-	const GeometryDesc& geometryDesc, MaterialHandle material,
-	uint32 transformCount, const Matrix3x4* intialTransforms)
+TransformGroupHandle Scene::createTransformGroup(uint32 size)
 {
 	uint32 baseTransformIndex = allocatedTansformCount;
-	allocatedTansformCount++;
+	allocatedTansformCount += size;
+	
+	TransformGroupHandle result = TransformGroupHandle(transformGroups.getSize());
+	TransformGroup &group = transformGroups.allocateBack();
+	//group.aabb.fill();
+	group.baseTransformIndex = baseTransformIndex;
+	group.parentBVHNode = uint32(-1);
+
+	if (bvhNodes.isEmpty())
+	{
+		if (bvhRootIndex == uint32(-1))
+		{
+			// Empty scene
+			bvhRootIndex = uint32(result);
+		}
+		else
+		{
+			// No BVH nodes allocated, single existing transform group -> create BVH
+			TransformGroup& existingGroup = transformGroups[bvhRootIndex];
+
+			BVHNode &node = bvhNodes.allocateBack();
+			node.aabb.fill(group.aabb, existingGroup.aabb);
+			node.children[0] = bvhRootIndex | bvhLeafFlag;
+			node.children[1] = uint32(result) | bvhLeafFlag;
+			node.parent = uint32(-1);
+		}
+	}
+	else
+	{
+		BVHNode &root = bvhNodes[bvhRootIndex];
+
+		uint32 nodeIndex = bvhNodes.getSize();
+		BVHNode &node = bvhNodes.allocateBack();
+		node.aabb.fill(root.aabb, group.aabb);
+		node.children[0] = bvhRootIndex;
+		node.children[1] = nodeIndex;
+		node.parent = uint32(-1);
+
+		root.parent = nodeIndex;
+	}
+
+	return result;
+}
+
+void Scene::updateTransform(TransformGroupHandle handle, uint32 index,
+	const XLib::Matrix3x4& transform)
+{
+	uint32 globalTransformIndex = transformGroups[handle].baseTransformIndex + index;
+	mappedTransformBuffer[globalTransformIndex] = transform;
+}
+
+GeometryInstanceHandle Scene::createGeometryInstance(const GeometryDesc& geometryDesc,
+	MaterialHandle material, TransformGroupHandle transformGroupHandle,	uint32 transformOffset)
+{
+	TransformGroup &transformGroup = transformGroups[transformGroupHandle];
+	uint32 baseTransformIndex = transformGroup.baseTransformIndex + transformOffset;
 
 	GeometryInstanceHandle result = GeometryInstanceHandle(instances.getSize());
 
@@ -155,6 +245,35 @@ GeometryInstanceHandle Scene::createGeometryInstance(
 	return result;
 }
 
+uint8 Scene::createDirectionalLight(const DirectionalLightDesc& desc)
+{
+	if (directionalLightCount)
+		return 0;
+
+	uint8 result = directionalLightCount;
+
+	directionalLights[result].desc = desc;
+	directionalLights[result].shadowVolumeOrigin = VectorMath::Normalize(desc.direction) * -20.0f;
+	directionalLights[result].shadowVolumeSize = { 40.0f, 40.0f, 40.0f };
+
+	directionalLights[result].dsvDescriptorIndex = device->dsvHeap.allocate(1);
+	device->d3dDevice->CreateDepthStencilView(d3dShadowMapAtlas,
+		&D3D12DepthStencilViewDesc_Texture2D(DXGI_FORMAT_D16_UNORM),
+		device->dsvHeap.getCPUHandle(directionalLights[0].dsvDescriptorIndex));
+
+	directionalLightCount++;
+
+	return 0;
+}
+
+void Scene::updateDirectionalLightDirection(uint8 id, float32x3 direction)
+{
+	directionalLights[0].desc.direction = direction;
+	directionalLights[0].shadowVolumeOrigin = VectorMath::Normalize(direction) * -16.0f;
+}
+
+// private ==================================================================================//
+
 void Scene::populateCommandListForGBufferPass(ID3D12GraphicsCommandList* d3dCommandList,
 	ID3D12CommandSignature* d3dICS)
 {
@@ -185,8 +304,6 @@ void Scene::populateCommandListForShadowPass(ID3D12GraphicsCommandList* d3dComma
 	mappedShadowCameraTransformsCB->transform =
 		Matrix4x4::LookAtCentered(light.shadowVolumeOrigin, light.desc.direction, { 0.0f, 0.0f, 1.0f })
 		* Matrix4x4::Scale(float32x3(1.0f, 1.0f, 1.0f) / light.shadowVolumeSize);
-		//Matrix4x4::LookAt({ 30.0f, 30.0f, 30.0f }, { 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f }) *
-		//Matrix4x4::Scale({ 0.05f, 0.05f, 0.01f });
 
 	D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle =
 		device->dsvHeap.getCPUHandle(directionalLights[0].dsvDescriptorIndex);
@@ -208,36 +325,4 @@ void Scene::populateCommandListForShadowPass(ID3D12GraphicsCommandList* d3dComma
 		d3dCommandList->ExecuteIndirect(d3dICS, commandList.length, d3dCommandListArena,
 			commandList.arenaBaseSegment * commandListArenaSegmentSize, nullptr, 0);
 	}
-}
-
-void Scene::updateGeometryInstanceTransform(GeometryInstanceHandle handle,
-	const Matrix3x4& transform, uint16 transformIndex)
-{
-	uint32 globalTransformIndex = instances[handle].baseTransformIndex + transformIndex;
-	mappedTransformBuffer[globalTransformIndex] = transform;
-}
-
-uint8 Scene::createDirectionalLight(const DirectionalLightDesc& desc)
-{
-	if (directionalLightCount)
-		return 0;
-
-	uint8 result = directionalLightCount;
-
-	directionalLights[result].desc = desc;
-	directionalLights[result].shadowVolumeOrigin = VectorMath::Normalize(desc.direction) * -20.0f;
-	directionalLights[result].shadowVolumeSize = { 40.0f, 40.0f, 40.0f };
-
-	directionalLights[result].dsvDescriptorIndex = device->dsvHeap.allocate(1);
-	device->d3dDevice->CreateDepthStencilView(d3dShadowMapAtlas,
-		&D3D12DepthStencilViewDesc_Texture2D(DXGI_FORMAT_D16_UNORM),
-		device->dsvHeap.getCPUHandle(directionalLights[0].dsvDescriptorIndex));
-
-	directionalLightCount++;
-}
-
-void Scene::updateDirectionalLightDirection(uint8 id, float32x3 direction)
-{
-	directionalLights[0].desc.direction = direction;
-	directionalLights[0].shadowVolumeOrigin = VectorMath::Normalize(direction) * -16.0f;
 }

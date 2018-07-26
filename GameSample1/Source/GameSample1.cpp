@@ -50,10 +50,11 @@ void Game::initialize()
 
 			renderDevice.updateMaterial(mat, 0, &c, sizeof(c));
 
+			Render::TransformGroupHandle tgh = scene.createTransformGroup();
 			Render::GeometryInstanceHandle inst = scene.createGeometryInstance(
-				sphereGeometryResource.getGeometryDesc(), mat);
+				sphereGeometryResource.getGeometryDesc(), mat, tgh);
 
-			scene.updateGeometryInstanceTransform(inst,
+			scene.updateTransform(tgh, 0,
 				Matrix3x4::Translation(i * 3.0f - 10.0f, j * 3.0f - 10.0f, 0.0f));
 		}
 	}
@@ -71,19 +72,22 @@ void Game::initialize()
 
 	renderDevice.updateMaterial(mat, 0, &c, sizeof(c));
 
+	Render::TransformGroupHandle tgh = scene.createTransformGroup();
 	Render::GeometryInstanceHandle inst = scene.createGeometryInstance(
-		cubeGeometryResource.getGeometryDesc(), mat);
-	scene.updateGeometryInstanceTransform(inst,
+		cubeGeometryResource.getGeometryDesc(), mat, tgh);
+	scene.updateTransform(tgh, 0,
 		Matrix3x4::Translation(3.0f, 3.0f, 0.0f) * Matrix3x4::Scale(3.0f, 3.0f, 3.0f));
 
+	tgh = scene.createTransformGroup();
 	inst = scene.createGeometryInstance(
-		cubeGeometryResource.getGeometryDesc(), mat);
-	scene.updateGeometryInstanceTransform(inst,
+		cubeGeometryResource.getGeometryDesc(), mat, tgh);
+	scene.updateTransform(tgh, 0,
 		Matrix3x4::Translation(3.0f, 3.0f, 0.0f) * Matrix3x4::Scale(0.5f, 0.5f, 10.0f));
 
+	tgh = scene.createTransformGroup();
 	inst = scene.createGeometryInstance(
-		sphereGeometryResource.getGeometryDesc(), mat);
-	scene.updateGeometryInstanceTransform(inst,
+		sphereGeometryResource.getGeometryDesc(), mat, tgh);
+	scene.updateTransform(tgh, 0,
 		Matrix3x4::Translation(-3.0f, -3.0f, -6.0f) * Matrix3x4::Scale(4.0f, 4.0f, 4.0f));
 
 	{
