@@ -131,12 +131,13 @@ void XERDevice::UploadEngine::uploadTexture2DAndGenerateMIPs(ID3D12Resource* d3d
 		case DXGI_FORMAT_R8G8B8A8_UNORM:	pixelPitch = sizeof(uint8x4);	break;
 
 		default:
-			Debug::Crash(DbgMsgFmt("invalid format"));
+			// TODO: warning
+			return;
 	}
 
 	uint16x2 mipSize = { uint16(desc.Width), uint16(desc.Height) };
 
-	Debug::CrashCondition(mipSize.x * pixelPitch > uploadBufferSize, DbgMsgFmt("texture is too large"));
+	XASSERT(mipSize.x * pixelPitch <= uploadBufferSize, "texture is too large");
 
 	const void *mipSourceData = sourceData;
 	uint32 mipSourceRowPitch = sourceRowPitch;
@@ -198,15 +199,16 @@ void XERDevice::UploadEngine::uploadTexture3DRegion(ID3D12Resource* d3dDstTextur
 			pixelPitch = sizeof(float32x4);	break;
 
 		default:
-			Debug::Crash(DbgMsgFmt("invalid format"));
+			// TODO: warning
+			return;
 	}
 
 	uint32 rowByteSize = width * pixelPitch;
 	uint32 uploadRowPitch = alignup(rowByteSize, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 	uint32 uploadBufferBytesRequired = uploadRowPitch * depth * height;
 
-	Debug::CrashCondition(uploadBufferBytesRequired > uploadBufferSize,
-		DbgMsgFmt("region is too large (for this implementation)"));
+	XASSERT(uploadBufferBytesRequired <= uploadBufferSize,
+		"region is too large (for this implementation)");
 
 	byte *mappedUploadBufferCurrentRowPointer = mappedUploadBuffer;
 	const byte *sourceData = to<byte*>(_sourceData);
@@ -241,7 +243,7 @@ void XERDevice::UploadEngine::uploadTexture3DRegion(ID3D12Resource* d3dDstTextur
 void XERDevice::UploadEngine::uploadBuffer(ID3D12Resource* d3dDestBuffer,
 	uint32 destOffset, const void* data, uint32 size)
 {
-	Debug::CrashCondition(d3dDestBuffer == nullptr, DbgMsgFmt("destination ID3D12Resource is null"));
+	XASSERT(d3dDestBuffer, "destination ID3D12Resource is null");
 
 	uint32 bytesUploaded = 0;
 	if (d3dDestBuffer == d3dLastBufferUploadResource &&

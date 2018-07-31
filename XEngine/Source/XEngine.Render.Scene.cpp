@@ -56,7 +56,7 @@ XERGeometryInstanceId XERScene::createGeometryInstance(XERGeometry* geometry,
 
 	if (!effectData)
 	{
-		Debug::CrashCondition(effectCount >= countof(effectsDataList), DbgMsgFmt("effects limit exceeded"));
+		XASSERT(effectCount < countof(effectsDataList), "effects limit exceeded");
 
 		effectData = &effectsDataList[effectCount];
 		effectCount++;

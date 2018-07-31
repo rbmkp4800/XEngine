@@ -26,7 +26,7 @@ void Uploader::flush()
 	device.d3dCopyQueue->ExecuteCommandLists(
 		countof(d3dCommandListsToExecute), d3dCommandListsToExecute);
 
-	gpuQueueSyncronizer.synchronize(device.d3dCopyQueue);
+	gpuQueueSynchronizer.synchronize(device.d3dCopyQueue);
 
 	d3dCommandAllocator->Reset();
 	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
@@ -84,7 +84,7 @@ void Uploader::initialize()
 		d3dUploadBuffer.uuid(), d3dUploadBuffer.voidInitRef());
 	d3dUploadBuffer->Map(0, &D3D12Range(), to<void**>(&mappedUploadBuffer));
 
-	gpuQueueSyncronizer.initialize(d3dDevice);
+	gpuQueueSynchronizer.initialize(d3dDevice);
 
 	d3dCommandAllocator->Reset();
 	d3dCommandList->Reset(d3dCommandAllocator, nullptr);
@@ -122,12 +122,13 @@ void Uploader::uploadTexture2DAndGenerateMIPs(ID3D12Resource* d3dDstTexture,
 		case DXGI_FORMAT_R8G8B8A8_UNORM:	pixelPitch = sizeof(uint8x4);	break;
 
 		default:
-			Debug::Crash(DbgMsgFmt("invalid format"));
+			// TODO: warning
+			return;
 	}
 
 	uint16x2 mipSize = { uint16(desc.Width), uint16(desc.Height) };
 
-	Debug::CrashCondition(mipSize.x * pixelPitch > uploadBufferSize, DbgMsgFmt("texture is too large"));
+	XASSERT(mipSize.x * pixelPitch <= uploadBufferSize, "texture is too large");
 
 	const void *mipSourceData = sourceData;
 	uint32 mipSourceRowPitch = sourceRowPitch;

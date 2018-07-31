@@ -224,7 +224,7 @@ void Output_SetCursorState(CursorState state)
 
 void Output::Initialize()
 {
-	Debug::CrashCondition(dispatchThread.isInitialized(), DbgMsgFmt("already initialized"));
+	XASSERT(!dispatchThread.isInitialized(), "already initialized");
 
 	// Initailize Raw Input
 	if (!rawInputRegistered)

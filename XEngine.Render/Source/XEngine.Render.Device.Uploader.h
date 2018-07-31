@@ -25,7 +25,7 @@ namespace XEngine::Render::Device_
 		XLib::Platform::COMPtr<ID3D12Resource> d3dUploadBuffer;
 		byte *mappedUploadBuffer = nullptr;
 
-		Internal::GPUQueueSynchronizer gpuQueueSyncronizer;
+		Internal::GPUQueueSynchronizer gpuQueueSynchronizer;
 
 	private:
 		inline Device& getDevice();
