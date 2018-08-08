@@ -163,7 +163,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Source\XEngine.Core.AbstractResourceManager.h" />
+    <ClInclude Include="Source\XEngine.Core.ResourceCache.h" />
     <ClInclude Include="Source\XEngine.Core.DiskWorker.h" />
     <ClInclude Include="Source\XEngine.Core.GeometryResource.h" />
     <ClInclude Include="Source\XEngine.Core.Engine.h" />
@@ -174,12 +174,7 @@
     <ClInclude Include="Source\XEngine.UI.TextRenderer.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Source\XEngine.Core.DiskWorker.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="Source\XEngine.Core.DiskWorker.cpp" />
     <ClCompile Include="Source\XEngine.Core.Engine.cpp" />
     <ClCompile Include="Source\XEngine.Core.GeometryResource.cpp" />
     <ClCompile Include="Source\XEngine.Core.Output.cpp" />

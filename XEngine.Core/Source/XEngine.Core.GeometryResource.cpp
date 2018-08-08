@@ -1,5 +1,5 @@
 #include <XLib.Vectors.Math.h>
-//#include <XLib.PoolAllocator.h>
+#include <XLib.System.File.h>
 #include <XEngine.Render.Device.h>
 #include <XEngine.Render.Vertices.h>
 
@@ -11,28 +11,100 @@ using namespace XLib;
 using namespace XEngine::Core;
 using namespace XEngine::Render;
 
-/*namespace
-{
-	struct Request
-	{
-		GeometryResource *resource = nullptr;
-	};
-
-	using RequestsAllocator = PoolAllocator<Request,
-		PoolAllocatorHeapUsagePolicy::SingleDynamicChunk>;
-
-	RequestsAllocator requestsAllocator;
-}*/
-
-GeometryResource::~GeometryResource()
+/*GeometryResource::~GeometryResource()
 {
 
 }
 
-//bool GeometryResource::createFromFileAsync(const char* filename)
-//{
-//
-//}
+bool GeometryResource::Create(const CreationArgs& args, CreationTask& task)
+{
+	switch (args.type)
+	{
+		case CreationType::Cube:
+
+			break;
+
+		case CreationType::CubicSphere:
+
+			break;
+
+		case CreationType::FromFile:
+
+			break;
+
+		default:
+			// TODO: log warning
+			return false;
+	}
+}
+
+bool GeometryResource::CreationTask::cancel()
+{
+
+}*/
+
+#pragma pack(push, 1)
+class XEGeometryFile abstract final
+{
+public:
+	static constexpr uint32 Magic = 0xAABBCCDD; // TODO: replace
+	static constexpr uint16 SupportedVersion = 1;
+
+	struct Header
+	{
+		uint32 magic;
+		uint16 version;
+		uint16 vertexStride;
+		uint32 vertexCount;
+		uint32 indexCount;
+	};
+};
+#pragma pack(pop)
+
+bool GeometryResource::createFromFile(const char* filename)
+{
+	File file;
+	if (!file.open(filename, FileAccessMode::Read))
+		return false;
+
+	XEGeometryFile::Header header;
+	if (!file.read(header))
+		return false;
+
+	if (header.magic != XEGeometryFile::Magic ||
+		header.version != XEGeometryFile::SupportedVersion)
+	{
+		return false;
+	}
+
+	uint64 expectedFileSize = uint64(header.vertexStride) * uint64(header.vertexCount) +
+		uint64(header.indexCount) * sizeof(uint32) + sizeof(header);
+	if (expectedFileSize != file.getSize())
+		return false;
+
+	uint32 verticesSize = header.vertexCount * header.vertexStride;
+	uint32 indicesSize = header.indexCount * 4;
+
+	HeapPtr<byte> vertices(verticesSize);
+	if (!file.read(vertices, verticesSize))
+		return false;
+
+	HeapPtr<uint32> indices(header.indexCount);
+	if (!file.read(indices, indicesSize ))
+		return false;
+
+	vertexCount = header.vertexCount;
+	indexCount = header.indexCount;
+	vertexStride = uint8(header.vertexStride);
+	indexIs32Bit = true;
+
+	Render::Device& renderDevice = Engine::GetRenderDevice();
+	buffer = renderDevice.createBuffer(verticesSize + indicesSize);
+	renderDevice.updateBuffer(buffer, 0, vertices, verticesSize);
+	renderDevice.updateBuffer(buffer, verticesSize, indices, indicesSize);
+
+	return true;
+}
 
 void GeometryResource::createCube()
 {
@@ -180,19 +252,4 @@ void GeometryResource::createCubicSphere(uint32 detalizationLevel)
 	buffer = renderDevice.createBuffer(verticesSize + indicesSize);
 	renderDevice.updateBuffer(buffer, 0, vertexBuffer, verticesSize);
 	renderDevice.updateBuffer(buffer, verticesSize, indexBuffer, indicesSize);
-}
-
-void GeometryResource::cancelCreation()
-{
-
-}
-
-bool GeometryResource::isReady() const
-{
-	return true;
-}
-
-void GeometryResource::setReadyCallback() const
-{
-
 }

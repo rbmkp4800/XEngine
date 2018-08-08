@@ -2,11 +2,10 @@
 
 #include <XLib.Types.h>
 #include <XLib.NonCopyable.h>
-
 #include <XEngine.Render.Base.h>
 #include <XEngine.Render.Scene.h>
 
-//#include "XEngine.Core.AbstractResourceManager.h"
+#include "XEngine.Core.ResourceCache.h"
 
 namespace XEngine::Core
 {
@@ -18,22 +17,18 @@ namespace XEngine::Core
 	private:
 		uint32 vertexCount = 0;
 		uint32 indexCount = 0;
-        Render::BufferHandle buffer = Render::BufferHandle(0);
+		Render::BufferHandle buffer = Render::BufferHandle(0);
 		uint8 vertexStride = 0;
 		bool indexIs32Bit = false;
 
 	public:
 		GeometryResource() = default;
-		~GeometryResource();
+		~GeometryResource() = default;
 
-		bool createFromFileAsync(const char* filename);
+		// NOTE: temporary
+		bool createFromFile(const char* filename);
 		void createCube();
 		void createCubicSphere(uint32 detalizationLevel);
-
-		void cancelCreation();
-
-		bool isReady() const;
-		void setReadyCallback() const;
 
 		inline Render::GeometryDesc getGeometryDesc() const
 		{
@@ -48,8 +43,51 @@ namespace XEngine::Core
 			result.indexIs32Bit = indexIs32Bit;
 			return result;
 		}
+
+	public: // creation
+		enum class CreationType : uint8;
+		struct CreationArgs;
+		class CreationTask;
+
+		static bool Create(const CreationArgs& args, CreationTask& task);
 	};
 
-	//using GeometryResourceManager = AbstractResourceManager<
+	enum class GeometryResource::CreationType : uint8
+	{
+		None = 0,
+		Cube,
+		CubicSphere,
+		FromFile,
+	};
+
+	struct GeometryResource::CreationArgs
+	{
+		CreationType type = CreationType::None;
+
+		union
+		{
+			struct
+			{
+				uint16 detalization;
+			} cubicSphere;
+			struct
+			{
+				char filename[32];
+			} fromFile;
+		};
+	};
+
+	class GeometryResource::CreationTask : public XLib::NonCopyable
+	{
+	private:
+
+	public:
+		CreationTask() = default;
+		~CreationTask();
+
+		bool cancel();
+	};
+
+	//using GeometryResourceCache = ResourceCache<
 	//	GeometryResourceUID, GeometryResourceHandle, GeometryResource>;
 }

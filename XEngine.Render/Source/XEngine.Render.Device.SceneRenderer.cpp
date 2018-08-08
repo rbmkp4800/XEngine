@@ -271,8 +271,8 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		mappedLightingPassCB->directionalLightCount = scene.directionalLightCount;
 		for (uint8 i = 0; i < scene.directionalLightCount; i++)
 		{
-			const Scene::DirectionalLight& srcLight = scene.directionalLights[i];
-			LightingPassConstants::DirectionalLight& dstLight = mappedLightingPassCB->directionalLights[i];
+			const Scene::DirectionalLight &srcLight = scene.directionalLights[i];
+			LightingPassConstants::DirectionalLight &dstLight = mappedLightingPassCB->directionalLights[i];
 
 			dstLight.shadowTextureTransform =
 				Matrix4x4::LookAtCentered(srcLight.shadowVolumeOrigin, srcLight.desc.direction, { 0.0f, 0.0f, 1.0f }) *

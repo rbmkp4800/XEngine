@@ -10,6 +10,10 @@
 #include <XLib.System.Threading.Event.h>
 #include <XLib.Heap.h>
 
+// NOTE: temporary implementation
+// TODO: implement proper DiskOperationHandle (not supported for now)
+// TODO: implement proper shutdown
+
 namespace XEngine::Core
 {
 	using DiskOperationHandle = uint32;
@@ -23,6 +27,8 @@ namespace XEngine::Core
 			XLib::IntrusiveDoublyLinkedListItemHook operationsQueueItemHook;
 			DiskReadHandler handler;
 			void *handlerContext = nullptr;
+			// TODO: replace with StaticString
+			char filename[32];
 		};
 
 		using OperationsAllocator = XLib::PoolAllocator<Operation,
@@ -34,6 +40,7 @@ namespace XEngine::Core
 	private:
 		OperationsAllocator operationsAllocator;
 		OperationsQueue operationsQueue;
+		XLib::Lock operationsAllocatorLock;
 		XLib::Lock operationsQueueLock;
 
 		XLib::Thread dispatchThread;

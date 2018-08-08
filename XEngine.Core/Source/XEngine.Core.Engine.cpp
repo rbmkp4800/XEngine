@@ -3,7 +3,7 @@
 
 #include "XEngine.Core.Engine.h"
 
-//#include "XEngine.Core.DiskWorker.h"
+#include "XEngine.Core.DiskWorker.h"
 #include "XEngine.Core.Input.h"
 #include "XEngine.Core.Output.h"
 
@@ -12,7 +12,7 @@ using namespace XEngine;
 using namespace XEngine::Core;
 
 static bool running = false;
-//static DiskWorker diskWorker;
+static DiskWorker diskWorker;
 static Render::Device renderDevice;
 
 static Render::SwapChain outputSwapChain;
@@ -23,7 +23,7 @@ void Engine::Run(GameBase* game)
 
 	Output::Initialize();
 	renderDevice.initialize();
-	//diskWorker.startup(0x40000);
+	diskWorker.startup(0x40000);
 
 	game->initialize();
 
@@ -41,6 +41,7 @@ void Engine::Run(GameBase* game)
 	}
 
 	Output::Destroy();
+	diskWorker.shutdown();
 }
 
 void Engine::Shutdown()
@@ -48,7 +49,7 @@ void Engine::Shutdown()
 	running = false;
 }
 
-//DiskWorker& Engine::GetDiskWorker() { return diskWorker; }
+DiskWorker& Engine::GetDiskWorker() { return diskWorker; }
 Render::Device& Engine::GetRenderDevice() { return renderDevice; }
 
 uint32 Engine::GetOutputViewCount() { return 1; }
