@@ -21,6 +21,15 @@ namespace XEngine::Render { class Scene; }
 namespace XEngine::Render { class Target; }
 namespace XEngine::Render { class GBuffer; }
 
+namespace XEngine::Render
+{
+	enum class DebugOutput
+	{
+		Disabled = 0,
+		Wireframe,
+	};
+}
+
 namespace XEngine::Render::Device_
 {
 	class SceneRenderer : public XLib::NonCopyable
@@ -37,6 +46,8 @@ namespace XEngine::Render::Device_
 
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dShadowPassPSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
+
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;
 
 		XLib::Platform::COMPtr<ID3D12Resource> d3dCameraTransformCB;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dLightingPassCB;
@@ -56,7 +67,7 @@ namespace XEngine::Render::Device_
 		void render(ID3D12GraphicsCommandList* d3dCommandList,
 			ID3D12CommandAllocator* d3dCommandAllocator, Scene& scene,
 			const Camera& camera, GBuffer& gBuffer, Target& target,
-			rectu16 viewport, bool finalizeTarget);
+			rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput);
 
 		inline ID3D12RootSignature* getGBufferPassD3DRS() { return d3dGBufferPassRS; }
 	};

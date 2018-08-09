@@ -89,11 +89,11 @@ void Device::clearTarget(Target& target, XLib::Color color)
 
 }
 
-void Device::renderScene(Scene& scene, const Camera& camera,
-	GBuffer& gBuffer, Target& target, rectu16 viewport, bool finalizeTarget)
+void Device::renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
+	Target& target, rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput)
 {
-	sceneRenderer.render(d3dCommandList, d3dCommandAllocator,
-		scene, camera, gBuffer, target, viewport, finalizeTarget);
+	sceneRenderer.render(d3dCommandList, d3dCommandAllocator, scene,
+		camera, gBuffer, target, viewport, finalizeTarget, debugOutput);
 
 	gpuQueueSyncronizer.synchronize(d3dGraphicsQueue);
 }

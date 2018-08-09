@@ -121,7 +121,7 @@ namespace XEngine::Render
 
 	private:
 		void populateCommandListForGBufferPass(ID3D12GraphicsCommandList* d3dCommandList,
-			ID3D12CommandSignature* d3dICS);
+			ID3D12CommandSignature* d3dICS, bool useEffectPSOs);
 		void populateCommandListForShadowPass(ID3D12GraphicsCommandList* d3dCommandList,
 			ID3D12CommandSignature* d3dICS, ID3D12PipelineState* d3dPSO);
 

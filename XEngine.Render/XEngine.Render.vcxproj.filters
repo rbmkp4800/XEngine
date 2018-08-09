@@ -135,6 +135,7 @@
     <FxCompile Include="Source\Shaders\UIColorPS.hlsl" />
     <FxCompile Include="Source\Shaders\UIColorAlphaTextureVS.hlsl" />
     <FxCompile Include="Source\Shaders\UIColorAlphaTexturePS.hlsl" />
-    <FxCompile Include="Source\Shaders\ShadowPassVS.hlsl" />
+    <FxCompile Include="Source\Shaders\DebugWhitePS.hlsl" />
+    <FxCompile Include="Source\Shaders\SceneGeometryPositionOnlyVS.hlsl" />
   </ItemGroup>
 </Project>

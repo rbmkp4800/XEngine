@@ -85,7 +85,7 @@ namespace XEngine::Render
 		void updateMaterial(MaterialHandle material, uint32 offset, const void* data, uint32 size);
 		void clearTarget(Target& target, XLib::Color color);
 		void renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
-			Target& target, rectu16 viewport, bool finalizeTarget);
+			Target& target, rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput);
 		void renderUI(UI::Batch& uiBatch);
 
 		inline BufferHandle createBuffer(uint32 size) { return bufferHeap.createBuffer(size); }

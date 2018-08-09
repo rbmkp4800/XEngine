@@ -275,15 +275,18 @@ void Scene::updateDirectionalLightDirection(uint8 id, float32x3 direction)
 // private ==================================================================================//
 
 void Scene::populateCommandListForGBufferPass(ID3D12GraphicsCommandList* d3dCommandList,
-	ID3D12CommandSignature* d3dICS)
+	ID3D12CommandSignature* d3dICS, bool useEffectPSOs)
 {
 	d3dCommandList->SetGraphicsRootShaderResourceView(3,
 		d3dTransformBuffer->GetGPUVirtualAddress());
 
 	for (CommandListDesc& commandList : commandLists)
 	{
-		ID3D12PipelineState *d3dPSO = device->effectHeap.getPSO(commandList.effect);
-		d3dCommandList->SetPipelineState(d3dPSO);
+		if (useEffectPSOs)
+		{
+			ID3D12PipelineState *d3dPSO = device->effectHeap.getPSO(commandList.effect);
+			d3dCommandList->SetPipelineState(d3dPSO);
+		}
 
 		d3dCommandList->SetGraphicsRootConstantBufferView(2,
 			device->materialHeap.getMaterialsTableGPUAddress(commandList.effect));

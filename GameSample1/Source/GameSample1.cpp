@@ -142,7 +142,12 @@ void Game::update(float32 timeDelta)
 
 	scene.updateDirectionalLightDirection(0, dir);
 
-	renderDevice.renderScene(scene, camera, gBuffer, renderTarget, { 0, 0, 1440, 900 }, false);
+	Render::DebugOutput debugOutput = Render::DebugOutput::Disabled;
+	if (Core::Input::IsKeyDown(VirtualKey('1')))
+		debugOutput = Render::DebugOutput::Wireframe;
+
+	renderDevice.renderScene(scene, camera, gBuffer, renderTarget,
+		{ 0, 0, 1440, 900 }, false, debugOutput);
 
 	uiBatch.beginDraw(renderTarget, { 0, 0, 1440, 900 });
 	{
