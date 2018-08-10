@@ -22,6 +22,23 @@ using namespace XEngine::Render;
 using namespace XEngine::Render::Internal;
 using namespace XEngine::Render::Device_;
 
+namespace
+{
+	class GPUTimestampId abstract final
+	{
+	public:
+		enum : uint32
+		{
+			Start = 0,
+			GBufferPassFinish,
+			ShadowPassFinish,
+			LightingPassFinished,
+
+			Count,
+		};
+	};
+}
+
 struct SceneRenderer::CameraTransformConstants
 {
 	Matrix4x4 viewProjection;
@@ -243,6 +260,13 @@ void SceneRenderer::initialize()
 		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dDebugWireframePSO.uuid(), d3dDebugWireframePSO.voidInitRef());
 	}
 
+	// Readback buffer
+	{
+		d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_READBACK), D3D12_HEAP_FLAG_NONE,
+			&D3D12ResourceDesc_Buffer(256), D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+			d3dReadbackBuffer.uuid(), d3dReadbackBuffer.voidInitRef());
+	}
+
 	// Constant buffers
 	{
 		d3dDevice->CreateCommittedResource(
@@ -260,6 +284,9 @@ void SceneRenderer::initialize()
 		d3dCameraTransformCB->Map(0, &D3D12Range(), to<void**>(&mappedCameraTransformCB));
 		d3dLightingPassCB->Map(0, &D3D12Range(), to<void**>(&mappedLightingPassCB));
 	}
+
+	d3dDevice->CreateQueryHeap(&D3D12QueryHeapDesc(D3D12_QUERY_HEAP_TYPE_TIMESTAMP, 16),
+		d3dTimestampQueryHeap.uuid(), d3dTimestampQueryHeap.voidInitRef());
 }
 
 void SceneRenderer::destroy()
@@ -272,6 +299,10 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 	const Camera& camera, GBuffer& gBuffer, Target& target,
 	rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput)
 {
+	timings.cpuRenderingStart = Timer::GetRecord();
+
+	device.d3dGraphicsQueue->GetClockCalibration(&gpuTimerCalibrationTimespamp, &cpuTimerCalibrationTimespamp);
+
 	uint16x2 viewportSize = viewport.getSize();
 	float32x2 viewportSizeF = float32x2(viewportSize);
 
@@ -319,6 +350,8 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		d3dCommandList->SetDescriptorHeaps(countof(d3dDescriptorHeaps), d3dDescriptorHeaps);
 	}
 
+	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::Start);
+
 	// G-buffer pass ========================================================================//
 	{
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(gBuffer.rtvDescriptorsBaseIndex);
@@ -339,8 +372,12 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		scene.populateCommandListForGBufferPass(d3dCommandList, d3dGBufferPassICS, true);
 	}
 
+	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::GBufferPassFinish);
+
 	// Shadow map pass ======================================================================//
 	scene.populateCommandListForShadowPass(d3dCommandList, d3dGBufferPassICS, d3dShadowPassPSO);
+
+	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::ShadowPassFinish);
 
 	// Lighting pass ========================================================================//
 	{
@@ -421,12 +458,41 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		}
 	}
 
+	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::LightingPassFinished);
+
 	// Finalize =============================================================================//
 	{
+		d3dCommandList->ResolveQueryData(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP,
+			0, GPUTimestampId::Count, d3dReadbackBuffer, 0);
+
 		d3dCommandList->Close();
+
+		timings.cpuCommandListSubmit = Timer::GetRecord();
 
 		ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
 		device.d3dGraphicsQueue->ExecuteCommandLists(
 			countof(d3dCommandListsToExecute), d3dCommandListsToExecute);
 	}
+}
+
+void SceneRenderer::updateTimings()
+{
+	uint64 *timestamps = nullptr;
+	d3dReadbackBuffer->Map(0, &D3D12Range(), (void**)&timestamps);
+
+	uint64 cpuClockFrequency = 0;
+	QueryPerformanceFrequency(PLARGE_INTEGER(&cpuClockFrequency));
+
+	auto gpu2cpuTimestamp = [&](uint64 gpuTimestamp) -> uint64
+	{
+		return cpuTimerCalibrationTimespamp +
+			(gpuTimestamp - gpuTimerCalibrationTimespamp) * cpuClockFrequency / device.graphicsQueueClockFrequency;
+	};
+
+	timings.gpuGBufferPassStart		= gpu2cpuTimestamp(timestamps[GPUTimestampId::Start]);
+	timings.gpuGBufferPassFinish	= gpu2cpuTimestamp(timestamps[GPUTimestampId::GBufferPassFinish]);
+	timings.gpuShadowPassFinish		= gpu2cpuTimestamp(timestamps[GPUTimestampId::ShadowPassFinish]);
+	timings.gpuLightingPassFinish	= gpu2cpuTimestamp(timestamps[GPUTimestampId::LightingPassFinished]);
+
+	d3dReadbackBuffer->Unmap(0, nullptr);
 }

@@ -74,6 +74,8 @@ namespace XEngine::Render
 
 		Internal::GPUQueueSynchronizer gpuQueueSyncronizer;
 
+		uint64 graphicsQueueClockFrequency = 0;
+
 	public:
 		Device() = default;
 		~Device() = default;
@@ -87,10 +89,13 @@ namespace XEngine::Render
 		void renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 			Target& target, rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput);
 		void renderUI(UI::Batch& uiBatch);
+		void finishFrame();
 
 		inline BufferHandle createBuffer(uint32 size) { return bufferHeap.createBuffer(size); }
 		inline EffectHandle createEffect_plain() { return effectHeap.createEffect_plain(); }
 		inline MaterialHandle createMaterial(EffectHandle effect) { return materialHeap.createMaterial(effect); }
 		inline void releaseBuffer(BufferHandle handle);
+
+		inline const SceneRenderingTimings& getSceneRenderingTimings() { return sceneRenderer.getTimings(); }
 	};
 }

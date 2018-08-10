@@ -4,6 +4,7 @@
 #include <XLib.Vectors.h>
 #include <XLib.NonCopyable.h>
 #include <XLib.Platform.COMPtr.h>
+#include <XLib.System.Timer.h>
 
 #include "XEngine.Render.Base.h"
 
@@ -14,6 +15,7 @@ struct ID3D12PipelineState;
 struct ID3D12GraphicsCommandList;
 struct ID3D12CommandAllocator;
 struct ID3D12Resource;
+struct ID3D12QueryHeap;
 
 namespace XEngine::Render { struct Camera; }
 namespace XEngine::Render { class Device; }
@@ -27,6 +29,24 @@ namespace XEngine::Render
 	{
 		Disabled = 0,
 		Wireframe,
+	};
+
+	struct SceneRenderingTimings
+	{
+		XLib::TimerRecord cpuRenderingStart;
+		XLib::TimerRecord cpuCommandListSubmit;
+		XLib::TimerRecord gpuGBufferPassStart;
+		union
+		{
+			XLib::TimerRecord gpuGBufferPassFinish;
+			XLib::TimerRecord gpuShadowPassStart;
+		};
+		union
+		{
+			XLib::TimerRecord gpuShadowPassFinish;
+			XLib::TimerRecord gpuLightingPassStart;
+		};
+		XLib::TimerRecord gpuLightingPassFinish;
 	};
 }
 
@@ -49,10 +69,17 @@ namespace XEngine::Render::Device_
 
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;
 
+		XLib::Platform::COMPtr<ID3D12Resource> d3dReadbackBuffer;
+
 		XLib::Platform::COMPtr<ID3D12Resource> d3dCameraTransformCB;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dLightingPassCB;
 		CameraTransformConstants *mappedCameraTransformCB = nullptr;
 		LightingPassConstants *mappedLightingPassCB = nullptr;
+
+		XLib::Platform::COMPtr<ID3D12QueryHeap> d3dTimestampQueryHeap;
+
+		uint64 cpuTimerCalibrationTimespamp = 0, gpuTimerCalibrationTimespamp = 0;
+		SceneRenderingTimings timings = {};
 
 	private:
 		inline Device& getDevice();
@@ -69,6 +96,10 @@ namespace XEngine::Render::Device_
 			const Camera& camera, GBuffer& gBuffer, Target& target,
 			rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput);
 
+		void updateTimings();
+
 		inline ID3D12RootSignature* getGBufferPassD3DRS() { return d3dGBufferPassRS; }
+
+		inline const SceneRenderingTimings& getTimings() const { return timings; }
 	};
 }

@@ -38,6 +38,8 @@ void Engine::Run(GameBase* game)
 		game->update(0.0f);
 
 		outputSwapChain.present(true);
+
+		renderDevice.finishFrame();
 	}
 
 	Output::Destroy();

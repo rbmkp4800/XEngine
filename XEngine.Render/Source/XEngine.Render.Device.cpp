@@ -71,6 +71,8 @@ bool Device::initialize()
 
 	gpuQueueSyncronizer.initialize(d3dDevice);
 
+	d3dGraphicsQueue->GetTimestampFrequency(&graphicsQueueClockFrequency);
+
 	return true;
 }
 
@@ -94,14 +96,16 @@ void Device::renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 {
 	sceneRenderer.render(d3dCommandList, d3dCommandAllocator, scene,
 		camera, gBuffer, target, viewport, finalizeTarget, debugOutput);
-
-	gpuQueueSyncronizer.synchronize(d3dGraphicsQueue);
 }
 
 void Device::renderUI(UI::Batch& uiBatch)
 {
 	ID3D12CommandList *d3dCommandListsToExecute[] = { uiBatch.d3dCommandList };
 	d3dGraphicsQueue->ExecuteCommandLists(1, d3dCommandListsToExecute);
+}
 
+void Device::finishFrame()
+{
 	gpuQueueSyncronizer.synchronize(d3dGraphicsQueue);
+	sceneRenderer.updateTimings();
 }
