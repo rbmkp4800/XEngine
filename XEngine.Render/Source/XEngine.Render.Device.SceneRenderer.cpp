@@ -31,6 +31,7 @@ namespace
 		{
 			Start = 0,
 			GBufferPassFinish,
+			DepthBufferDownscale,
 			ShadowPassFinish,
 			LightingPassFinished,
 
@@ -99,7 +100,7 @@ void SceneRenderer::initialize()
 			D3D12RootParameter_SRV(0, 0, D3D12_SHADER_VISIBILITY_VERTEX),
 				// PS b2 camera transform constant buffer
 			D3D12RootParameter_CBV(2, 0, D3D12_SHADER_VISIBILITY_VERTEX),
-				// PS t1
+				// PS t0 space1 textures
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
@@ -189,6 +190,27 @@ void SceneRenderer::initialize()
 			d3dGBufferPassRS, d3dGBufferPassICS.uuid(), d3dGBufferPassICS.voidInitRef());
 	}
 
+	// Depth buffer downscale PSO
+	{
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dGBufferPassRS; // TODO: check if this should be separated.
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
+		psoDesc.PS = D3D12ShaderBytecode(Shaders::DepthBufferDownscalePS.data, Shaders::DepthBufferDownscalePS.size);
+		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
+		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Disable();
+		psoDesc.InputLayout = D3D12InputLayoutDesc();
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 1;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R16_UNORM;
+		psoDesc.SampleDesc.Count = 1;
+		psoDesc.SampleDesc.Quality = 0;
+
+		d3dDevice->CreateGraphicsPipelineState(&psoDesc,
+			d3dDepthBufferDownscalePSO.uuid(), d3dDepthBufferDownscalePSO.voidInitRef());
+	}
+
 	// Shadow pass PSO
 	{
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -235,7 +257,7 @@ void SceneRenderer::initialize()
 			d3dLightingPassPSO.uuid(), d3dLightingPassPSO.voidInitRef());
 	}
 
-	// debug wireframe PSO
+	// Debug wireframe PSO
 	{
 		D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
 		{
@@ -263,7 +285,7 @@ void SceneRenderer::initialize()
 	// Readback buffer
 	{
 		d3dDevice->CreateCommittedResource(&D3D12HeapProperties(D3D12_HEAP_TYPE_READBACK), D3D12_HEAP_FLAG_NONE,
-			&D3D12ResourceDesc_Buffer(256), D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+			&D3D12ResourceDesc_Buffer(1024 * 1024 * 2), D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
 			d3dReadbackBuffer.uuid(), d3dReadbackBuffer.voidInitRef());
 	}
 
@@ -304,7 +326,9 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 	device.d3dGraphicsQueue->GetClockCalibration(&gpuTimerCalibrationTimespamp, &cpuTimerCalibrationTimespamp);
 
 	uint16x2 viewportSize = viewport.getSize();
+	uint16x2 viewportHalfSize = viewportSize / 2;
 	float32x2 viewportSizeF = float32x2(viewportSize);
+	float32x2 viewportHalfSizeF = float32x2(viewportHalfSize);
 
 	// Updating frame constants =============================================================//
 	{
@@ -374,6 +398,44 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 
 	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::GBufferPassFinish);
 
+	// Depth buffer downscale ===============================================================//
+	{
+		d3dCommandList->ResourceBarrier(1,
+			&D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
+				D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(gBuffer.rtvDescriptorsBaseIndex + 2);
+		d3dCommandList->OMSetRenderTargets(1, &rtvDescriptorsHandle, FALSE, nullptr);
+
+		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportHalfSizeF.x, viewportHalfSizeF.y));
+		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportHalfSize.x, viewportHalfSize.y));
+
+		// Assuming G-buffer pass RS is set
+		// TODO: check if this should use separate RS
+		d3dCommandList->SetGraphicsRootDescriptorTable(5, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex + 2));
+
+		d3dCommandList->SetPipelineState(d3dDepthBufferDownscalePSO);
+		d3dCommandList->DrawInstanced(3, 1, 0, 0);
+
+		d3dCommandList->ResourceBarrier(1,
+			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownsampledX2DepthTexture,
+				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE));
+
+		uint16 readbackRowPitch = alignup(viewportHalfSize.x * 2, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		d3dCommandList->CopyTextureRegion(
+			&D3D12TextureCopyLocation_PlacedFootprint(d3dReadbackBuffer, 0,
+				DXGI_FORMAT_R16_UNORM, viewportHalfSize.x, viewportHalfSize.y, 1, readbackRowPitch),
+			0, 0, 0,
+			&D3D12TextureCopyLocation_Subresource(gBuffer.d3dDownsampledX2DepthTexture, 0),
+			&D3D12Box(0, viewportHalfSize.x, 0, viewportHalfSize.y));
+
+		d3dCommandList->ResourceBarrier(1,
+			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownsampledX2DepthTexture,
+				D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	}
+
+	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::DepthBufferDownscale);
+
 	// Shadow map pass ======================================================================//
 	scene.populateCommandListForShadowPass(d3dCommandList, d3dGBufferPassICS, d3dShadowPassPSO);
 
@@ -388,8 +450,6 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalRoughnessMetalnessTexture,
 					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
-				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
-					D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 				D3D12ResourceBarrier_Transition(scene.d3dShadowMapAtlas,
 					D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 				// Optional:

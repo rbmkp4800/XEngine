@@ -63,7 +63,8 @@ void XERDevice::UploadEngine::uploadTexture2DMIPLevel(DXGI_FORMAT format,
 		srcLocation.PlacedFootprint.Footprint.Depth = 1;
 		srcLocation.PlacedFootprint.Footprint.RowPitch = uploadRowPitch;
 
-		d3dCommandList->CopyTextureRegion(&D3D12TextureCopyLocation(d3dDstTexture, mipLevel),
+		d3dCommandList->CopyTextureRegion(
+			&D3D12TextureCopyLocation_Subresource(d3dDstTexture, mipLevel),
 			0, rowsUploaded, 0, &srcLocation, &D3D12Box(0, width, 0, rowsToUpload));
 
 		if (rowsToUpload == rowsFitToBuffer)
@@ -234,7 +235,8 @@ void XERDevice::UploadEngine::uploadTexture3DRegion(ID3D12Resource* d3dDstTextur
 	srcLocation.PlacedFootprint.Footprint.RowPitch = uploadRowPitch;
 
 	commandListDirty = true;
-	d3dCommandList->CopyTextureRegion(&D3D12TextureCopyLocation(d3dDstTexture, 0),
+	d3dCommandList->CopyTextureRegion(
+		&D3D12TextureCopyLocation_Subresource(d3dDstTexture, 0),
 		dstLeft, dstTop, dstFront, &srcLocation, &D3D12Box(0, width, 0, height, 0, depth));
 
 	uploadBufferBytesUsed += uploadBufferBytesRequired;

@@ -37,6 +37,12 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 		&D3D12ClearValue_DepthStencil(DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f),
 		d3dDepthTexture.uuid(), d3dDepthTexture.voidInitRef());
 
+	d3dDevice->CreateCommittedResource(
+		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R16_UNORM, size.x / 2, size.y / 2,
+			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET), D3D12_RESOURCE_STATE_RENDER_TARGET,
+		nullptr, d3dDownsampledX2DepthTexture.uuid(), d3dDownsampledX2DepthTexture.voidInitRef());
+
 	srvDescriptorsBaseIndex = device.srvHeap.allocate(3);
 	d3dDevice->CreateShaderResourceView(d3dDiffuseTexture, nullptr,
 		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 0));
@@ -46,11 +52,13 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 		&D3D12ShaderResourceViewDesc_Texture2D(DXGI_FORMAT_R24_UNORM_X8_TYPELESS),
 		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 2));
 
-	rtvDescriptorsBaseIndex = device.rtvHeap.allocate(2);
+	rtvDescriptorsBaseIndex = device.rtvHeap.allocate(3);
 	d3dDevice->CreateRenderTargetView(d3dDiffuseTexture, nullptr,
 		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + 0));
 	d3dDevice->CreateRenderTargetView(d3dNormalRoughnessMetalnessTexture, nullptr,
 		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + 1));
+	d3dDevice->CreateRenderTargetView(d3dDownsampledX2DepthTexture, nullptr,
+		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + 2));
 
 	dsvDescriptorIndex = device.dsvHeap.allocate(1);
 	d3dDevice->CreateDepthStencilView(d3dDepthTexture,

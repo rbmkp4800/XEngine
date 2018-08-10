@@ -19,9 +19,10 @@ namespace XEngine::Render
 	private:
 		Device *device = nullptr;
 
-		XLib::Platform::COMPtr<ID3D12Resource> d3dDepthTexture;
-		XLib::Platform::COMPtr<ID3D12Resource> d3dNormalRoughnessMetalnessTexture;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dDiffuseTexture;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dNormalRoughnessMetalnessTexture;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dDepthTexture;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dDownsampledX2DepthTexture;
 
 		uint16x2 size = { 0, 0 };
 

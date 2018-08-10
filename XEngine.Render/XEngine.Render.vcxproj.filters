@@ -137,5 +137,6 @@
     <FxCompile Include="Source\Shaders\UIColorAlphaTexturePS.hlsl" />
     <FxCompile Include="Source\Shaders\DebugWhitePS.hlsl" />
     <FxCompile Include="Source\Shaders\SceneGeometryPositionOnlyVS.hlsl" />
+    <FxCompile Include="Source\Shaders\DepthBufferDownscalePS.hlsl" />
   </ItemGroup>
 </Project>

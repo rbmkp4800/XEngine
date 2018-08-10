@@ -51,18 +51,12 @@ void Uploader::uploadTexture2DMIPLevel(DXGI_FORMAT format,
 				to<byte*>(sourceData) + (rowsUploaded + i) * sourceRowPitch, rowByteSize);
 		}
 
-		D3D12_TEXTURE_COPY_LOCATION srcLocation = {};
-		srcLocation.pResource = d3dUploadBuffer;
-		srcLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
-		srcLocation.PlacedFootprint.Offset = 0;
-		srcLocation.PlacedFootprint.Footprint.Format = format;
-		srcLocation.PlacedFootprint.Footprint.Width = width;
-		srcLocation.PlacedFootprint.Footprint.Height = rowsToUpload;
-		srcLocation.PlacedFootprint.Footprint.Depth = 1;
-		srcLocation.PlacedFootprint.Footprint.RowPitch = uploadRowPitch;
-
-		d3dCommandList->CopyTextureRegion(&D3D12TextureCopyLocation(d3dDstTexture, mipLevel),
-			0, rowsUploaded, 0, &srcLocation, &D3D12Box(0, width, 0, rowsToUpload));
+		d3dCommandList->CopyTextureRegion(
+			&D3D12TextureCopyLocation_Subresource(d3dDstTexture, mipLevel),
+			0, rowsUploaded, 0,
+			&D3D12TextureCopyLocation_PlacedFootprint(d3dUploadBuffer, 0,
+				format, width, rowsToUpload, 1, uploadRowPitch),
+			&D3D12Box(0, width, 0, rowsToUpload));
 
 		flush();
 	}
