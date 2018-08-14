@@ -203,7 +203,6 @@
     <ClInclude Include="Source\XEngine.Render.Camera.h" />
     <ClInclude Include="Source\XEngine.Render.ClassLinkage.h" />
     <ClInclude Include="Source\XEngine.Render.Device.DescriptorHeap.h" />
-    <ClInclude Include="Source\XEngine.Render.Device.EffectHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.h" />
     <ClInclude Include="Source\XEngine.Render.Device.BufferHeap.h" />
     <ClInclude Include="Source\XEngine.Render.Device.MaterialHeap.h" />
@@ -225,7 +224,6 @@
     <ClCompile Include="Source\XEngine.Render.Device.BufferHeap.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.DescriptorHeap.cpp" />
-    <ClCompile Include="Source\XEngine.Render.Device.EffectHeap.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.SceneRenderer.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.UIResources.cpp" />
     <ClCompile Include="Source\XEngine.Render.Device.Uploader.cpp" />
@@ -257,13 +255,13 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="Source\Shaders\EffectPlainPS.hlsl">
+    <FxCompile Include="Source\Shaders\Effect_PerMaterialAlbedoRoughtnessMetalnessPS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="Source\Shaders\EffectPlainVS.hlsl">
+    <FxCompile Include="Source\Shaders\Effect_NormalVS.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>

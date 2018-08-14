@@ -6,8 +6,8 @@
 #include "..\Intermediate\Shaders\DepthBufferDownscalePS.cso.h"
 #include "..\Intermediate\Shaders\LightingPassPS.cso.h"
 
-#include "..\Intermediate\Shaders\EffectPlainVS.cso.h"
-#include "..\Intermediate\Shaders\EffectPlainPS.cso.h"
+#include "..\Intermediate\Shaders\Effect_NormalVS.cso.h"
+#include "..\Intermediate\Shaders\Effect_PerMaterialAlbedoRoughtnessMetalnessPS.cso.h"
 
 #include "..\Intermediate\Shaders\SceneGeometryPositionOnlyVS.cso.h"
 
@@ -16,7 +16,6 @@
 #include "..\Intermediate\Shaders\UIColorAlphaTextureVS.cso.h"
 #include "..\Intermediate\Shaders\UIColorAlphaTexturePS.cso.h"
 
-#include "..\Intermediate\Shaders\DebugPositionOnlyVS.cso.h"
 #include "..\Intermediate\Shaders\DebugWhitePS.cso.h"
 
 using namespace XEngine::Render::Internal;
@@ -25,8 +24,8 @@ const ShaderData Shaders::ScreenQuadVS = { ScreenQuadVSData, sizeof(ScreenQuadVS
 const ShaderData Shaders::DepthBufferDownscalePS = { DepthBufferDownscalePSData, sizeof(DepthBufferDownscalePSData) };
 const ShaderData Shaders::LightingPassPS = { LightingPassPSData, sizeof(LightingPassPSData) };
 
-const ShaderData Shaders::EffectPlainVS = { EffectPlainVSData, sizeof(EffectPlainVSData) };
-const ShaderData Shaders::EffectPlainPS = { EffectPlainPSData, sizeof(EffectPlainPSData) };
+const ShaderData Shaders::Effect_NormalVS = { Effect_NormalVSData, sizeof(Effect_NormalVSData) };
+const ShaderData Shaders::Effect_PerMaterialAlbedoRoughtnessMetalnessPS = { Effect_PerMaterialAlbedoRoughtnessMetalnessPSData, sizeof(Effect_PerMaterialAlbedoRoughtnessMetalnessPSData) };
 
 const ShaderData Shaders::SceneGeometryPositionOnlyVS = { SceneGeometryPositionOnlyVSData, sizeof(SceneGeometryPositionOnlyVSData) };
 

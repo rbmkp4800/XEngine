@@ -193,7 +193,7 @@ GeometryInstanceHandle Scene::createGeometryInstance(const GeometryDesc& geometr
 	}
 
 	{
-		EffectHandle effect = device->materialHeap.getEffect(material);
+		EffectHandle effect = device->materialHeap.getEffectForMaterial(material);
 
 		CommandListDesc *commandListDesc = nullptr;
 		for (CommandListDesc& i : commandLists)
@@ -284,12 +284,12 @@ void Scene::populateCommandListForGBufferPass(ID3D12GraphicsCommandList* d3dComm
 	{
 		if (useEffectPSOs)
 		{
-			ID3D12PipelineState *d3dPSO = device->effectHeap.getPSO(commandList.effect);
+			ID3D12PipelineState *d3dPSO = device->materialHeap.getEffectPSO(commandList.effect);
 			d3dCommandList->SetPipelineState(d3dPSO);
 		}
 
 		d3dCommandList->SetGraphicsRootConstantBufferView(2,
-			device->materialHeap.getMaterialsTableGPUAddress(commandList.effect));
+			device->materialHeap.getEffectMaterialConstantsTableGPUAddress(commandList.effect));
 
 		d3dCommandList->ExecuteIndirect(d3dICS, commandList.length, d3dCommandListArena,
 			commandList.arenaBaseSegment * commandListArenaSegmentSize, nullptr, 0);

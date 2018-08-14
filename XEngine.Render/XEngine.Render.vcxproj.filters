@@ -30,9 +30,6 @@
     <ClInclude Include="Source\XEngine.Render.Device.MaterialHeap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\XEngine.Render.Device.EffectHeap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\XEngine.Render.Target.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -104,9 +101,6 @@
     <ClCompile Include="Source\XEngine.Render.Device.BufferHeap.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\XEngine.Render.Device.EffectHeap.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\XEngine.Render.Internal.Shaders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -129,8 +123,6 @@
   <ItemGroup>
     <FxCompile Include="Source\Shaders\LightingPassPS.hlsl" />
     <FxCompile Include="Source\Shaders\ScreenQuadVS.hlsl" />
-    <FxCompile Include="Source\Shaders\EffectPlainVS.hlsl" />
-    <FxCompile Include="Source\Shaders\EffectPlainPS.hlsl" />
     <FxCompile Include="Source\Shaders\UIColorVS.hlsl" />
     <FxCompile Include="Source\Shaders\UIColorPS.hlsl" />
     <FxCompile Include="Source\Shaders\UIColorAlphaTextureVS.hlsl" />
@@ -138,5 +130,7 @@
     <FxCompile Include="Source\Shaders\DebugWhitePS.hlsl" />
     <FxCompile Include="Source\Shaders\SceneGeometryPositionOnlyVS.hlsl" />
     <FxCompile Include="Source\Shaders\DepthBufferDownscalePS.hlsl" />
+    <FxCompile Include="Source\Shaders\Effect_NormalVS.hlsl" />
+    <FxCompile Include="Source\Shaders\Effect_PerMaterialAlbedoRoughtnessMetalnessPS.hlsl" />
   </ItemGroup>
 </Project>

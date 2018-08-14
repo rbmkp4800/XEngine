@@ -17,8 +17,8 @@ namespace XEngine::Render::Internal
 
 		static const ShaderData SceneGeometryPositionOnlyVS;
 
-		static const ShaderData EffectPlainVS;
-		static const ShaderData EffectPlainPS;
+		static const ShaderData Effect_NormalVS;
+		static const ShaderData Effect_PerMaterialAlbedoRoughtnessMetalnessPS;
 
 		static const ShaderData UIColorVS;
 		static const ShaderData UIColorPS;

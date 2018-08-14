@@ -7,6 +7,7 @@
 #include "XEngine.Render.Base.h"
 
 // NOTE: Temporary implementation
+// TODO: Remove redundant indirection when getting effect for material
 
 namespace XEngine::Render { class Device; }
 
@@ -15,9 +16,29 @@ namespace XEngine::Render::Device_
 	class MaterialHeap : public XLib::NonCopyable
 	{
 	private:
-		XLib::Platform::COMPtr<ID3D12Resource> d3dMaterialsTable;
-		byte* mappedMaterialsTable = nullptr;
+		struct Effect
+		{
+			XLib::Platform::COMPtr<ID3D12PipelineState> d3dPSO;
+			uint16 materialTableArenaBaseSegment;
+			uint16 materialConstantsSize;
+			uint16 constantsUsed;
+		};
+
+		struct Material
+		{
+			EffectHandle effectHandle;
+			uint16 constantsIndex;
+		};
+
+	private:
+		Effect effects[16];
+		Material materials[256];
+		uint16 effectCount = 0;
 		uint16 materialCount = 0;
+
+		XLib::Platform::COMPtr<ID3D12Resource> d3dMaterialConstantsTableArena;
+		byte* mappedMaterialConstantsTableArena = nullptr;
+		uint16 allocatedCommandListArenaSegmentCount = 0;
 
 	private:
 		inline Device& getDevice();
@@ -28,6 +49,11 @@ namespace XEngine::Render::Device_
 
 		void initialize();
 
+		EffectHandle createEffect_perMaterialAlbedoRoughtnessMetalness();
+		EffectHandle createEffect_albedoTexture_perMaterialRoughtnessMetalness();
+		EffectHandle createEffect_albedoNormalRoughtnessMetalnessTexture();
+		void releaseEffect(EffectHandle handle);
+
 		MaterialHandle createMaterial(EffectHandle effect,
 			const void* initialConstants = nullptr,
 			const TextureHandle* intialTextures = nullptr);
@@ -36,7 +62,9 @@ namespace XEngine::Render::Device_
 		void updateMaterialConstants(MaterialHandle handle, uint32 offset, const void* data, uint32 size);
 		void updateMaterialTexture(MaterialHandle handle, uint32 slot, TextureHandle textureHandle);
 
-		EffectHandle getEffect(MaterialHandle handle) const;
-		uint64 getMaterialsTableGPUAddress(EffectHandle effectHandle);
+		EffectHandle getEffectForMaterial(MaterialHandle handle) const;
+		ID3D12PipelineState* getEffectPSO(EffectHandle handle);
+		uint32 getEffectMaterialConstantsSize(EffectHandle handle) const;
+		uint64 getEffectMaterialConstantsTableGPUAddress(EffectHandle handle);
 	};
 }

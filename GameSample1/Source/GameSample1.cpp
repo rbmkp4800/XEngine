@@ -21,7 +21,7 @@ void Game::initialize()
 
 	Render::Device& renderDevice = Core::Engine::GetRenderDevice();
 
-	plainEffect = renderDevice.createEffect_plain();
+	plainEffect = renderDevice.createEffect_perMaterialAlbedoRoughtnessMetalness();
 	//plainMaterial = renderDevice.createMaterial(plainEffect);
 
 	scene.initialize(renderDevice);
