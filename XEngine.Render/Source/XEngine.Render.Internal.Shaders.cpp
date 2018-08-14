@@ -7,7 +7,9 @@
 #include "..\Intermediate\Shaders\LightingPassPS.cso.h"
 
 #include "..\Intermediate\Shaders\Effect_NormalVS.cso.h"
+#include "..\Intermediate\Shaders\Effect_NormalTexcoordVS.cso.h"
 #include "..\Intermediate\Shaders\Effect_PerMaterialAlbedoRoughtnessMetalnessPS.cso.h"
+#include "..\Intermediate\Shaders\Effect_AlbedoTexturePerMaterialRoughtnessMetalnessPS.cso.h"
 
 #include "..\Intermediate\Shaders\SceneGeometryPositionOnlyVS.cso.h"
 
@@ -25,7 +27,9 @@ const ShaderData Shaders::DepthBufferDownscalePS = { DepthBufferDownscalePSData,
 const ShaderData Shaders::LightingPassPS = { LightingPassPSData, sizeof(LightingPassPSData) };
 
 const ShaderData Shaders::Effect_NormalVS = { Effect_NormalVSData, sizeof(Effect_NormalVSData) };
+const ShaderData Shaders::Effect_NormalTexcoordVS = { Effect_NormalTexcoordVSData, sizeof(Effect_NormalTexcoordVSData) };
 const ShaderData Shaders::Effect_PerMaterialAlbedoRoughtnessMetalnessPS = { Effect_PerMaterialAlbedoRoughtnessMetalnessPSData, sizeof(Effect_PerMaterialAlbedoRoughtnessMetalnessPSData) };
+const ShaderData Shaders::Effect_AlbedoTexturePerMaterialRoughtnessMetalnessPS = { Effect_AlbedoTexturePerMaterialRoughtnessMetalnessPSData, sizeof(Effect_AlbedoTexturePerMaterialRoughtnessMetalnessPSData) };
 
 const ShaderData Shaders::SceneGeometryPositionOnlyVS = { SceneGeometryPositionOnlyVSData, sizeof(SceneGeometryPositionOnlyVSData) };
 

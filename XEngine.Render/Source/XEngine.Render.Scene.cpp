@@ -193,7 +193,7 @@ GeometryInstanceHandle Scene::createGeometryInstance(const GeometryDesc& geometr
 	}
 
 	{
-		EffectHandle effect = device->materialHeap.getEffectForMaterial(material);
+		EffectHandle effect = device->materialHeap.getEffect(material);
 
 		CommandListDesc *commandListDesc = nullptr;
 		for (CommandListDesc& i : commandLists)
@@ -233,7 +233,7 @@ GeometryInstanceHandle Scene::createGeometryInstance(const GeometryDesc& geometr
 		command.indexBufferView.Format = geometryDesc.indexIs32Bit ? DXGI_FORMAT_R32_UINT : DXGI_FORMAT_R16_UINT;
 			// Constats
 		command.baseTransformIndex = baseTransformIndex;
-		command.materialIndex = uint32(material);
+		command.materialIndex = uint32(device->materialHeap.getMaterialConstantsTableEntryIndex(material));
 			// Draw arguments
 		command.drawIndexedArguments.IndexCountPerInstance = geometryDesc.indexCount;
 		command.drawIndexedArguments.InstanceCount = 1;
@@ -289,7 +289,7 @@ void Scene::populateCommandListForGBufferPass(ID3D12GraphicsCommandList* d3dComm
 		}
 
 		d3dCommandList->SetGraphicsRootConstantBufferView(2,
-			device->materialHeap.getEffectMaterialConstantsTableGPUAddress(commandList.effect));
+			device->materialHeap.getMaterialConstantsTableGPUAddress(commandList.effect));
 
 		d3dCommandList->ExecuteIndirect(d3dICS, commandList.length, d3dCommandListArena,
 			commandList.arenaBaseSegment * commandListArenaSegmentSize, nullptr, 0);

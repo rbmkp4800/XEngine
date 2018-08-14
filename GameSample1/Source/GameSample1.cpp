@@ -48,7 +48,7 @@ void Game::initialize()
 			c.color = { 1.0f, 0.0f, 0.0f, 0.0f };
 			c.roughtnessMetalness = { max(float32(i) / 8.0f, 0.05f), float32(j) / 8.0f, 0.0f, 0.0f };
 
-			renderDevice.updateMaterial(mat, 0, &c, sizeof(c));
+			renderDevice.updateMaterialConstants(mat, 0, &c, sizeof(c));
 
 			Render::TransformGroupHandle tgh = scene.createTransformGroup();
 			Render::GeometryInstanceHandle inst = scene.createGeometryInstance(
@@ -70,7 +70,7 @@ void Game::initialize()
 	c.color = { 0.5f, 0.5f, 1.0f, 0.0f };
 	c.roughtnessMetalness = { 0.7f, 0.7f, 0.0f, 0.0f };
 
-	renderDevice.updateMaterial(mat, 0, &c, sizeof(c));
+	renderDevice.updateMaterialConstants(mat, 0, &c, sizeof(c));
 
 	Render::TransformGroupHandle tgh = scene.createTransformGroup();
 	Render::GeometryInstanceHandle inst = scene.createGeometryInstance(

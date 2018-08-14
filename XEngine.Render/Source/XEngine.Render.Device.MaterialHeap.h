@@ -9,6 +9,9 @@
 // NOTE: Temporary implementation
 // TODO: Remove redundant indirection when getting effect for material
 
+struct ID3D12Resource;
+struct ID3D12PipelineState;
+
 namespace XEngine::Render { class Device; }
 
 namespace XEngine::Render::Device_
@@ -19,8 +22,9 @@ namespace XEngine::Render::Device_
 		struct Effect
 		{
 			XLib::Platform::COMPtr<ID3D12PipelineState> d3dPSO;
-			uint16 materialTableArenaBaseSegment;
+			uint16 materialConstantsTableArenaBaseSegment;
 			uint16 materialConstantsSize;
+			uint16 materialUserSpecifiedConstantsOffset;
 			uint16 constantsUsed;
 		};
 
@@ -50,7 +54,7 @@ namespace XEngine::Render::Device_
 		void initialize();
 
 		EffectHandle createEffect_perMaterialAlbedoRoughtnessMetalness();
-		EffectHandle createEffect_albedoTexture_perMaterialRoughtnessMetalness();
+		EffectHandle createEffect_albedoTexturePerMaterialRoughtnessMetalness();
 		EffectHandle createEffect_albedoNormalRoughtnessMetalnessTexture();
 		void releaseEffect(EffectHandle handle);
 
@@ -62,9 +66,9 @@ namespace XEngine::Render::Device_
 		void updateMaterialConstants(MaterialHandle handle, uint32 offset, const void* data, uint32 size);
 		void updateMaterialTexture(MaterialHandle handle, uint32 slot, TextureHandle textureHandle);
 
-		EffectHandle getEffectForMaterial(MaterialHandle handle) const;
+		uint16 getMaterialConstantsTableEntryIndex(MaterialHandle handle) const;
+		EffectHandle getEffect(MaterialHandle handle) const;
 		ID3D12PipelineState* getEffectPSO(EffectHandle handle);
-		uint32 getEffectMaterialConstantsSize(EffectHandle handle) const;
-		uint64 getEffectMaterialConstantsTableGPUAddress(EffectHandle handle);
+		uint64 getMaterialConstantsTableGPUAddress(EffectHandle handle);
 	};
 }

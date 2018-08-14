@@ -173,6 +173,33 @@ void GeometryResource::createCube()
 	renderDevice.updateBuffer(buffer, sizeof(vertices), indices, sizeof(indices));
 }
 
+void GeometryResource::createPlane()
+{
+	static VertexTexture vertices[] =
+	{
+		{ { -1.0f, -1.0f, 0.0f },	{ 0.0f, 0.0f, 1.0f },	{ 0.0f, 0.0f } },
+		{ { 1.0f, 1.0f, 0.0f },		{ 0.0f, 0.0f, 1.0f },	{ 1.0f, 1.0f } },
+		{ { -1.0f, 1.0f, 0.0f },	{ 0.0f, 0.0f, 1.0f },	{ 0.0f, 1.0f } },
+		{ { 1.0f, -1.0f, 0.0f },	{ 0.0f, 0.0f, 1.0f },	{ 1.0f, 0.0f } },
+	};
+
+	static uint16 indices[] =
+	{
+		0, 1, 2,
+		0, 3, 1,
+	};
+
+	vertexCount = countof(vertices);
+	indexCount = countof(indices);
+	vertexStride = sizeof(VertexTexture);
+	indexIs32Bit = false;
+
+	Render::Device& renderDevice = Engine::GetRenderDevice();
+	buffer = renderDevice.createBuffer(sizeof(vertices) + sizeof(indices));
+	renderDevice.updateBuffer(buffer, 0, vertices, sizeof(vertices));
+	renderDevice.updateBuffer(buffer, sizeof(vertices), indices, sizeof(indices));
+}
+
 void GeometryResource::createCubicSphere(uint32 detalizationLevel)
 {
 	// TODO: check max detalization value

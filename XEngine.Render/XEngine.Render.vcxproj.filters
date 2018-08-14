@@ -119,6 +119,9 @@
     <ClCompile Include="Source\XEngine.Render.UI.Resources.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\XEngine.Render.Device.TextureHeap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Source\Shaders\LightingPassPS.hlsl" />
@@ -132,5 +135,7 @@
     <FxCompile Include="Source\Shaders\DepthBufferDownscalePS.hlsl" />
     <FxCompile Include="Source\Shaders\Effect_NormalVS.hlsl" />
     <FxCompile Include="Source\Shaders\Effect_PerMaterialAlbedoRoughtnessMetalnessPS.hlsl" />
+    <FxCompile Include="Source\Shaders\Effect_AlbedoTexturePerMaterialRoughtnessMetalness.hlsl" />
+    <FxCompile Include="Source\Shaders\Effect_NormalTexcoordVS.hlsl" />
   </ItemGroup>
 </Project>

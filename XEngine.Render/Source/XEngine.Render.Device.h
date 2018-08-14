@@ -38,6 +38,7 @@ namespace XEngine::Render
 		friend Device_::SceneRenderer;
 		friend Device_::MaterialHeap;
 		friend Device_::BufferHeap;
+		friend Device_::TextureHeap;
 
 		friend Scene;
 		friend GBuffer;
@@ -81,7 +82,9 @@ namespace XEngine::Render
 		void destroy();
 
 		void updateBuffer(BufferHandle buffer, uint32 destOffset, const void* srcData, uint32 size);
-		void updateMaterial(MaterialHandle material, uint32 offset, const void* data, uint32 size);
+		void updateTexture(TextureHandle texture, const void* sourceData, uint32 sourceRowPitch, void* mipsGenerationBuffer);
+		void updateMaterialConstants(MaterialHandle material, uint32 offset, const void* data, uint32 size);
+		void updateMaterialTexture(MaterialHandle handle, uint32 slot, TextureHandle textureHandle);
 		void clearTarget(Target& target, XLib::Color color);
 		void renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 			Target& target, rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput);
@@ -89,7 +92,9 @@ namespace XEngine::Render
 		void finishFrame();
 
 		inline BufferHandle createBuffer(uint32 size) { return bufferHeap.createBuffer(size); }
+		inline TextureHandle createTexture(uint16 width, uint16 height) { return textureHeap.createTexture(width, height); }
 		inline EffectHandle createEffect_perMaterialAlbedoRoughtnessMetalness() { return materialHeap.createEffect_perMaterialAlbedoRoughtnessMetalness(); }
+		inline EffectHandle createEffect_albedoTexturePerMaterialRoughtnessMetalness() { return materialHeap.createEffect_albedoTexturePerMaterialRoughtnessMetalness(); }
 		inline MaterialHandle createMaterial(EffectHandle effect) { return materialHeap.createMaterial(effect); }
 		inline void releaseBuffer(BufferHandle handle);
 

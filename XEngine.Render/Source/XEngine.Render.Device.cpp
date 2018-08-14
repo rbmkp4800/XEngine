@@ -64,7 +64,7 @@ bool Device::initialize()
 
 	materialHeap.initialize();
 	bufferHeap.initialize();
-	//textureHeap.initialize();
+	textureHeap.initialize();
 
 	uiResources.initialize(d3dDevice);
 
@@ -80,9 +80,19 @@ void Device::updateBuffer(BufferHandle buffer, uint32 destOffset, const void* sr
 	uploader.uploadBuffer(bufferHeap.getD3DResource(buffer), destOffset, srcData, size);
 }
 
-void Device::updateMaterial(MaterialHandle material, uint32 offset, const void* data, uint32 size)
+void Device::updateTexture(TextureHandle texture, const void* sourceData, uint32 sourceRowPitch, void* mipsGenerationBuffer)
+{
+	uploader.uploadTexture2DAndGenerateMIPs(textureHeap.getTexture(texture), sourceData, sourceRowPitch, mipsGenerationBuffer);
+}
+
+void Device::updateMaterialConstants(MaterialHandle material, uint32 offset, const void* data, uint32 size)
 {
 	materialHeap.updateMaterialConstants(material, offset, data, size);
+}
+
+void Device::updateMaterialTexture(MaterialHandle handle, uint32 slot, TextureHandle textureHandle)
+{
+	materialHeap.updateMaterialTexture(handle, slot, textureHandle);
 }
 
 void Device::clearTarget(Target& target, XLib::Color color)

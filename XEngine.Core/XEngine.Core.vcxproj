@@ -169,6 +169,7 @@
     <ClInclude Include="Source\XEngine.Core.Engine.h" />
     <ClInclude Include="Source\XEngine.Core.Input.h" />
     <ClInclude Include="Source\XEngine.Core.Output.h" />
+    <ClInclude Include="Source\XEngine.Core.TextureResource.h" />
     <ClInclude Include="Source\XEngine.Core.WorldController.h" />
     <ClInclude Include="Source\XEngine.UI.MonospacedFont.h" />
     <ClInclude Include="Source\XEngine.UI.TextRenderer.h" />
@@ -179,6 +180,7 @@
     <ClCompile Include="Source\XEngine.Core.GeometryResource.cpp" />
     <ClCompile Include="Source\XEngine.Core.Output.cpp" />
     <ClCompile Include="Source\XEngine.Core.Input.cpp" />
+    <ClCompile Include="Source\XEngine.Core.TextureResource.cpp" />
     <ClCompile Include="Source\XEngine.Core.WorldController.cpp" />
     <ClCompile Include="Source\XEngine.UI.MonospacedFont.cpp" />
     <ClCompile Include="Source\XEngine.UI.TextRenderer.cpp" />
