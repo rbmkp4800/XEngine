@@ -7,6 +7,7 @@
 #include <XLib.System.Timer.h>
 
 #include "XEngine.Render.Base.h"
+#include "XEngine.Render.Internal.GPUQueueSynchronizer.h"
 
 struct ID3D12Device;
 struct ID3D12RootSignature;
@@ -59,6 +60,11 @@ namespace XEngine::Render::Device_
 		struct LightingPassConstants;
 
 	private:
+		XLib::Platform::COMPtr<ID3D12CommandAllocator> d3dGBufferPassCA;
+		XLib::Platform::COMPtr<ID3D12GraphicsCommandList> d3dGBufferPassCL;
+		XLib::Platform::COMPtr<ID3D12CommandAllocator> d3dFrameFinishCA;
+		XLib::Platform::COMPtr<ID3D12GraphicsCommandList> d3dFrameFinishCL;
+
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dGBufferPassRS;
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dLightingPassRS;
 
@@ -82,6 +88,8 @@ namespace XEngine::Render::Device_
 		uint64 cpuTimerCalibrationTimespamp = 0, gpuTimerCalibrationTimespamp = 0;
 		SceneRenderingTimings timings = {};
 
+		Internal::GPUQueueSynchronizer gpuQueueSyncronizer;
+
 	private:
 		inline Device& getDevice();
 
@@ -92,9 +100,7 @@ namespace XEngine::Render::Device_
 		void initialize();
 		void destroy();
 
-		void render(ID3D12GraphicsCommandList* d3dCommandList,
-			ID3D12CommandAllocator* d3dCommandAllocator, Scene& scene,
-			const Camera& camera, GBuffer& gBuffer, Target& target,
+		void render(Scene& scene, const Camera& camera, GBuffer& gBuffer, Target& target,
 			rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput);
 
 		void updateTimings();

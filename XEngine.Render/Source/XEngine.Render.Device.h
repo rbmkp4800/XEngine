@@ -54,9 +54,6 @@ namespace XEngine::Render
 		XLib::Platform::COMPtr<ID3D12CommandQueue> d3dGraphicsQueue;
 		XLib::Platform::COMPtr<ID3D12CommandQueue> d3dCopyQueue;
 
-		XLib::Platform::COMPtr<ID3D12GraphicsCommandList> d3dCommandList;
-		XLib::Platform::COMPtr<ID3D12CommandAllocator> d3dCommandAllocator;
-
 		Device_::DescriptorHeap srvHeap;
 		Device_::DescriptorHeap rtvHeap;
 		Device_::DescriptorHeap dsvHeap;

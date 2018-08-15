@@ -81,6 +81,18 @@ void SceneRenderer::initialize()
 {
 	ID3D12Device *d3dDevice = device.d3dDevice;
 
+	d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
+		d3dGBufferPassCA.uuid(), d3dGBufferPassCA.voidInitRef());
+	d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+		d3dGBufferPassCA, nullptr, d3dGBufferPassCL.uuid(), d3dGBufferPassCL.voidInitRef());
+	d3dGBufferPassCL->Close();
+
+	d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
+		d3dFrameFinishCA.uuid(), d3dFrameFinishCA.voidInitRef());
+	d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+		d3dFrameFinishCA, nullptr, d3dFrameFinishCL.uuid(), d3dFrameFinishCL.voidInitRef());
+	d3dFrameFinishCL->Close();
+
 	// G-buffer pass RS
 	{
 		D3D12_DESCRIPTOR_RANGE ranges[] =
@@ -309,6 +321,8 @@ void SceneRenderer::initialize()
 
 	d3dDevice->CreateQueryHeap(&D3D12QueryHeapDesc(D3D12_QUERY_HEAP_TYPE_TIMESTAMP, 16),
 		d3dTimestampQueryHeap.uuid(), d3dTimestampQueryHeap.voidInitRef());
+
+	gpuQueueSyncronizer.initialize(d3dDevice);
 }
 
 void SceneRenderer::destroy()
@@ -316,10 +330,8 @@ void SceneRenderer::destroy()
 
 }
 
-void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
-	ID3D12CommandAllocator* d3dCommandAllocator, Scene& scene,
-	const Camera& camera, GBuffer& gBuffer, Target& target,
-	rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput)
+void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
+	Target& target, rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput)
 {
 	timings.cpuRenderingStart = Timer::GetRecord();
 
@@ -363,83 +375,111 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 		}
 	}
 
-	// Basic initialization =================================================================//
+	// Initialize G-Buffer pass command list ================================================//
 	{
-		d3dCommandAllocator->Reset();
-		d3dCommandList->Reset(d3dCommandAllocator, nullptr);
+		d3dGBufferPassCA->Reset();
+		d3dGBufferPassCL->Reset(d3dGBufferPassCA, nullptr);
 
-		d3dCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		d3dGBufferPassCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		ID3D12DescriptorHeap *d3dDescriptorHeaps[] = { device.srvHeap.getD3D12DescriptorHeap() };
-		d3dCommandList->SetDescriptorHeaps(countof(d3dDescriptorHeaps), d3dDescriptorHeaps);
+		d3dGBufferPassCL->SetDescriptorHeaps(countof(d3dDescriptorHeaps), d3dDescriptorHeaps);
 	}
 
-	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::Start);
+	d3dGBufferPassCL->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::Start);
 
 	// G-buffer pass ========================================================================//
 	{
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(gBuffer.rtvDescriptorsBaseIndex);
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle = device.dsvHeap.getCPUHandle(gBuffer.dsvDescriptorIndex);
-		d3dCommandList->OMSetRenderTargets(2, &rtvDescriptorsHandle, TRUE, &dsvDescriptorHandle);
+		d3dGBufferPassCL->OMSetRenderTargets(2, &rtvDescriptorsHandle, TRUE, &dsvDescriptorHandle);
 
 		const float32 clearColor[4] = {};
-		d3dCommandList->ClearRenderTargetView(rtvDescriptorsHandle, clearColor, 0, nullptr);
-		d3dCommandList->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		d3dGBufferPassCL->ClearRenderTargetView(rtvDescriptorsHandle, clearColor, 0, nullptr);
+		d3dGBufferPassCL->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
-		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportSize.x, viewportSize.y));
+		d3dGBufferPassCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
+		d3dGBufferPassCL->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportSize.x, viewportSize.y));
 
-		d3dCommandList->SetGraphicsRootSignature(d3dGBufferPassRS);
-		d3dCommandList->SetGraphicsRootConstantBufferView(4, d3dCameraTransformCB->GetGPUVirtualAddress());
-		d3dCommandList->SetGraphicsRootDescriptorTable(5, device.srvHeap.getGPUHandle(0));
+		d3dGBufferPassCL->SetGraphicsRootSignature(d3dGBufferPassRS);
+		d3dGBufferPassCL->SetGraphicsRootConstantBufferView(4, d3dCameraTransformCB->GetGPUVirtualAddress());
+		d3dGBufferPassCL->SetGraphicsRootDescriptorTable(5, device.srvHeap.getGPUHandle(0));
 
-		scene.populateCommandListForGBufferPass(d3dCommandList, d3dGBufferPassICS, true);
+		scene.populateCommandListForGBufferPass(d3dGBufferPassCL, d3dGBufferPassICS, true);
 	}
 
-	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::GBufferPassFinish);
+	d3dGBufferPassCL->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::GBufferPassFinish);
 
-	// Depth buffer downscale ===============================================================//
+	// Depth buffer downscale and readback ==================================================//
 	{
-		d3dCommandList->ResourceBarrier(1,
+		d3dGBufferPassCL->ResourceBarrier(1,
 			&D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
 				D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(gBuffer.rtvDescriptorsBaseIndex + 2);
-		d3dCommandList->OMSetRenderTargets(1, &rtvDescriptorsHandle, FALSE, nullptr);
+		d3dGBufferPassCL->OMSetRenderTargets(1, &rtvDescriptorsHandle, FALSE, nullptr);
 
-		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportHalfSizeF.x, viewportHalfSizeF.y));
-		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportHalfSize.x, viewportHalfSize.y));
+		d3dGBufferPassCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportHalfSizeF.x, viewportHalfSizeF.y));
+		d3dGBufferPassCL->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportHalfSize.x, viewportHalfSize.y));
 
 		// Assuming G-buffer pass RS is set
 		// TODO: check if this should use separate RS
-		d3dCommandList->SetGraphicsRootDescriptorTable(5, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex + 2));
+		d3dGBufferPassCL->SetGraphicsRootDescriptorTable(5, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex + 2));
 
-		d3dCommandList->SetPipelineState(d3dDepthBufferDownscalePSO);
-		d3dCommandList->DrawInstanced(3, 1, 0, 0);
+		d3dGBufferPassCL->SetPipelineState(d3dDepthBufferDownscalePSO);
+		d3dGBufferPassCL->DrawInstanced(3, 1, 0, 0);
 
-		d3dCommandList->ResourceBarrier(1,
+		d3dGBufferPassCL->ResourceBarrier(1,
 			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownsampledX2DepthTexture,
 				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE));
 
 		uint16 readbackRowPitch = alignup(viewportHalfSize.x * 2, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
-		d3dCommandList->CopyTextureRegion(
+		d3dGBufferPassCL->CopyTextureRegion(
 			&D3D12TextureCopyLocation_PlacedFootprint(d3dReadbackBuffer, 0,
 				DXGI_FORMAT_R16_UNORM, viewportHalfSize.x, viewportHalfSize.y, 1, readbackRowPitch),
 			0, 0, 0,
 			&D3D12TextureCopyLocation_Subresource(gBuffer.d3dDownsampledX2DepthTexture, 0),
 			&D3D12Box(0, viewportHalfSize.x, 0, viewportHalfSize.y));
 
-		d3dCommandList->ResourceBarrier(1,
+		d3dGBufferPassCL->ResourceBarrier(1,
 			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownsampledX2DepthTexture,
 				D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
 	}
 
-	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::DepthBufferDownscale);
+	d3dGBufferPassCL->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::DepthBufferDownscale);
+
+	// Submit G-Buffer pass command list ====================================================//
+	{
+		d3dGBufferPassCL->Close();
+
+		ID3D12CommandList *d3dCommandListsToExecute[] = { d3dGBufferPassCL };
+		device.d3dGraphicsQueue->ExecuteCommandLists(
+			countof(d3dCommandListsToExecute), d3dCommandListsToExecute);
+	}
+
+	// NOTE: Temporary implementation
+	//gpuQueueSyncronizer.synchronize(device.d3dGraphicsQueue);
+
+	//uint16 *t = nullptr;
+	//d3dReadbackBuffer->Map(0, &D3D12Range(), ...);
+	//d3dReadbackBuffer->Unmap(0, nullptr);
+
+	// Initialize frame finish command list =================================================//
+	{
+		d3dFrameFinishCA->Reset();
+		d3dFrameFinishCL->Reset(d3dFrameFinishCA, nullptr);
+
+		d3dFrameFinishCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		ID3D12DescriptorHeap *d3dDescriptorHeaps[] = { device.srvHeap.getD3D12DescriptorHeap() };
+		d3dFrameFinishCL->SetDescriptorHeaps(countof(d3dDescriptorHeaps), d3dDescriptorHeaps);
+	}
 
 	// Shadow map pass ======================================================================//
-	scene.populateCommandListForShadowPass(d3dCommandList, d3dGBufferPassICS, d3dShadowPassPSO);
+	d3dFrameFinishCL->SetGraphicsRootSignature(d3dGBufferPassRS);
+	scene.populateCommandListForShadowPass(d3dFrameFinishCL, d3dGBufferPassICS, d3dShadowPassPSO);
 
-	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::ShadowPassFinish);
+	d3dFrameFinishCL->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::ShadowPassFinish);
 
 	// Lighting pass ========================================================================//
 	{
@@ -463,33 +503,33 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 			else
 				target.stateRenderTarget = true;
 
-			d3dCommandList->ResourceBarrier(barrierCount, d3dBarriers);
+			d3dFrameFinishCL->ResourceBarrier(barrierCount, d3dBarriers);
 		}
 
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle = device.rtvHeap.getCPUHandle(target.rtvDescriptorIndex);
-		d3dCommandList->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
+		d3dFrameFinishCL->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
 
-		d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
-		d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportSize.x, viewportSize.y));
+		d3dFrameFinishCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
+		d3dFrameFinishCL->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportSize.x, viewportSize.y));
 
-		d3dCommandList->SetGraphicsRootSignature(d3dLightingPassRS);
-		d3dCommandList->SetGraphicsRootConstantBufferView(0, d3dLightingPassCB->GetGPUVirtualAddress());
-		d3dCommandList->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex));
-		d3dCommandList->SetGraphicsRootDescriptorTable(2, device.srvHeap.getGPUHandle(scene.shadowMapAtlasSRVDescriptorIndex));
+		d3dFrameFinishCL->SetGraphicsRootSignature(d3dLightingPassRS);
+		d3dFrameFinishCL->SetGraphicsRootConstantBufferView(0, d3dLightingPassCB->GetGPUVirtualAddress());
+		d3dFrameFinishCL->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex));
+		d3dFrameFinishCL->SetGraphicsRootDescriptorTable(2, device.srvHeap.getGPUHandle(scene.shadowMapAtlasSRVDescriptorIndex));
 
-		d3dCommandList->SetPipelineState(d3dLightingPassPSO);
-		d3dCommandList->DrawInstanced(3, 1, 0, 0);
+		d3dFrameFinishCL->SetPipelineState(d3dLightingPassPSO);
+		d3dFrameFinishCL->DrawInstanced(3, 1, 0, 0);
 
 		// debug wireframe ==================================================================//
 		// TODO: move from here
 		if (debugOutput == DebugOutput::Wireframe)
 		{
-			d3dCommandList->SetGraphicsRootSignature(d3dGBufferPassRS);
+			d3dFrameFinishCL->SetGraphicsRootSignature(d3dGBufferPassRS);
 			// NOTE: assuming that first matrix in this CB is view VP matrix
-			d3dCommandList->SetGraphicsRootConstantBufferView(4, d3dCameraTransformCB->GetGPUVirtualAddress());
-			d3dCommandList->SetPipelineState(d3dDebugWireframePSO);
+			d3dFrameFinishCL->SetGraphicsRootConstantBufferView(4, d3dCameraTransformCB->GetGPUVirtualAddress());
+			d3dFrameFinishCL->SetPipelineState(d3dDebugWireframePSO);
 
-			scene.populateCommandListForGBufferPass(d3dCommandList, d3dGBufferPassICS, false);
+			scene.populateCommandListForGBufferPass(d3dFrameFinishCL, d3dGBufferPassICS, false);
 		}
 
 		{
@@ -514,22 +554,22 @@ void SceneRenderer::render(ID3D12GraphicsCommandList* d3dCommandList,
 			else
 				barrierCount--;
 
-			d3dCommandList->ResourceBarrier(barrierCount, d3dBarriers);
+			d3dFrameFinishCL->ResourceBarrier(barrierCount, d3dBarriers);
 		}
 	}
 
-	d3dCommandList->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::LightingPassFinished);
+	d3dFrameFinishCL->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::LightingPassFinished);
 
-	// Finalize =============================================================================//
+	d3dFrameFinishCL->ResolveQueryData(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP,
+		0, GPUTimestampId::Count, d3dReadbackBuffer, 0);
+
+	timings.cpuCommandListSubmit = Timer::GetRecord();
+
+	// Submit frame finish command list =====================================================//
 	{
-		d3dCommandList->ResolveQueryData(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP,
-			0, GPUTimestampId::Count, d3dReadbackBuffer, 0);
+		d3dFrameFinishCL->Close();
 
-		d3dCommandList->Close();
-
-		timings.cpuCommandListSubmit = Timer::GetRecord();
-
-		ID3D12CommandList *d3dCommandListsToExecute[] = { d3dCommandList };
+		ID3D12CommandList *d3dCommandListsToExecute[] = { d3dFrameFinishCL };
 		device.d3dGraphicsQueue->ExecuteCommandLists(
 			countof(d3dCommandListsToExecute), d3dCommandListsToExecute);
 	}

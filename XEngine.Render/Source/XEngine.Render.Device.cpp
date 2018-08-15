@@ -49,12 +49,6 @@ bool Device::initialize()
 	d3dDevice->CreateCommandQueue(&D3D12CommandQueueDesc(D3D12_COMMAND_LIST_TYPE_COPY),
 		d3dCopyQueue.uuid(), d3dCopyQueue.voidInitRef());
 
-	d3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
-		d3dCommandAllocator.uuid(), d3dCommandAllocator.voidInitRef());
-	d3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, d3dCommandAllocator, nullptr,
-		d3dCommandList.uuid(), d3dCommandList.voidInitRef());
-	d3dCommandList->Close();
-
 	srvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 16, true);
 	rtvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 8, false);
 	dsvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 4, false);
@@ -103,8 +97,7 @@ void Device::clearTarget(Target& target, XLib::Color color)
 void Device::renderScene(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 	Target& target, rectu16 viewport, bool finalizeTarget, DebugOutput debugOutput)
 {
-	sceneRenderer.render(d3dCommandList, d3dCommandAllocator, scene,
-		camera, gBuffer, target, viewport, finalizeTarget, debugOutput);
+	sceneRenderer.render(scene, camera, gBuffer, target, viewport, finalizeTarget, debugOutput);
 }
 
 void Device::renderUI(UI::Batch& uiBatch)
