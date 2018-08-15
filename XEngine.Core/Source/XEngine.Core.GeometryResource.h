@@ -28,7 +28,8 @@ namespace XEngine::Core
 		// NOTE: temporary
 		bool createFromFile(const char* filename);
 		void createCube();
-		void createPlane();
+		void createPlane_texture();
+		void createPlane_tangentTexture();
 		void createCubicSphere(uint32 detalizationLevel);
 
 		inline Render::GeometryDesc getGeometryDesc() const

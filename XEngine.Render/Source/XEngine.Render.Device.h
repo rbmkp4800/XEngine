@@ -95,6 +95,7 @@ namespace XEngine::Render
 		inline TextureHandle createTexture(uint16 width, uint16 height) { return textureHeap.createTexture(width, height); }
 		inline EffectHandle createEffect_perMaterialAlbedoRoughtnessMetalness() { return materialHeap.createEffect_perMaterialAlbedoRoughtnessMetalness(); }
 		inline EffectHandle createEffect_albedoTexturePerMaterialRoughtnessMetalness() { return materialHeap.createEffect_albedoTexturePerMaterialRoughtnessMetalness(); }
+		inline EffectHandle createEffect_albedoNormalRoughtnessMetalnessTexture() { return materialHeap.createEffect_albedoNormalRoughtnessMetalnessTexture(); }
 		inline MaterialHandle createMaterial(EffectHandle effect) { return materialHeap.createMaterial(effect); }
 		inline void releaseBuffer(BufferHandle handle);
 

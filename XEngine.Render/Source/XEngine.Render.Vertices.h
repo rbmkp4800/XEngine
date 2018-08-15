@@ -3,6 +3,8 @@
 #include <XLib.Types.h>
 #include <XLib.Vectors.h>
 
+// TODO: encode normal and tangent as r10g10b10a2_unorm
+
 namespace XEngine::Render
 {
 	struct VertexBase
@@ -15,6 +17,14 @@ namespace XEngine::Render
 	{
 		float32x3 position;
 		float32x3 normal;
+		float32x2 texture;
+	};
+
+	struct VertexTangentTexture
+	{
+		float32x3 position;
+		float32x3 normal;
+		float32x3 tangent;
 		float32x2 texture;
 	};
 

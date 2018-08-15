@@ -173,7 +173,7 @@ void GeometryResource::createCube()
 	renderDevice.updateBuffer(buffer, sizeof(vertices), indices, sizeof(indices));
 }
 
-void GeometryResource::createPlane()
+void GeometryResource::createPlane_texture()
 {
 	static VertexTexture vertices[] =
 	{
@@ -192,6 +192,33 @@ void GeometryResource::createPlane()
 	vertexCount = countof(vertices);
 	indexCount = countof(indices);
 	vertexStride = sizeof(VertexTexture);
+	indexIs32Bit = false;
+
+	Render::Device& renderDevice = Engine::GetRenderDevice();
+	buffer = renderDevice.createBuffer(sizeof(vertices) + sizeof(indices));
+	renderDevice.updateBuffer(buffer, 0, vertices, sizeof(vertices));
+	renderDevice.updateBuffer(buffer, sizeof(vertices), indices, sizeof(indices));
+}
+
+void GeometryResource::createPlane_tangentTexture()
+{
+	static VertexTangentTexture vertices[] =
+	{
+		{ { -1.0f, -1.0f, 0.0f },	{ 0.0f, 0.0f, 1.0f },	{ 1.0f, 0.0f, 0.0f },	{ 0.0f, 0.0f } },
+		{ { 1.0f, 1.0f, 0.0f },		{ 0.0f, 0.0f, 1.0f },	{ 1.0f, 0.0f, 0.0f },	{ 1.0f, 1.0f } },
+		{ { -1.0f, 1.0f, 0.0f },	{ 0.0f, 0.0f, 1.0f },	{ 1.0f, 0.0f, 0.0f },	{ 0.0f, 1.0f } },
+		{ { 1.0f, -1.0f, 0.0f },	{ 0.0f, 0.0f, 1.0f },	{ 1.0f, 0.0f, 0.0f },	{ 1.0f, 0.0f } },
+	};
+
+	static uint16 indices[] =
+	{
+		0, 1, 2,
+		0, 3, 1,
+	};
+
+	vertexCount = countof(vertices);
+	indexCount = countof(indices);
+	vertexStride = sizeof(VertexTangentTexture);
 	indexIs32Bit = false;
 
 	Render::Device& renderDevice = Engine::GetRenderDevice();
