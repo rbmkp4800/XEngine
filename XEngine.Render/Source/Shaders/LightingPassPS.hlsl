@@ -160,10 +160,6 @@ float4 main(PSInput input) : SV_Target
 	}
 
 	float3 ambient = 0.03f * albedo;
-	float3 color = ambient + sum;
-	
-	color = color / (color + 1.0f);
-	color = pow(color, 1.0f / 2.2f);  
 
-	return float4(color, 1.0f);
+	return float4(ambient + sum, 1.0f);
 }

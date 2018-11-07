@@ -67,12 +67,14 @@ namespace XEngine::Render::Device_
 
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dGBufferPassRS;
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dLightingPassRS;
+		XLib::Platform::COMPtr<ID3D12RootSignature> d3dPostProcessRS;
 
 		XLib::Platform::COMPtr<ID3D12CommandSignature> d3dGBufferPassICS;
 
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDepthBufferDownscalePSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dShadowPassPSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dToneMappingPSO;
 
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;
 

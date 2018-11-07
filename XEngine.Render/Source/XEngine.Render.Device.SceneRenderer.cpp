@@ -31,7 +31,7 @@ namespace
 		{
 			Start = 0,
 			GBufferPassFinish,
-			DepthBufferDownscale,
+			DepthBufferDownscaleFinish,
 			ShadowPassFinish,
 			LightingPassFinished,
 
@@ -174,6 +174,31 @@ void SceneRenderer::initialize()
 			d3dLightingPassRS.uuid(), d3dLightingPassRS.voidInitRef());
 	}
 
+	// Post-process RS
+	{
+		D3D12_DESCRIPTOR_RANGE ranges[] =
+		{
+			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+		};
+
+		D3D12_ROOT_PARAMETER rootParameters[] =
+		{
+				// b0 exposure constant
+			D3D12RootParameter_Constants(1, 0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
+				// t0 hdr texture
+			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
+		};
+
+		COMPtr<ID3DBlob> d3dSignature, d3dError;
+		D3D12SerializeRootSignature(
+			&D3D12RootSignatureDesc(countof(rootParameters), rootParameters, 0 , nullptr),
+			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
+
+		d3dDevice->CreateRootSignature(0,
+			d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
+			d3dPostProcessRS.uuid(), d3dPostProcessRS.voidInitRef());
+	}
+
 	// G-buffer pass ICS
 	{
 		D3D12_INDIRECT_ARGUMENT_DESC indirectArgumentDescs[] =
@@ -215,7 +240,7 @@ void SceneRenderer::initialize()
 		psoDesc.InputLayout = D3D12InputLayoutDesc();
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		psoDesc.NumRenderTargets = 1;
-		psoDesc.RTVFormats[0] = DXGI_FORMAT_R16_UNORM;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R32_FLOAT;
 		psoDesc.SampleDesc.Count = 1;
 		psoDesc.SampleDesc.Quality = 0;
 
@@ -261,12 +286,33 @@ void SceneRenderer::initialize()
 		psoDesc.InputLayout = D3D12InputLayoutDesc();
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		psoDesc.NumRenderTargets = 1;
-		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R11G11B10_FLOAT;
 		psoDesc.SampleDesc.Count = 1;
 		psoDesc.SampleDesc.Quality = 0;
 
 		d3dDevice->CreateGraphicsPipelineState(&psoDesc,
 			d3dLightingPassPSO.uuid(), d3dLightingPassPSO.voidInitRef());
+	}
+
+	// Tone mapping PSO
+	{
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dPostProcessRS;
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
+		psoDesc.PS = D3D12ShaderBytecode(Shaders::ToneMappingPS.data, Shaders::ToneMappingPS.size);
+		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
+		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Disable();
+		psoDesc.InputLayout = D3D12InputLayoutDesc();
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 1;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+		psoDesc.SampleDesc.Count = 1;
+		psoDesc.SampleDesc.Quality = 0;
+
+		d3dDevice->CreateGraphicsPipelineState(&psoDesc,
+			d3dToneMappingPSO.uuid(), d3dToneMappingPSO.voidInitRef());
 	}
 
 	// Debug wireframe PSO
@@ -416,7 +462,7 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 			&D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
 				D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(gBuffer.rtvDescriptorsBaseIndex + 2);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(gBuffer.rtvDescriptorsBaseIndex + 3);
 		d3dGBufferPassCL->OMSetRenderTargets(1, &rtvDescriptorsHandle, FALSE, nullptr);
 
 		d3dGBufferPassCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportHalfSizeF.x, viewportHalfSizeF.y));
@@ -430,23 +476,23 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 		d3dGBufferPassCL->DrawInstanced(3, 1, 0, 0);
 
 		d3dGBufferPassCL->ResourceBarrier(1,
-			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownsampledX2DepthTexture,
+			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownscaledX2DepthTexture,
 				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE));
 
-		uint16 readbackRowPitch = alignup(viewportHalfSize.x * 2, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		uint16 readbackRowPitch = alignup(viewportHalfSize.x * 4, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 		d3dGBufferPassCL->CopyTextureRegion(
 			&D3D12TextureCopyLocation_PlacedFootprint(d3dReadbackBuffer, 0,
-				DXGI_FORMAT_R16_UNORM, viewportHalfSize.x, viewportHalfSize.y, 1, readbackRowPitch),
+				DXGI_FORMAT_R32_FLOAT, viewportHalfSize.x, viewportHalfSize.y, 1, readbackRowPitch),
 			0, 0, 0,
-			&D3D12TextureCopyLocation_Subresource(gBuffer.d3dDownsampledX2DepthTexture, 0),
+			&D3D12TextureCopyLocation_Subresource(gBuffer.d3dDownscaledX2DepthTexture, 0),
 			&D3D12Box(0, viewportHalfSize.x, 0, viewportHalfSize.y));
 
 		d3dGBufferPassCL->ResourceBarrier(1,
-			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownsampledX2DepthTexture,
+			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownscaledX2DepthTexture,
 				D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
 	}
 
-	d3dGBufferPassCL->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::DepthBufferDownscale);
+	d3dGBufferPassCL->EndQuery(d3dTimestampQueryHeap, D3D12_QUERY_TYPE_TIMESTAMP, GPUTimestampId::DepthBufferDownscaleFinish);
 
 	// Submit G-Buffer pass command list ====================================================//
 	{
@@ -492,21 +538,12 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 				D3D12ResourceBarrier_Transition(scene.d3dShadowMapAtlas,
 					D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
-				// Optional:
-				D3D12ResourceBarrier_Transition(target.d3dTexture,
-					D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET),
 			};
 
-			uint32 barrierCount = countof(d3dBarriers);
-			if (target.stateRenderTarget)
-				barrierCount--;
-			else
-				target.stateRenderTarget = true;
-
-			d3dFrameFinishCL->ResourceBarrier(barrierCount, d3dBarriers);
+			d3dFrameFinishCL->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
 		}
 
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle = device.rtvHeap.getCPUHandle(target.rtvDescriptorIndex);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle = device.rtvHeap.getCPUHandle(gBuffer.rtvDescriptorsBaseIndex + 2);
 		d3dFrameFinishCL->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
 
 		d3dFrameFinishCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
@@ -518,6 +555,59 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 		d3dFrameFinishCL->SetGraphicsRootDescriptorTable(2, device.srvHeap.getGPUHandle(scene.shadowMapAtlasSRVDescriptorIndex));
 
 		d3dFrameFinishCL->SetPipelineState(d3dLightingPassPSO);
+		d3dFrameFinishCL->DrawInstanced(3, 1, 0, 0);
+
+		{
+			D3D12_RESOURCE_BARRIER d3dBarriers[] =
+			{
+				D3D12ResourceBarrier_Transition(gBuffer.d3dDiffuseTexture,
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
+				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalRoughnessMetalnessTexture,
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
+				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
+				D3D12ResourceBarrier_Transition(scene.d3dShadowMapAtlas,
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
+			};
+
+			d3dFrameFinishCL->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
+		}
+	}
+
+	// Post-process =========================================================================//
+	{
+		{
+			D3D12_RESOURCE_BARRIER d3dBarriers[] =
+			{
+				D3D12ResourceBarrier_Transition(gBuffer.d3dHDRTexture,
+					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+				{},
+			};
+
+			uint32 barrierCount = countof(d3dBarriers);
+			if (target.stateRenderTarget)
+				barrierCount--;
+			else
+			{
+				target.stateRenderTarget = true;
+				d3dBarriers[1] = D3D12ResourceBarrier_Transition(target.d3dTexture,
+					D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			}
+
+			d3dFrameFinishCL->ResourceBarrier(barrierCount, d3dBarriers);
+		}
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle = device.rtvHeap.getCPUHandle(target.rtvDescriptorIndex);
+		d3dFrameFinishCL->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
+
+		d3dFrameFinishCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
+		d3dFrameFinishCL->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportSize.x, viewportSize.y));
+
+		d3dFrameFinishCL->SetGraphicsRootSignature(d3dPostProcessRS);
+		d3dFrameFinishCL->SetGraphicsRoot32BitConstant(0, as<UINT>(1.0f), 0);
+		d3dFrameFinishCL->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex + 3));
+
+		d3dFrameFinishCL->SetPipelineState(d3dToneMappingPSO);
 		d3dFrameFinishCL->DrawInstanced(3, 1, 0, 0);
 
 		// debug wireframe ==================================================================//
@@ -535,22 +625,18 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 		{
 			D3D12_RESOURCE_BARRIER d3dBarriers[] =
 			{
-				D3D12ResourceBarrier_Transition(gBuffer.d3dDiffuseTexture,
+				D3D12ResourceBarrier_Transition(gBuffer.d3dHDRTexture,
 					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
-				D3D12ResourceBarrier_Transition(gBuffer.d3dNormalRoughnessMetalnessTexture,
-					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET),
-				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
-					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
-				D3D12ResourceBarrier_Transition(scene.d3dShadowMapAtlas,
-					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
-				// Optional:
-				D3D12ResourceBarrier_Transition(target.d3dTexture,
-					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON),
+				{},
 			};
 
 			uint32 barrierCount = countof(d3dBarriers);
 			if (finalizeTarget)
+			{
 				target.stateRenderTarget = false;
+				d3dBarriers[1] = D3D12ResourceBarrier_Transition(target.d3dTexture,
+					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COMMON);
+			}
 			else
 				barrierCount--;
 

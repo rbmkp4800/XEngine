@@ -302,7 +302,7 @@ void Scene::populateCommandListForShadowPass(ID3D12GraphicsCommandList* d3dComma
 	if (directionalLightCount == 0)
 		return;
 
-	DirectionalLight& light = directionalLights[0];
+	const DirectionalLight& light = directionalLights[0];
 
 	mappedShadowCameraTransformsCB->transform =
 		Matrix4x4::LookAtCentered(light.shadowVolumeOrigin, light.desc.direction, { 0.0f, 0.0f, 1.0f })

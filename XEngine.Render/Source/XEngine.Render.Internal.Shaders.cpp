@@ -5,6 +5,7 @@
 #include "..\Intermediate\Shaders\ScreenQuadVS.cso.h"
 #include "..\Intermediate\Shaders\DepthBufferDownscalePS.cso.h"
 #include "..\Intermediate\Shaders\LightingPassPS.cso.h"
+#include "..\Intermediate\Shaders\ToneMappingPS.cso.h"
 
 #include "..\Intermediate\Shaders\Effect_NormalVS.cso.h"
 #include "..\Intermediate\Shaders\Effect_NormalTexcoordVS.cso.h"
@@ -27,6 +28,7 @@ using namespace XEngine::Render::Internal;
 const ShaderData Shaders::ScreenQuadVS = { ScreenQuadVSData, sizeof(ScreenQuadVSData) };
 const ShaderData Shaders::DepthBufferDownscalePS = { DepthBufferDownscalePSData, sizeof(DepthBufferDownscalePSData) };
 const ShaderData Shaders::LightingPassPS = { LightingPassPSData, sizeof(LightingPassPSData) };
+const ShaderData Shaders::ToneMappingPS = { ToneMappingPSData, sizeof(ToneMappingPSData) };
 
 const ShaderData Shaders::Effect_NormalVS = { Effect_NormalVSData, sizeof(Effect_NormalVSData) };
 const ShaderData Shaders::Effect_NormalTexcoordVS = { Effect_NormalTexcoordVSData, sizeof(Effect_NormalTexcoordVSData) };

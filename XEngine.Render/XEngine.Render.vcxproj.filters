@@ -139,5 +139,6 @@
     <FxCompile Include="Source\Shaders\Effect_AlbedoTexturePerMaterialRoughtnessMetalnessPS.hlsl" />
     <FxCompile Include="Source\Shaders\Effect_NormalTangentTexcoordVS.hlsl" />
     <FxCompile Include="Source\Shaders\Effect_AlbedoNormalRoughtnessMetalnessTexturePS.hlsl" />
+    <FxCompile Include="Source\Shaders\ToneMappingPS.hlsl" />
   </ItemGroup>
 </Project>
