@@ -21,6 +21,7 @@ namespace GameSample1
 		XEngine::Render::Scene scene;
 		XEngine::Render::GBuffer gBuffer;
 		XEngine::Render::EffectHandle plainEffect;
+		XEngine::Render::EffectHandle emissiveEffect;
 		XEngine::Render::MaterialHandle plainMaterial;
 
 		//XEngine::Core::GeometryResourceManager geometryResourceManager;

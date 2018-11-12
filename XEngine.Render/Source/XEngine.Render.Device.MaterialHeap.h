@@ -56,6 +56,7 @@ namespace XEngine::Render::Device_
 		EffectHandle createEffect_perMaterialAlbedoRoughtnessMetalness();
 		EffectHandle createEffect_albedoTexturePerMaterialRoughtnessMetalness();
 		EffectHandle createEffect_albedoNormalRoughtnessMetalnessTexture();
+		EffectHandle createEffect_perMaterialEmissiveColor();
 		void releaseEffect(EffectHandle handle);
 
 		MaterialHandle createMaterial(EffectHandle effect,

@@ -160,6 +160,49 @@ EffectHandle MaterialHeap::createEffect_albedoNormalRoughtnessMetalnessTexture()
 	return result;
 }
 
+EffectHandle MaterialHeap::createEffect_perMaterialEmissiveColor()
+{
+	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+	{
+		{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT, 0,	D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT, 0,	D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+	psoDesc.pRootSignature = device.sceneRenderer.getGBufferPassD3DRS();
+	psoDesc.VS = D3D12ShaderBytecode(Shaders::Effect_NormalVS.data, Shaders::Effect_NormalVS.size);
+	psoDesc.PS = D3D12ShaderBytecode(Shaders::Effect_PerMaterialEmissiveColorPS.data, Shaders::Effect_PerMaterialEmissiveColorPS.size);
+	psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+	psoDesc.SampleMask = UINT_MAX;
+	psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
+	psoDesc.DepthStencilState = D3D12DepthStencilDesc_Default();
+	psoDesc.InputLayout = D3D12InputLayoutDesc(inputElementDescs, countof(inputElementDescs));
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.NumRenderTargets = 3;
+	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	psoDesc.RTVFormats[1] = DXGI_FORMAT_R16G16B16A16_SNORM;
+	psoDesc.RTVFormats[2] = DXGI_FORMAT_R11G11B10_FLOAT;
+	psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	psoDesc.SampleDesc.Count = 1;
+	psoDesc.SampleDesc.Quality = 0;
+
+	COMPtr<ID3D12PipelineState> d3dPSO;
+	device.d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dPSO.uuid(), d3dPSO.voidInitRef());
+
+	EffectHandle result = EffectHandle(effectCount);
+	effectCount++;
+
+	Effect &effect = effects[result];
+	effect.d3dPSO = move(d3dPSO);
+	effect.materialConstantsTableArenaBaseSegment = allocatedCommandListArenaSegmentCount;
+	effect.materialConstantsSize = 8;
+	effect.materialUserSpecifiedConstantsOffset = 0;
+	effect.constantsUsed = 0;
+	allocatedCommandListArenaSegmentCount++;
+
+	return result;
+}
+
 MaterialHandle MaterialHeap::createMaterial(EffectHandle effectHandle,
 	const void* initialConstants, const TextureHandle* intialTextures)
 {

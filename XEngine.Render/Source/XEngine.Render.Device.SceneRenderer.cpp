@@ -283,7 +283,16 @@ void SceneRenderer::initialize()
 		psoDesc.pRootSignature = d3dLightingPassRS;
 		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
 		psoDesc.PS = D3D12ShaderBytecode(Shaders::LightingPassPS.data, Shaders::LightingPassPS.size);
-		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+		psoDesc.BlendState.RenderTarget[0].BlendEnable = TRUE;
+		psoDesc.BlendState.RenderTarget[0].LogicOpEnable = FALSE;
+		psoDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_ONE;
+		psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+		psoDesc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+		psoDesc.BlendState.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+		psoDesc.BlendState.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ONE;
+		psoDesc.BlendState.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+		psoDesc.BlendState.RenderTarget[0].LogicOp = D3D12_LOGIC_OP_NOOP;
+		psoDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 		psoDesc.SampleMask = UINT_MAX;
 		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
 		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Disable();
@@ -503,12 +512,17 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 
 	// G-buffer pass ========================================================================//
 	{
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(gBuffer.rtvDescriptorsBaseIndex);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(
+			gBuffer.rtvDescriptorsBaseIndex + GBuffer::RTVDescriptorIndex::Diffuse);
 		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle = device.dsvHeap.getCPUHandle(gBuffer.dsvDescriptorIndex);
-		d3dGBufferPassCL->OMSetRenderTargets(2, &rtvDescriptorsHandle, TRUE, &dsvDescriptorHandle);
+		d3dGBufferPassCL->OMSetRenderTargets(3, &rtvDescriptorsHandle, TRUE, &dsvDescriptorHandle);
+
+		D3D12_CPU_DESCRIPTOR_HANDLE hdrRTVDescriptorsHandle = device.rtvHeap.getCPUHandle(
+			gBuffer.rtvDescriptorsBaseIndex + GBuffer::RTVDescriptorIndex::HDR);
 
 		const float32 clearColor[4] = {};
 		d3dGBufferPassCL->ClearRenderTargetView(rtvDescriptorsHandle, clearColor, 0, nullptr);
+		d3dGBufferPassCL->ClearRenderTargetView(hdrRTVDescriptorsHandle, clearColor, 0, nullptr);
 		d3dGBufferPassCL->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		d3dGBufferPassCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
@@ -518,6 +532,7 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 		d3dGBufferPassCL->SetGraphicsRootConstantBufferView(4, d3dCameraTransformCB->GetGPUVirtualAddress());
 		d3dGBufferPassCL->SetGraphicsRootDescriptorTable(5, device.srvHeap.getGPUHandle(0));
 
+		// TODO: check if separate emissive pass is faster then mixed emissive + default (extra RTV is bound)
 		scene.populateCommandListForGBufferPass(d3dGBufferPassCL, d3dGBufferPassICS, true);
 	}
 

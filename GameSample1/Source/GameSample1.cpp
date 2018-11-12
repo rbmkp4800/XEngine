@@ -22,6 +22,7 @@ void Game::initialize()
 	Render::Device& renderDevice = Core::Engine::GetRenderDevice();
 
 	plainEffect = renderDevice.createEffect_perMaterialAlbedoRoughtnessMetalness();
+	emissiveEffect = renderDevice.createEffect_perMaterialEmissiveColor();
 	//plainMaterial = renderDevice.createMaterial(plainEffect);
 
 	scene.initialize(renderDevice);
@@ -89,6 +90,31 @@ void Game::initialize()
 		sphereGeometryResource.getGeometryDesc(), mat, tgh);
 	scene.updateTransform(tgh, 0,
 		Matrix3x4::Translation(-3.0f, -3.0f, -6.0f) * Matrix3x4::Scale(4.0f, 4.0f, 4.0f));
+
+
+
+	mat = renderDevice.createMaterial(emissiveEffect);
+
+	struct
+	{
+		float32x3 color;
+	} e;
+
+	e.color = { 5.0f, 5.0f, 50.0f };
+
+	renderDevice.updateMaterialConstants(mat, 0, &e, sizeof(e));
+
+	tgh = scene.createTransformGroup();
+	inst = scene.createGeometryInstance(
+		cubeGeometryResource.getGeometryDesc(), mat, tgh);
+	scene.updateTransform(tgh, 0,
+		Matrix3x4::Translation(3.0f, 3.0f, 5.0f) * Matrix3x4::Scale(0.3f, 0.3f, 15.0f));
+
+	tgh = scene.createTransformGroup();
+	inst = scene.createGeometryInstance(
+		sphereGeometryResource.getGeometryDesc(), mat, tgh);
+	scene.updateTransform(tgh, 0,
+		Matrix3x4::Translation(10.0f, 10.0f, 10.0f) * Matrix3x4::Scale(0.3f, 0.3f, 0.3f));
 
 	{
 		Render::DirectionalLightDesc desc;

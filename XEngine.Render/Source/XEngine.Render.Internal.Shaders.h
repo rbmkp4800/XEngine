@@ -27,6 +27,7 @@ namespace XEngine::Render::Internal
 		static const ShaderData Effect_PerMaterialAlbedoRoughtnessMetalnessPS;
 		static const ShaderData Effect_AlbedoTexturePerMaterialRoughtnessMetalnessPS;
 		static const ShaderData Effect_AlbedoNormalRoughtnessMetalnessTexturePS;
+		static const ShaderData Effect_PerMaterialEmissiveColorPS;
 
 		static const ShaderData UIColorVS;
 		static const ShaderData UIColorPS;

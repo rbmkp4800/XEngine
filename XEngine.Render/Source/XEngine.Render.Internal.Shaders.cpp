@@ -16,6 +16,7 @@
 #include "..\Intermediate\Shaders\Effect_PerMaterialAlbedoRoughtnessMetalnessPS.cso.h"
 #include "..\Intermediate\Shaders\Effect_AlbedoTexturePerMaterialRoughtnessMetalnessPS.cso.h"
 #include "..\Intermediate\Shaders\Effect_AlbedoNormalRoughtnessMetalnessTexturePS.cso.h"
+#include "..\Intermediate\Shaders\Effect_PerMaterialEmissiveColorPS.cso.h"
 
 #include "..\Intermediate\Shaders\SceneGeometryPositionOnlyVS.cso.h"
 
@@ -42,6 +43,7 @@ const ShaderData Shaders::Effect_NormalTangentTexcoordVS = { Effect_NormalTangen
 const ShaderData Shaders::Effect_PerMaterialAlbedoRoughtnessMetalnessPS = { Effect_PerMaterialAlbedoRoughtnessMetalnessPSData, sizeof(Effect_PerMaterialAlbedoRoughtnessMetalnessPSData) };
 const ShaderData Shaders::Effect_AlbedoTexturePerMaterialRoughtnessMetalnessPS = { Effect_AlbedoTexturePerMaterialRoughtnessMetalnessPSData, sizeof(Effect_AlbedoTexturePerMaterialRoughtnessMetalnessPSData) };
 const ShaderData Shaders::Effect_AlbedoNormalRoughtnessMetalnessTexturePS = { Effect_AlbedoNormalRoughtnessMetalnessTexturePSData, sizeof(Effect_AlbedoNormalRoughtnessMetalnessTexturePSData) };
+const ShaderData Shaders::Effect_PerMaterialEmissiveColorPS = { Effect_PerMaterialEmissiveColorPSData, sizeof(Effect_PerMaterialEmissiveColorPSData) };
 
 const ShaderData Shaders::SceneGeometryPositionOnlyVS = { SceneGeometryPositionOnlyVSData, sizeof(SceneGeometryPositionOnlyVSData) };
 
