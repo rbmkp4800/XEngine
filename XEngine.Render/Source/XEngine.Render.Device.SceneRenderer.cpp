@@ -178,20 +178,24 @@ void SceneRenderer::initialize()
 	{
 		D3D12_DESCRIPTOR_RANGE ranges[] =
 		{
-			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1 + GBuffer::BloomLevelCount, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
 		};
 
 		D3D12_ROOT_PARAMETER rootParameters[] =
 		{
-				// b0 exposure constant
-			D3D12RootParameter_Constants(1, 0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
-				// t0 hdr texture
+			D3D12RootParameter_Constants(3, 0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
+		};
+
+		D3D12_STATIC_SAMPLER_DESC staticSamplers[] =
+		{
+			D3D12StaticSamplerDesc_Default(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
 		COMPtr<ID3DBlob> d3dSignature, d3dError;
 		D3D12SerializeRootSignature(
-			&D3D12RootSignatureDesc(countof(rootParameters), rootParameters, 0 , nullptr),
+			&D3D12RootSignatureDesc(countof(rootParameters), rootParameters,
+				countof(staticSamplers), staticSamplers),
 			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
 
 		d3dDevice->CreateRootSignature(0,
@@ -292,6 +296,69 @@ void SceneRenderer::initialize()
 
 		d3dDevice->CreateGraphicsPipelineState(&psoDesc,
 			d3dLightingPassPSO.uuid(), d3dLightingPassPSO.voidInitRef());
+	}
+
+	// Bloom filter and downscale x4 PSO
+	{
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dPostProcessRS;
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
+		psoDesc.PS = D3D12ShaderBytecode(Shaders::BloomFilterAndDownscaleX4PS.data, Shaders::BloomFilterAndDownscaleX4PS.size);
+		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
+		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Disable();
+		psoDesc.InputLayout = D3D12InputLayoutDesc();
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 1;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R11G11B10_FLOAT;
+		psoDesc.SampleDesc.Count = 1;
+		psoDesc.SampleDesc.Quality = 0;
+
+		d3dDevice->CreateGraphicsPipelineState(&psoDesc,
+			d3dBloomFilterAndDownscaleX4PSO.uuid(), d3dBloomFilterAndDownscaleX4PSO.voidInitRef());
+	}
+
+	// Bloom blur PSO
+	{
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dPostProcessRS;
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
+		psoDesc.PS = D3D12ShaderBytecode(Shaders::BloomBlurPS.data, Shaders::BloomBlurPS.size);
+		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
+		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Disable();
+		psoDesc.InputLayout = D3D12InputLayoutDesc();
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 1;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R11G11B10_FLOAT;
+		psoDesc.SampleDesc.Count = 1;
+		psoDesc.SampleDesc.Quality = 0;
+
+		d3dDevice->CreateGraphicsPipelineState(&psoDesc,
+			d3dBloomBlurPSO.uuid(), d3dBloomBlurPSO.voidInitRef());
+	}
+
+	// Bloom downscale x2 PSO
+	{
+		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+		psoDesc.pRootSignature = d3dPostProcessRS;
+		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
+		psoDesc.PS = D3D12ShaderBytecode(Shaders::BloomDownscaleX2PS.data, Shaders::BloomDownscaleX2PS.size);
+		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
+		psoDesc.SampleMask = UINT_MAX;
+		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
+		psoDesc.DepthStencilState = D3D12DepthStencilDesc_Disable();
+		psoDesc.InputLayout = D3D12InputLayoutDesc();
+		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+		psoDesc.NumRenderTargets = 1;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R11G11B10_FLOAT;
+		psoDesc.SampleDesc.Count = 1;
+		psoDesc.SampleDesc.Quality = 0;
+
+		d3dDevice->CreateGraphicsPipelineState(&psoDesc,
+			d3dBloomDownscaleX2PSO.uuid(), d3dBloomDownscaleX2PSO.voidInitRef());
 	}
 
 	// Tone mapping PSO
@@ -462,7 +529,8 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 			&D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
 				D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(gBuffer.rtvDescriptorsBaseIndex + 3);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(
+			gBuffer.rtvDescriptorsBaseIndex + GBuffer::RTVDescriptorIndex::DownscaledX2Depth);
 		d3dGBufferPassCL->OMSetRenderTargets(1, &rtvDescriptorsHandle, FALSE, nullptr);
 
 		d3dGBufferPassCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportHalfSizeF.x, viewportHalfSizeF.y));
@@ -543,7 +611,8 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 			d3dFrameFinishCL->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
 		}
 
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle = device.rtvHeap.getCPUHandle(gBuffer.rtvDescriptorsBaseIndex + 2);
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle = device.rtvHeap.getCPUHandle(
+			gBuffer.rtvDescriptorsBaseIndex + GBuffer::RTVDescriptorIndex::HDR);
 		d3dFrameFinishCL->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
 
 		d3dFrameFinishCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
@@ -597,20 +666,134 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 			d3dFrameFinishCL->ResourceBarrier(barrierCount, d3dBarriers);
 		}
 
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle = device.rtvHeap.getCPUHandle(target.rtvDescriptorIndex);
+		d3dFrameFinishCL->SetGraphicsRootSignature(d3dPostProcessRS);
+		
+		// Generate bloom ===================================================================//
+
+		uint32 bloomLevelScaleFactor = 4;
+		for (uint32 bloomLevel = 0; bloomLevel < GBuffer::BloomLevelCount; bloomLevel++)
+		{
+			// Generate current level data
+
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle = device.rtvHeap.getCPUHandle(
+				gBuffer.rtvDescriptorsBaseIndex + GBuffer::RTVDescriptorIndex::BloomBase + bloomLevel);
+			d3dFrameFinishCL->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
+
+			d3dFrameFinishCL->RSSetViewports(1,
+				&D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x / bloomLevelScaleFactor, viewportSizeF.y / bloomLevelScaleFactor));
+			d3dFrameFinishCL->RSSetScissorRects(1,
+				&D3D12Rect(0, 0, viewportSize.x / bloomLevelScaleFactor, viewportSize.y / bloomLevelScaleFactor));
+
+			if (bloomLevel == 0)
+			{
+				d3dFrameFinishCL->SetPipelineState(d3dBloomFilterAndDownscaleX4PSO);
+
+				d3dFrameFinishCL->SetGraphicsRoot32BitConstant(0, as<UINT>(1.0f / viewportSizeF.x), 0);
+				d3dFrameFinishCL->SetGraphicsRoot32BitConstant(0, as<UINT>(1.0f / viewportSizeF.y), 1);
+				d3dFrameFinishCL->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(
+					gBuffer.srvDescriptorsBaseIndex + GBuffer::SRVDescriptorIndex::HDR));
+			}
+			else
+			{
+				d3dFrameFinishCL->SetPipelineState(d3dBloomDownscaleX2PSO);
+
+				// NOTE: state will be reverted during tone mapping (for now).
+				d3dFrameFinishCL->ResourceBarrier(1,
+					&D3D12ResourceBarrier_Transition(gBuffer.d3dBloomTextures[bloomLevel - 1],
+						D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+				d3dFrameFinishCL->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(
+					gBuffer.srvDescriptorsBaseIndex + GBuffer::SRVDescriptorIndex::BloomBase + bloomLevel - 1));
+			}
+
+			d3dFrameFinishCL->DrawInstanced(3, 1, 0, 0);
+
+			// Blur vertically
+
+			d3dFrameFinishCL->SetPipelineState(d3dBloomBlurPSO);
+
+			d3dFrameFinishCL->ResourceBarrier(1,
+				&D3D12ResourceBarrier_Transition(gBuffer.d3dBloomTextures[bloomLevel],
+					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+			rtvDescriptorHandle = device.rtvHeap.getCPUHandle(
+				gBuffer.rtvDescriptorsBaseIndex + GBuffer::RTVDescriptorIndex::BloomBlurTemp);
+			d3dFrameFinishCL->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
+
+			d3dFrameFinishCL->SetGraphicsRoot32BitConstant(0, as<UINT>(0.0f), 0);
+			d3dFrameFinishCL->SetGraphicsRoot32BitConstant(0, as<UINT>(bloomLevelScaleFactor / viewportSizeF.y), 1);
+			d3dFrameFinishCL->SetGraphicsRoot32BitConstant(0, as<UINT>(1.0f), 2);
+			d3dFrameFinishCL->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(
+				gBuffer.srvDescriptorsBaseIndex + GBuffer::SRVDescriptorIndex::BloomBase + bloomLevel));
+		
+			d3dFrameFinishCL->DrawInstanced(3, 1, 0, 0);
+
+			// TODO: collapse to single barrier call
+			d3dFrameFinishCL->ResourceBarrier(1,
+				&D3D12ResourceBarrier_Transition(gBuffer.d3dBloomTextures[bloomLevel],
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+			// Blur horizontally
+
+			rtvDescriptorHandle = device.rtvHeap.getCPUHandle(
+				gBuffer.rtvDescriptorsBaseIndex + GBuffer::RTVDescriptorIndex::BloomBase + bloomLevel);
+			d3dFrameFinishCL->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
+
+			d3dFrameFinishCL->SetGraphicsRoot32BitConstant(0, as<UINT>(bloomLevelScaleFactor / viewportSizeF.x), 0);
+			d3dFrameFinishCL->SetGraphicsRoot32BitConstant(0, as<UINT>(0.0f), 1);
+			d3dFrameFinishCL->SetGraphicsRoot32BitConstant(0, as<UINT>(1.0f / float(1 << bloomLevel)), 2);
+			d3dFrameFinishCL->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(
+				gBuffer.srvDescriptorsBaseIndex + GBuffer::SRVDescriptorIndex::BloomBlurTemp));
+
+			d3dFrameFinishCL->ResourceBarrier(1,
+				&D3D12ResourceBarrier_Transition(gBuffer.d3dBloomBlurTemp,
+					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+			d3dFrameFinishCL->DrawInstanced(3, 1, 0, 0);
+
+			d3dFrameFinishCL->ResourceBarrier(1,
+				&D3D12ResourceBarrier_Transition(gBuffer.d3dBloomBlurTemp,
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+			/////////////////
+
+			bloomLevelScaleFactor *= 2;
+		}
+
+		// Tone map =========================================================================//
+
+		// NOTE: bloom levels upsample is done in tone mapping. This should be optimized and fixed.
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvDescriptorHandle =
+			device.rtvHeap.getCPUHandle(target.rtvDescriptorIndex);
 		d3dFrameFinishCL->OMSetRenderTargets(1, &rtvDescriptorHandle, FALSE, nullptr);
 
 		d3dFrameFinishCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportSizeF.x, viewportSizeF.y));
 		d3dFrameFinishCL->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportSize.x, viewportSize.y));
 
-		d3dFrameFinishCL->SetGraphicsRootSignature(d3dPostProcessRS);
 		d3dFrameFinishCL->SetGraphicsRoot32BitConstant(0, as<UINT>(1.0f), 0);
-		d3dFrameFinishCL->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex + 3));
+		d3dFrameFinishCL->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(
+			gBuffer.srvDescriptorsBaseIndex + GBuffer::SRVDescriptorIndex::HDR));
+
+		d3dFrameFinishCL->ResourceBarrier(1,
+			&D3D12ResourceBarrier_Transition(gBuffer.d3dBloomTextures[GBuffer::BloomLevelCount - 1],
+				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
 		d3dFrameFinishCL->SetPipelineState(d3dToneMappingPSO);
 		d3dFrameFinishCL->DrawInstanced(3, 1, 0, 0);
 
-		// debug wireframe ==================================================================//
+		{
+			D3D12_RESOURCE_BARRIER d3dBarriers[GBuffer::BloomLevelCount];
+			for (uint32 i = 0; i < GBuffer::BloomLevelCount; i++)
+			{
+				d3dBarriers[i] = D3D12ResourceBarrier_Transition(gBuffer.d3dBloomTextures[i],
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			}
+
+			d3dFrameFinishCL->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
+		}
+
+		// Debug wireframe ==================================================================//
 		// TODO: move from here
 		if (debugOutput == DebugOutput::Wireframe)
 		{

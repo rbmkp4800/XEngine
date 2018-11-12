@@ -49,8 +49,8 @@ bool Device::initialize()
 	d3dDevice->CreateCommandQueue(&D3D12CommandQueueDesc(D3D12_COMMAND_LIST_TYPE_COPY),
 		d3dCopyQueue.uuid(), d3dCopyQueue.voidInitRef());
 
-	srvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 16, true);
-	rtvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 8, false);
+	srvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, true);
+	rtvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, false);
 	dsvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 4, false);
 
 	uploader.initialize();

@@ -14,6 +14,8 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 	this->device = &device;
 	this->size = size;
 
+	const uint16x2 bloomRootLevelTextureSize(size.x / 4, size.y / 4);
+
 	ID3D12Device *d3dDevice = device.d3dDevice;
 
 	d3dDevice->CreateCommittedResource(
@@ -47,6 +49,33 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 		&D3D12ClearValue_Color(DXGI_FORMAT_R11G11B10_FLOAT),
 		d3dHDRTexture.uuid(), d3dHDRTexture.voidInitRef());
 
+	uint16x2 currentBloomLevelTextureSize = bloomRootLevelTextureSize;
+	for (uint32 i = 0; i < BloomLevelCount; i++)
+	{
+		d3dDevice->CreateCommittedResource(
+			&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+			&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R11G11B10_FLOAT,
+				currentBloomLevelTextureSize.x, currentBloomLevelTextureSize.y,
+				D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, 1),
+			D3D12_RESOURCE_STATE_RENDER_TARGET,
+			&D3D12ClearValue_Color(DXGI_FORMAT_R11G11B10_FLOAT),
+			d3dBloomTextures[i].uuid(), d3dBloomTextures[i].voidInitRef());
+
+		// TODO: handle small target size
+
+		currentBloomLevelTextureSize.x /= 2;
+		currentBloomLevelTextureSize.y /= 2;
+	}
+
+	d3dDevice->CreateCommittedResource(
+		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R11G11B10_FLOAT,
+			bloomRootLevelTextureSize.x, bloomRootLevelTextureSize.y,
+			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, 1),
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		&D3D12ClearValue_Color(DXGI_FORMAT_R11G11B10_FLOAT),
+		d3dBloomBlurTemp.uuid(), d3dBloomBlurTemp.voidInitRef());
+
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
 		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R32_FLOAT, size.x / 2, size.y / 2,
@@ -54,26 +83,56 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 		D3D12_RESOURCE_STATE_RENDER_TARGET, nullptr,
 		d3dDownscaledX2DepthTexture.uuid(), d3dDownscaledX2DepthTexture.voidInitRef());
 
-	srvDescriptorsBaseIndex = device.srvHeap.allocate(4);
+	// Create SRV descriptors ===============================================================//
+
+	srvDescriptorsBaseIndex = device.srvHeap.allocate(SRVDescriptorIndex::Count);
+
+	// G-Buffer descritors range
 	d3dDevice->CreateShaderResourceView(d3dDiffuseTexture, nullptr,
-		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 0));
+		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::Diffuse));
 	d3dDevice->CreateShaderResourceView(d3dNormalRoughnessMetalnessTexture, nullptr,
-		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 1));
+		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::NormalRoughnessMetalness));
 	d3dDevice->CreateShaderResourceView(d3dDepthTexture,
 		&D3D12ShaderResourceViewDesc_Texture2D(DXGI_FORMAT_R24_UNORM_X8_TYPELESS),
-		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 2));
-	d3dDevice->CreateShaderResourceView(d3dHDRTexture, nullptr,
-		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 3));
+		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::Depth));
 
-	rtvDescriptorsBaseIndex = device.rtvHeap.allocate(4);
+	// TODO: HDR texture and bloom textures are used as single descriptor range as dirty upscale
+	//		implementation. Fix it
+	d3dDevice->CreateShaderResourceView(d3dHDRTexture, nullptr,
+		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::HDR));
+
+	for (uint32 i = 0; i < BloomLevelCount; i++)
+	{
+		d3dDevice->CreateShaderResourceView(d3dBloomTextures[i], nullptr,
+			device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::BloomBase + i));
+	}
+
+	d3dDevice->CreateShaderResourceView(d3dBloomBlurTemp, nullptr,
+		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::BloomBlurTemp));
+
+	// Create RTV descriptors ===============================================================//
+
+	rtvDescriptorsBaseIndex = device.rtvHeap.allocate(RTVDescriptorIndex::Count);
+
 	d3dDevice->CreateRenderTargetView(d3dDiffuseTexture, nullptr,
-		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + 0));
+		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::Diffuse));
 	d3dDevice->CreateRenderTargetView(d3dNormalRoughnessMetalnessTexture, nullptr,
-		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + 1));
+		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::NormalRoughnessMetalness));
 	d3dDevice->CreateRenderTargetView(d3dHDRTexture, nullptr,
-		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + 2));
+		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::HDR));
+
+	for (uint32 i = 0; i < BloomLevelCount; i++)
+	{
+		d3dDevice->CreateRenderTargetView(d3dBloomTextures[i], nullptr,
+			device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::BloomBase + i));
+	}
+	
+	d3dDevice->CreateRenderTargetView(d3dBloomBlurTemp, nullptr,
+		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::BloomBlurTemp));
 	d3dDevice->CreateRenderTargetView(d3dDownscaledX2DepthTexture, nullptr,
-		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + 3));
+		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::DownscaledX2Depth));
+
+	// Create DSV descriptors ===============================================================//
 
 	dsvDescriptorIndex = device.dsvHeap.allocate(1);
 	d3dDevice->CreateDepthStencilView(d3dDepthTexture,
@@ -83,5 +142,5 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 
 void GBuffer::resize(uint16x2 size)
 {
-
+	// TODO: implement resize
 }

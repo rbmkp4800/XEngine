@@ -74,6 +74,9 @@ namespace XEngine::Render::Device_
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDepthBufferDownscalePSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dShadowPassPSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomFilterAndDownscaleX4PSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomBlurPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomDownscaleX2PSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dToneMappingPSO;
 
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;

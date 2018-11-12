@@ -140,5 +140,8 @@
     <FxCompile Include="Source\Shaders\Effect_NormalTangentTexcoordVS.hlsl" />
     <FxCompile Include="Source\Shaders\Effect_AlbedoNormalRoughtnessMetalnessTexturePS.hlsl" />
     <FxCompile Include="Source\Shaders\ToneMappingPS.hlsl" />
+    <FxCompile Include="Source\Shaders\BloomFilterAndDownscaleX4PS.hlsl" />
+    <FxCompile Include="Source\Shaders\BloomBlurPS.hlsl" />
+    <FxCompile Include="Source\Shaders\BloomDownscaleX2PS.hlsl" />
   </ItemGroup>
 </Project>
