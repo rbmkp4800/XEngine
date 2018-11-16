@@ -42,8 +42,13 @@ using namespace XEngine::Core;
 static Thread dispatchThread;
 static Event controlEvent;
 static HWND hWnd = nullptr;
+
 static CursorState cursorState = CursorState::Default;
 static bool cursorIsHidden = false;
+
+static bool cursorAbsoluteMovementInitialized = false;
+static uint16 cursorLastAbsoluteX = 0;
+static uint16 cursorLastAbsoluteY = 0;
 
 static bool windowClassRegistered = false;
 static bool rawInputRegistered = false;
@@ -104,10 +109,7 @@ static void HandleRawInput(WPARAM wParam, LPARAM lParam)
 
 	if (inputBuffer.header.dwType == RIM_TYPEMOUSE)
 	{
-		auto& data = inputBuffer.data.mouse;
-
-		if (data.usFlags != 0)
-			return;
+		const auto& data = inputBuffer.data.mouse;
 
 		if (data.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN)
 			InputProxy::OnMouseButton(MouseButton::Left, true);
@@ -127,8 +129,56 @@ static void HandleRawInput(WPARAM wParam, LPARAM lParam)
 		if (data.usButtonFlags & RI_MOUSE_WHEEL)
 			InputProxy::OnMouseWheel(float32(sint16(data.usButtonData)) / float32(WHEEL_DELTA));
 
-		if (data.lLastX || data.lLastY)
-			InputProxy::OnMouseMove({ sint16(data.lLastX), sint16(data.lLastY) });
+		// TODO: Investigate further. Maybe add some logging during switch between modes
+		if (data.usFlags & MOUSE_MOVE_ABSOLUTE)
+		{
+			// Absolute movement. Used in RDP/TeamViewer session
+
+			uint16 currentAbsoluteX = 0;
+			uint16 currentAbsoluteY = 0;
+
+			if (data.usFlags & MOUSE_VIRTUAL_DESKTOP)
+			{
+				// http://www.petergiuntoli.com/parsing-wm_input-over-remote-desktop
+				// For virtual desktop coords: [0 .. MaxDim] map to [0 .. 0xFFFF]
+
+				// TODO: Handle virtual desktop size change properly
+				const uint32 virtualDesktopWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+				const uint32 virtualDesktopHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+				currentAbsoluteX = uint16(data.lLastX * virtualDesktopWidth / 0xFFFF);
+				currentAbsoluteY = uint16(data.lLastY * virtualDesktopHeight / 0xFFFF);
+			}
+			else
+			{
+				currentAbsoluteX = uint16(data.lLastX);
+				currentAbsoluteY = uint16(data.lLastY);
+			}
+
+			if (cursorAbsoluteMovementInitialized)
+			{
+				const sint32 deltaX = sint32(currentAbsoluteX) - sint32(cursorLastAbsoluteX);
+				const sint32 deltaY = sint32(currentAbsoluteY) - sint32(cursorLastAbsoluteY);
+
+				if (deltaX || deltaY)
+					InputProxy::OnMouseMove({ sint16(deltaX), sint16(deltaY) });
+			}
+			else
+				cursorAbsoluteMovementInitialized = true;
+
+			cursorLastAbsoluteX = currentAbsoluteX;
+			cursorLastAbsoluteY = currentAbsoluteY;
+		}
+		else
+		{
+			// Relative movement
+
+			if (data.lLastX || data.lLastY)
+				InputProxy::OnMouseMove({ sint16(data.lLastX), sint16(data.lLastY) });
+
+			// Assuming that absolute mode can be switched back to relative
+			cursorAbsoluteMovementInitialized = false;
+		}
 	}
 	else if (inputBuffer.header.dwType == RIM_TYPEKEYBOARD)
 	{
@@ -155,7 +205,11 @@ static LRESULT __stdcall WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 			if (LOWORD(wParam) != WA_INACTIVE)
 				ApplyCursorState();
 			else
+			{
 				ResetCursor();
+
+				cursorAbsoluteMovementInitialized = false;
+			}
 			break;
 
 		case WM_SYSCOMMAND:
