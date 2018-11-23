@@ -17,7 +17,7 @@ namespace XEngine::Render
 		friend Device_::SceneRenderer;
 
 	private:
-		static constexpr uint32 BloomLevelCount = 4;
+		static constexpr uint32 BloomLevelCount = 5;
 
 		struct SRVDescriptorIndex
 		{
@@ -27,8 +27,8 @@ namespace XEngine::Render
 				NormalRoughnessMetalness,
 				Depth,
 				HDR,
-				BloomBase,
-				BloomBlurTemp = BloomBase + BloomLevelCount,
+				BloomA,
+				BloomB,
 
 				Count,
 			};
@@ -41,9 +41,9 @@ namespace XEngine::Render
 				Diffuse = 0,
 				NormalRoughnessMetalness,
 				HDR,
-				BloomBase,
-				BloomBlurTemp = BloomBase + BloomLevelCount,
-				DownscaledX2Depth,
+				BloomABase,
+				BloomBBase = BloomABase + BloomLevelCount,
+				DownscaledX2Depth = BloomBBase + BloomLevelCount,
 
 				Count,
 			};
@@ -56,8 +56,7 @@ namespace XEngine::Render
 		XLib::Platform::COMPtr<ID3D12Resource> d3dNormalRoughnessMetalnessTexture;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dDepthTexture;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dHDRTexture;
-		XLib::Platform::COMPtr<ID3D12Resource> d3dBloomTextures[BloomLevelCount];
-		XLib::Platform::COMPtr<ID3D12Resource> d3dBloomBlurTemp;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dBloomTextureA, d3dBloomTextureB;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dDownscaledX2DepthTexture;
 
 		uint16x2 size = { 0, 0 };

@@ -1,5 +1,6 @@
 #include <d3d12.h>
 
+#include <XLib.Util.h>
 #include <XLib.Platform.D3D12.Helpers.h>
 
 #include "XEngine.Render.GBuffer.h"
@@ -13,8 +14,6 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 {
 	this->device = &device;
 	this->size = size;
-
-	const uint16x2 bloomRootLevelTextureSize(size.x / 4, size.y / 4);
 
 	ID3D12Device *d3dDevice = device.d3dDevice;
 
@@ -49,32 +48,27 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 		&D3D12ClearValue_Color(DXGI_FORMAT_R11G11B10_FLOAT),
 		d3dHDRTexture.uuid(), d3dHDRTexture.voidInitRef());
 
-	uint16x2 currentBloomLevelTextureSize = bloomRootLevelTextureSize;
-	for (uint32 i = 0; i < BloomLevelCount; i++)
-	{
-		d3dDevice->CreateCommittedResource(
-			&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-			&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R11G11B10_FLOAT,
-				currentBloomLevelTextureSize.x, currentBloomLevelTextureSize.y,
-				D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, 1),
-			D3D12_RESOURCE_STATE_RENDER_TARGET,
-			&D3D12ClearValue_Color(DXGI_FORMAT_R11G11B10_FLOAT),
-			d3dBloomTextures[i].uuid(), d3dBloomTextures[i].voidInitRef());
-
-		// TODO: handle small target size
-
-		currentBloomLevelTextureSize.x /= 2;
-		currentBloomLevelTextureSize.y /= 2;
-	}
+	const uint16 bloomAlignment = 1 << BloomLevelCount;
+	const uint16x2 bloomBaseLevelTextureSize =
+		uint16x2(alignup(size.x / 4, bloomAlignment), alignup(size.y / 4, bloomAlignment));
 
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
 		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R11G11B10_FLOAT,
-			bloomRootLevelTextureSize.x, bloomRootLevelTextureSize.y,
-			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, 1),
+			bloomBaseLevelTextureSize.x, bloomBaseLevelTextureSize.y,
+			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, BloomLevelCount),
 		D3D12_RESOURCE_STATE_RENDER_TARGET,
 		&D3D12ClearValue_Color(DXGI_FORMAT_R11G11B10_FLOAT),
-		d3dBloomBlurTemp.uuid(), d3dBloomBlurTemp.voidInitRef());
+		d3dBloomTextureA.uuid(), d3dBloomTextureA.voidInitRef());
+
+	d3dDevice->CreateCommittedResource(
+		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R11G11B10_FLOAT,
+			bloomBaseLevelTextureSize.x, bloomBaseLevelTextureSize.y,
+			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, BloomLevelCount),
+		D3D12_RESOURCE_STATE_RENDER_TARGET,
+		&D3D12ClearValue_Color(DXGI_FORMAT_R11G11B10_FLOAT),
+		d3dBloomTextureB.uuid(), d3dBloomTextureB.voidInitRef());
 
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
@@ -96,19 +90,13 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 		&D3D12ShaderResourceViewDesc_Texture2D(DXGI_FORMAT_R24_UNORM_X8_TYPELESS),
 		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::Depth));
 
-	// TODO: HDR texture and bloom textures are used as single descriptor range as dirty upscale
-	//		implementation. Fix it
+	// NOTE: HDR and BloomA texture are used as single range in ToneMapping
 	d3dDevice->CreateShaderResourceView(d3dHDRTexture, nullptr,
 		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::HDR));
-
-	for (uint32 i = 0; i < BloomLevelCount; i++)
-	{
-		d3dDevice->CreateShaderResourceView(d3dBloomTextures[i], nullptr,
-			device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::BloomBase + i));
-	}
-
-	d3dDevice->CreateShaderResourceView(d3dBloomBlurTemp, nullptr,
-		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::BloomBlurTemp));
+	d3dDevice->CreateShaderResourceView(d3dBloomTextureA, nullptr,
+		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::BloomA));
+	d3dDevice->CreateShaderResourceView(d3dBloomTextureB, nullptr,
+		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::BloomB));
 
 	// Create RTV descriptors ===============================================================//
 
@@ -123,12 +111,12 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 
 	for (uint32 i = 0; i < BloomLevelCount; i++)
 	{
-		d3dDevice->CreateRenderTargetView(d3dBloomTextures[i], nullptr,
-			device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::BloomBase + i));
+		d3dDevice->CreateRenderTargetView(d3dBloomTextureA, &D3D12RenderTargetViewDesc_Texture2D(i),
+			device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::BloomABase + i));
+		d3dDevice->CreateRenderTargetView(d3dBloomTextureB, &D3D12RenderTargetViewDesc_Texture2D(i),
+			device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::BloomBBase + i));
 	}
-	
-	d3dDevice->CreateRenderTargetView(d3dBloomBlurTemp, nullptr,
-		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::BloomBlurTemp));
+
 	d3dDevice->CreateRenderTargetView(d3dDownscaledX2DepthTexture, nullptr,
 		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::DownscaledX2Depth));
 

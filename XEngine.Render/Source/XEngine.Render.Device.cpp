@@ -50,8 +50,8 @@ bool Device::initialize()
 		d3dCopyQueue.uuid(), d3dCopyQueue.voidInitRef());
 
 	srvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 32, true);
-	rtvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 16, false);
-	dsvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 4, false);
+	rtvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 32, false);
+	dsvHeap.initalize(d3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 8, false);
 
 	uploader.initialize();
 	sceneRenderer.initialize();

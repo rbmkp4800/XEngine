@@ -14,9 +14,11 @@ namespace XEngine::Render::Internal
 		static const ShaderData ScreenQuadVS;
 		static const ShaderData DepthBufferDownscalePS;
 		static const ShaderData LightingPassPS;
-		static const ShaderData BloomFilterAndDownscaleX4PS;
-		static const ShaderData BloomBlurPS;
-		static const ShaderData BloomDownscaleX2PS;
+		static const ShaderData BloomFilterAndDownscalePS;
+		static const ShaderData BloomDownscalePS;
+		static const ShaderData BloomBlurHorizontalPS;
+		static const ShaderData BloomBlurVerticalPS;
+		static const ShaderData BloomBlurVerticalAndAccumulatePS;
 		static const ShaderData ToneMappingPS;
 
 		static const ShaderData SceneGeometryPositionOnlyVS;

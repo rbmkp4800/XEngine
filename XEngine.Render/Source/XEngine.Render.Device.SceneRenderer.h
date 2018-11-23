@@ -47,7 +47,12 @@ namespace XEngine::Render
 			XLib::TimerRecord gpuShadowPassFinish;
 			XLib::TimerRecord gpuLightingPassStart;
 		};
-		XLib::TimerRecord gpuLightingPassFinish;
+		union
+		{
+			XLib::TimerRecord gpuLightingPassFinish;
+			XLib::TimerRecord gpuPostProcessStart;
+		};
+		XLib::TimerRecord gpuPostProcessFinish;
 	};
 }
 
@@ -74,9 +79,11 @@ namespace XEngine::Render::Device_
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDepthBufferDownscalePSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dShadowPassPSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dLightingPassPSO;
-		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomFilterAndDownscaleX4PSO;
-		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomBlurPSO;
-		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomDownscaleX2PSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomFilterAndDownscalePSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomDownscalePSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomBlurHorizontalPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomBlurVerticalPSO;
+		XLib::Platform::COMPtr<ID3D12PipelineState> d3dBloomBlurVerticalAndAccumulatePSO;
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dToneMappingPSO;
 
 		XLib::Platform::COMPtr<ID3D12PipelineState> d3dDebugWireframePSO;
