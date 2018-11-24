@@ -36,7 +36,7 @@ PSOutput main(PSInput input)
 	PSOutput output;
 	output.albedo = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	output.normalRoughnessMetalness.xy = normalize(input.normal).xy;
-	output.normalRoughnessMetalness.zw = float2(0.0f, 1.0f);
+	output.normalRoughnessMetalness.zw = float2(1.0f, 0.0f);
 	output.luminance = materialsTable.items[materialIndex].emissiveColor;
 	return output;
 }
