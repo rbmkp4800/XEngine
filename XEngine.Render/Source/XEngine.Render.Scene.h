@@ -57,8 +57,6 @@ namespace XEngine::Render
 
 		struct TransformGroup;
 		struct BVHNode;
-
-		struct ShadowCameraTransformConstants;
 		
 		struct Instance // 28 bytes
 		{
@@ -81,6 +79,7 @@ namespace XEngine::Render
 			float32x3 shadowVolumeSize;
 			//rectu16 shadowMapRect;
 			uint16 dsvDescriptorIndex;
+			uint16 shadowMapDim;
 		};
 
 		struct PointLight
@@ -100,12 +99,10 @@ namespace XEngine::Render
 
 		XLib::Platform::COMPtr<ID3D12Resource> d3dTransformBuffer;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dCommandListArena;
-		XLib::Platform::COMPtr<ID3D12Resource> d3dShadowCameraTransformsCB;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dShadowMapAtlas;
 
 		XLib::Matrix3x4 *mappedTransformBuffer = nullptr;
 		byte *mappedCommandListArena = nullptr;
-		ShadowCameraTransformConstants *mappedShadowCameraTransformsCB = nullptr;
 
 		DirectionalLight directionalLights[directionalLightsLimit] = {};
 
@@ -123,7 +120,7 @@ namespace XEngine::Render
 		void populateCommandListForGBufferPass(ID3D12GraphicsCommandList* d3dCommandList,
 			ID3D12CommandSignature* d3dICS, bool useEffectPSOs);
 		void populateCommandListForShadowPass(ID3D12GraphicsCommandList* d3dCommandList,
-			ID3D12CommandSignature* d3dICS, ID3D12PipelineState* d3dPSO);
+			ID3D12CommandSignature* d3dICS);
 
 	public:
 		Scene() = default;

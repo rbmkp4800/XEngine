@@ -61,10 +61,6 @@ namespace XEngine::Render::Device_
 	class SceneRenderer : public XLib::NonCopyable
 	{
 	private:
-		struct CameraTransformConstants;
-		struct LightingPassConstants;
-
-	private:
 		XLib::Platform::COMPtr<ID3D12CommandAllocator> d3dGBufferPassCA;
 		XLib::Platform::COMPtr<ID3D12GraphicsCommandList> d3dGBufferPassCL;
 		XLib::Platform::COMPtr<ID3D12CommandAllocator> d3dFrameFinishCA;
@@ -90,10 +86,8 @@ namespace XEngine::Render::Device_
 
 		XLib::Platform::COMPtr<ID3D12Resource> d3dReadbackBuffer;
 
-		XLib::Platform::COMPtr<ID3D12Resource> d3dCameraTransformCB;
-		XLib::Platform::COMPtr<ID3D12Resource> d3dLightingPassCB;
-		CameraTransformConstants *mappedCameraTransformCB = nullptr;
-		LightingPassConstants *mappedLightingPassCB = nullptr;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dFrameConstantsBuffer;
+		byte *mappedFrameConstantsBuffer = nullptr;
 
 		XLib::Platform::COMPtr<ID3D12QueryHeap> d3dTimestampQueryHeap;
 

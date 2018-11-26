@@ -67,12 +67,6 @@ struct Scene::BVHNode // 36 bytes
 	uint32 parent;
 };
 
-struct alignas(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT)
-	Scene::ShadowCameraTransformConstants
-{
-	Matrix4x4 transform;
-};
-
 // public ===================================================================================//
 
 void Scene::initialize(Device& device, uint32 initialTransformBufferSize)
@@ -95,22 +89,15 @@ void Scene::initialize(Device& device, uint32 initialTransformBufferSize)
 		d3dCommandListArena.uuid(), d3dCommandListArena.voidInitRef());
 
 	d3dDevice->CreateCommittedResource(
-		&D3D12HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-		&D3D12ResourceDesc_Buffer(sizeof(ShadowCameraTransformConstants)),
-		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		d3dShadowCameraTransformsCB.uuid(), d3dShadowCameraTransformsCB.voidInitRef());
-
-	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
 		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R16_TYPELESS, shadowMapDim, shadowMapDim,
-			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, 1),
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,
 		&D3D12ClearValue_DepthStencil(DXGI_FORMAT_D16_UNORM, 1.0f),
 		d3dShadowMapAtlas.uuid(), d3dShadowMapAtlas.voidInitRef());
 
 	d3dTransformBuffer->Map(0, &D3D12Range(), to<void**>(&mappedTransformBuffer));
 	d3dCommandListArena->Map(0, &D3D12Range(), to<void**>(&mappedCommandListArena));
-	d3dShadowCameraTransformsCB->Map(0, &D3D12Range(), to<void**>(&mappedShadowCameraTransformsCB));
 
 	shadowMapAtlasSRVDescriptorIndex = device.srvHeap.allocate(1);
 	d3dDevice->CreateShaderResourceView(d3dShadowMapAtlas,
@@ -247,29 +234,32 @@ GeometryInstanceHandle Scene::createGeometryInstance(const GeometryDesc& geometr
 
 uint8 Scene::createDirectionalLight(const DirectionalLightDesc& desc)
 {
-	if (directionalLightCount)
-		return 0;
+	// TODO: handle directional lights limit
 
-	uint8 result = directionalLightCount;
+	const uint8 result = directionalLightCount;
+	directionalLightCount++;
 
 	directionalLights[result].desc = desc;
 	directionalLights[result].shadowVolumeOrigin = VectorMath::Normalize(desc.direction) * -20.0f;
 	directionalLights[result].shadowVolumeSize = { 40.0f, 40.0f, 40.0f };
+	directionalLights[result].shadowMapDim = shadowMapDim;
 
-	directionalLights[result].dsvDescriptorIndex = device->dsvHeap.allocate(1);
+	const uint16 dsvDescriptorIndex = device->dsvHeap.allocate(1);
 	device->d3dDevice->CreateDepthStencilView(d3dShadowMapAtlas,
 		&D3D12DepthStencilViewDesc_Texture2D(DXGI_FORMAT_D16_UNORM),
-		device->dsvHeap.getCPUHandle(directionalLights[0].dsvDescriptorIndex));
+		device->dsvHeap.getCPUHandle(dsvDescriptorIndex));
 
-	directionalLightCount++;
+	directionalLights[result].dsvDescriptorIndex = dsvDescriptorIndex;
 
 	return 0;
 }
 
 void Scene::updateDirectionalLightDirection(uint8 id, float32x3 direction)
 {
-	directionalLights[0].desc.direction = direction;
-	directionalLights[0].shadowVolumeOrigin = VectorMath::Normalize(direction) * -16.0f;
+	// TODO: handle wrong id
+
+	directionalLights[id].desc.direction = direction;
+	directionalLights[id].shadowVolumeOrigin = VectorMath::Normalize(direction) * -16.0f;
 }
 
 // private ==================================================================================//
@@ -277,8 +267,7 @@ void Scene::updateDirectionalLightDirection(uint8 id, float32x3 direction)
 void Scene::populateCommandListForGBufferPass(ID3D12GraphicsCommandList* d3dCommandList,
 	ID3D12CommandSignature* d3dICS, bool useEffectPSOs)
 {
-	d3dCommandList->SetGraphicsRootShaderResourceView(3,
-		d3dTransformBuffer->GetGPUVirtualAddress());
+	d3dCommandList->SetGraphicsRootShaderResourceView(3, d3dTransformBuffer->GetGPUVirtualAddress());
 
 	for (CommandListDesc& commandList : commandLists)
 	{
@@ -297,31 +286,9 @@ void Scene::populateCommandListForGBufferPass(ID3D12GraphicsCommandList* d3dComm
 }
 
 void Scene::populateCommandListForShadowPass(ID3D12GraphicsCommandList* d3dCommandList,
-	ID3D12CommandSignature* d3dICS, ID3D12PipelineState* d3dPSO)
+	ID3D12CommandSignature* d3dICS)
 {
-	if (directionalLightCount == 0)
-		return;
-
-	const DirectionalLight& light = directionalLights[0];
-
-	mappedShadowCameraTransformsCB->transform =
-		Matrix4x4::LookAtCentered(light.shadowVolumeOrigin, light.desc.direction, { 0.0f, 0.0f, 1.0f })
-		* Matrix4x4::Scale(float32x3(1.0f, 1.0f, 1.0f) / light.shadowVolumeSize);
-
-	D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle =
-		device->dsvHeap.getCPUHandle(directionalLights[0].dsvDescriptorIndex);
-
-	d3dCommandList->OMSetRenderTargets(0, nullptr, FALSE, &dsvDescriptorHandle);
-	d3dCommandList->ClearDepthStencilView(dsvDescriptorHandle,
-		D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-	d3dCommandList->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, shadowMapDim, shadowMapDim));
-	d3dCommandList->RSSetScissorRects(1, &D3D12Rect(0, 0, shadowMapDim, shadowMapDim));
-
 	d3dCommandList->SetGraphicsRootShaderResourceView(3, d3dTransformBuffer->GetGPUVirtualAddress());
-	d3dCommandList->SetGraphicsRootConstantBufferView(4, d3dShadowCameraTransformsCB->GetGPUVirtualAddress());
-
-	d3dCommandList->SetPipelineState(d3dPSO);
 
 	for (CommandListDesc& commandList : commandLists)
 	{
