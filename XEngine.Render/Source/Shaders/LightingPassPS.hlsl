@@ -1,12 +1,16 @@
+// NOTE: view-world space logic is completely broken
+// TODO: fix that
+
 struct DirectionalLight
 {
 	float4x4 shadowTextureTransform;
-	float3 direction;
+	float3 viewSpaceDirection;
 	float3 color;
 };
 
 struct PointLight
 {
+	float4x4 shadowTextureTransforms[6];
 	float3 viewSpacePosition;
 	float3 color;
 };
@@ -29,9 +33,9 @@ cbuffer Constants : register(b0)
 Texture2D<float4> albedoTexture : register(t0);
 Texture2D<float4> normalRoughnessMetalnessTexture : register(t1);
 Texture2D<float> depthTexture : register(t2);
-Texture2D<float> shadowMap : register(t3);
+Texture2D<float> directionalLightShadowMap : register(t3);
+Texture2DArray<float> pointLightsShadowMaps : register(t4);
 
-//SamplerState shadowSampler : register(s0);
 SamplerComparisonState shadowSampler : register(s0);
 
 struct PSInput
@@ -94,6 +98,24 @@ float3 ComputeLighting(float3 diffuseColor, float3 specularColor, float3 lightCo
 	return (diffuseContribution + specularContribution) * lightColor * NdotL;
 }
 
+uint GetCubeFaceIndex(float3 v)
+{
+	// UnrealEngine/Engine/Shaders/Private/ShadowProjectionCommon.ush: CubemapHardwarePCF()
+
+	float3 absv = abs(v);
+	float maxCoordinate = max(absv.x, max(absv.y, absv.z));
+
+	int cubeFaceIndex = 0;
+	if (maxCoordinate == absv.x)
+		cubeFaceIndex = absv.x == v.x ? 0 : 1;
+	else if (maxCoordinate == absv.y)
+		cubeFaceIndex = absv.y == v.y ? 2 : 3;
+	else
+		cubeFaceIndex = absv.z == v.z ? 4 : 5;
+
+	return cubeFaceIndex;
+}
+
 float4 main(PSInput input) : SV_Target
 {
 	int2 texPosition = int2(input.position.xy);
@@ -135,10 +157,10 @@ float4 main(PSInput input) : SV_Target
 	for (uint i = 0; i < directionalLightCount; i++)
 	{
 		float3 shadowCoord = mul(directionalLights[i].shadowTextureTransform, float4(worldSpacePosition, 1.0f)).xyz;
-		float shadow = shadowMap.SampleCmpLevelZero(shadowSampler, shadowCoord.xy, shadowCoord.z - 0.01f);
+		float shadow = directionalLightShadowMap.SampleCmpLevelZero(shadowSampler, shadowCoord.xy, shadowCoord.z - 0.01f);
 
 		float3 lighting = ComputeLighting(diffuseColor, specularColor,
-			directionalLights[i].color, V, directionalLights[i].direction,
+			directionalLights[i].color, V, directionalLights[i].viewSpaceDirection,
 			normal, NdotV, alphaRoughnessSqr, k);
 
 		sum += lighting * sqr(shadow);
@@ -148,6 +170,16 @@ float4 main(PSInput input) : SV_Target
 	[loop]
 	for (uint i = 0; i < pointLightCount; i++) 
 	{
+		float3 lightWorldSpacePosition = mul((float3x4) inverseView, float4(pointLights[i].viewSpacePosition, 1.0f));
+		float3 worldLightVector = worldSpacePosition - lightWorldSpacePosition;
+		uint cubeFaceIndex = GetCubeFaceIndex(worldLightVector);
+
+		float4 shadowCoord = mul(pointLights[i].shadowTextureTransforms[cubeFaceIndex], float4(worldSpacePosition, 1.0f));
+		shadowCoord.xyz *= rcp(shadowCoord.w);
+
+		float shadow = pointLightsShadowMaps.SampleCmpLevelZero(shadowSampler,
+			float3(shadowCoord.xy, cubeFaceIndex), shadowCoord.z - 0.01f / shadowCoord.w);
+
 		float3 lightVector = pointLights[i].viewSpacePosition - viewSpacePosition;
 		float invLightDistance = rcp(length(lightVector));
 		float3 L = lightVector * invLightDistance; // normalized light vector
@@ -156,7 +188,7 @@ float4 main(PSInput input) : SV_Target
 			pointLights[i].color * sqr(invLightDistance), V, L,
 			normal, NdotV, alphaRoughnessSqr, k);
 
-		sum += lighting;
+		sum += lighting * sqr(shadow);
 	}
 
 	float3 ambient = 0.03f * albedo;

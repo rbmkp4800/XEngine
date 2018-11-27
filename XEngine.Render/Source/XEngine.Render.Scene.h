@@ -53,7 +53,9 @@ namespace XEngine::Render
 		friend Device_::SceneRenderer;
 
 	private:
+		static constexpr uint8 pointLightsLimit = 4;
 		static constexpr uint8 directionalLightsLimit = 2;
+		static constexpr uint32 pointLightShadowMapDim = 512;
 
 		struct TransformGroup;
 		struct BVHNode;
@@ -85,7 +87,7 @@ namespace XEngine::Render
 		struct PointLight
 		{
 			PointLightDesc desc;
-			rectu16 shadowMapRect;
+			uint16 dsvDescriptorsBaseIndex;
 		};
 
 	private:
@@ -100,10 +102,12 @@ namespace XEngine::Render
 		XLib::Platform::COMPtr<ID3D12Resource> d3dTransformBuffer;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dCommandListArena;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dShadowMapAtlas;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dPointLightShadowMaps;
 
 		XLib::Matrix3x4 *mappedTransformBuffer = nullptr;
 		byte *mappedCommandListArena = nullptr;
 
+		PointLight pointLights[pointLightsLimit] = {};
 		DirectionalLight directionalLights[directionalLightsLimit] = {};
 
 		uint32 transformBufferSize = 0;
@@ -112,7 +116,7 @@ namespace XEngine::Render
 
 		uint32 bvhRootIndex = uint32(-1);
 
-		uint16 shadowMapAtlasSRVDescriptorIndex = 0;
+		uint16 srvDescriptorsBaseIndex = 0;
 		uint16 pointLightCount = 0;
 		uint8 directionalLightCount = 0;
 

@@ -24,7 +24,7 @@ using namespace XEngine::Render::Device_;
 
 namespace
 {
-	constexpr uint32 frameConstantsBufferSize = 4096;
+	constexpr uint32 frameConstantsBufferSize = 16384;
 
 	class GPUTimestampId abstract final
 	{
@@ -48,7 +48,7 @@ namespace
 		Matrix4x4 view;
 	};
 
-	struct DirectionalShadowTransformConstants
+	struct ShadowTransformConstants
 	{
 		Matrix4x4 transform;
 	};
@@ -77,12 +77,37 @@ namespace
 
 		struct PointLight
 		{
+			Matrix4x4 shadowTextureTransforms[6];
 			float32x3 viewSpacePosition;
 			uint32 _padding0;
 			float32x3 color;
 			uint32 _padding1;
 		} pointLights[4];
 	};
+
+	inline Matrix4x4 getPointLightShadowDirectionTransform(float32x3 position, uint8 direction)
+	{
+		float32x3 target = { 0.0f, 0.0f, 0.0f };
+		if (direction == 0)
+			target.x = +1.0f;
+		else if (direction == 1)
+			target.x = -1.0f;
+		else if (direction == 2)
+			target.y = +1.0f;
+		else if (direction == 3)
+			target.y = -1.0f;
+		else if (direction == 4)
+			target.z = +1.0f;
+		else if (direction == 5)
+			target.z = -1.0f;
+
+		const float32x3 up = direction == 4 || direction == 5 ?
+			float32x3(1.0f, 0.0f, 0.0f) : float32x3(0.0f, 0.0f, 1.0f);
+
+		return
+			Matrix4x4::LookAtCentered(position, target, up) *
+			Matrix4x4::Perspective(Math::HalfPi<float32>, 1.0f, 0.5f, 20.0f);
+	}
 }
 
 void SceneRenderer::initialize()
@@ -149,7 +174,7 @@ void SceneRenderer::initialize()
 		};
 		D3D12_DESCRIPTOR_RANGE shadowMapRanges[] =
 		{
-			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 3, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 3, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
 		};
 
 		D3D12_ROOT_PARAMETER rootParameters[] =
@@ -446,13 +471,19 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 
 	uint32 frameConstantsBufferBytesUsed = 0;
 
-	CameraTransformConstants *mappedCameraTransformConstants = to<CameraTransformConstants*>(mappedFrameConstantsBuffer + frameConstantsBufferBytesUsed);
-	const D3D12_GPU_VIRTUAL_ADDRESS cameraTransformConstantsAddress = frameConstantsBufferAddress + frameConstantsBufferBytesUsed;
-	frameConstantsBufferBytesUsed += alignup<uint32>(sizeof(CameraTransformConstants), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+	CameraTransformConstants *mappedCameraTransformConstants =
+		to<CameraTransformConstants*>(mappedFrameConstantsBuffer + frameConstantsBufferBytesUsed);
+	const D3D12_GPU_VIRTUAL_ADDRESS cameraTransformConstantsAddress =
+		frameConstantsBufferAddress + frameConstantsBufferBytesUsed;
+	frameConstantsBufferBytesUsed += alignup<uint32>(
+		sizeof(CameraTransformConstants), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
-	LightingPassConstants *mappedLightingPassConstants = to<LightingPassConstants*>(mappedFrameConstantsBuffer + frameConstantsBufferBytesUsed);
-	const D3D12_GPU_VIRTUAL_ADDRESS lightingPassConstantsAddress = frameConstantsBufferAddress + frameConstantsBufferBytesUsed;
-	frameConstantsBufferBytesUsed += alignup<uint32>(sizeof(LightingPassConstants), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+	LightingPassConstants *mappedLightingPassConstants =
+		to<LightingPassConstants*>(mappedFrameConstantsBuffer + frameConstantsBufferBytesUsed);
+	const D3D12_GPU_VIRTUAL_ADDRESS lightingPassConstantsAddress =
+		frameConstantsBufferAddress + frameConstantsBufferBytesUsed;
+	frameConstantsBufferBytesUsed += alignup<uint32>(
+		sizeof(LightingPassConstants), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
 	// Updating frame constants =============================================================//
 	{
@@ -469,19 +500,39 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 		mappedLightingPassConstants->aspect = aspect;
 		mappedLightingPassConstants->halfFOVTan = Math::Tan(camera.fov * 0.5f);
 
-		mappedLightingPassConstants->pointLightCount = 1;
-		mappedLightingPassConstants->pointLights[0].viewSpacePosition = (float32x3(10.0f, 10.0f, 10.0f) * view).xyz;
-		mappedLightingPassConstants->pointLights[0].color = float32x3(1000.0f, 1000.0f, 1000.0f);
+		// TODO: handle limits
+		mappedLightingPassConstants->pointLightCount = scene.pointLightCount;
+		for (uint16 i = 0; i < scene.pointLightCount; i++)
+		{
+			const Scene::PointLight &srcLight = scene.pointLights[i];
+			LightingPassConstants::PointLight &dstLight = mappedLightingPassConstants->pointLights[i];
+
+			for (uint8 direction = 0; direction < 6; direction++)
+			{
+				dstLight.shadowTextureTransforms[direction] =
+					getPointLightShadowDirectionTransform(srcLight.desc.position, direction) *
+					Matrix4x4::Scale(float32x3(0.5f, -0.5f, 1.0f)) *
+					Matrix4x4::Translation(0.5f, 0.5f, 0.0f);
+			}
+			
+			dstLight.viewSpacePosition = (srcLight.desc.position * view).xyz;
+			dstLight.color = srcLight.desc.color;
+		}
+
 		mappedLightingPassConstants->directionalLightCount = scene.directionalLightCount;
 		for (uint8 i = 0; i < scene.directionalLightCount; i++)
 		{
 			const Scene::DirectionalLight &srcLight = scene.directionalLights[i];
 			LightingPassConstants::DirectionalLight &dstLight = mappedLightingPassConstants->directionalLights[i];
 
-			dstLight.shadowTextureTransform =
+			Matrix4x4 transform =
 				Matrix4x4::LookAtCentered(srcLight.shadowVolumeOrigin, srcLight.desc.direction, { 0.0f, 0.0f, 1.0f }) *
-				Matrix4x4::Scale(float32x3(0.5f, -0.5f, 1.0f) / srcLight.shadowVolumeSize) *
+				Matrix4x4::Scale(float32x3(1.0f, 1.0f, 1.0f) / srcLight.shadowVolumeSize);
+
+			dstLight.shadowTextureTransform = transform *
+				Matrix4x4::Scale(float32x3(0.5f, -0.5f, 1.0f)) *
 				Matrix4x4::Translation(0.5f, 0.5f, 0.0f);
+
 			dstLight.direction = VectorMath::Normalize(MultiplyBySubmatrix3x3(-srcLight.desc.direction, view));
 			dstLight.color = srcLight.desc.color;
 		}
@@ -595,34 +646,66 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 	}
 
 	// Shadow map pass ======================================================================//
+
 	d3dFrameFinishCL->SetGraphicsRootSignature(d3dGBufferPassRS);
+
+	d3dFrameFinishCL->SetPipelineState(d3dShadowPassPSO);
+
+	if (scene.pointLightCount)
+	{
+		const Scene::PointLight &light = scene.pointLights[0];
+
+		for (uint8 direction = 0; direction < 6; direction++)
+		{
+			ShadowTransformConstants *mappedShadowTransformConstants =
+				to<ShadowTransformConstants*>(mappedFrameConstantsBuffer + frameConstantsBufferBytesUsed);
+			const D3D12_GPU_VIRTUAL_ADDRESS shadowTransformConstantsAddress =
+				frameConstantsBufferAddress + frameConstantsBufferBytesUsed;
+			frameConstantsBufferBytesUsed += alignup<uint32>(
+				sizeof(ShadowTransformConstants), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+
+			mappedShadowTransformConstants->transform =
+				getPointLightShadowDirectionTransform(light.desc.position, direction);
+
+			const D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle =
+				device.dsvHeap.getCPUHandle(light.dsvDescriptorsBaseIndex + direction);
+			d3dFrameFinishCL->OMSetRenderTargets(0, nullptr, FALSE, &dsvDescriptorHandle);
+			d3dFrameFinishCL->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
+			const uint32 dim = Scene::pointLightShadowMapDim;
+			d3dFrameFinishCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, dim, dim));
+			d3dFrameFinishCL->RSSetScissorRects(1, &D3D12Rect(0, 0, dim, dim));
+
+			d3dFrameFinishCL->SetGraphicsRootConstantBufferView(4, shadowTransformConstantsAddress);
+
+			scene.populateCommandListForShadowPass(d3dFrameFinishCL, d3dGBufferPassICS);
+		}
+	}
 
 	for (uint8 i = 0; i < scene.directionalLightCount; i++)
 	{
-		const Scene::DirectionalLight& light = scene.directionalLights[0];
+		const Scene::DirectionalLight &light = scene.directionalLights[0];
 
-		DirectionalShadowTransformConstants *mappedShadowTransformConstants =
-			to<DirectionalShadowTransformConstants*>(mappedFrameConstantsBuffer + frameConstantsBufferBytesUsed);
+		ShadowTransformConstants *mappedShadowTransformConstants =
+			to<ShadowTransformConstants*>(mappedFrameConstantsBuffer + frameConstantsBufferBytesUsed);
 		const D3D12_GPU_VIRTUAL_ADDRESS shadowTransformConstantsAddress =
 			frameConstantsBufferAddress + frameConstantsBufferBytesUsed;
-		frameConstantsBufferBytesUsed += alignup<uint32>(sizeof(DirectionalShadowTransformConstants), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+		frameConstantsBufferBytesUsed += alignup<uint32>(
+			sizeof(ShadowTransformConstants), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
 		mappedShadowTransformConstants->transform =
 			Matrix4x4::LookAtCentered(light.shadowVolumeOrigin, light.desc.direction, { 0.0f, 0.0f, 1.0f }) *
 			Matrix4x4::Scale(float32x3(1.0f, 1.0f, 1.0f) / light.shadowVolumeSize);
 
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle = device.dsvHeap.getCPUHandle(light.dsvDescriptorIndex);
-
+		const D3D12_CPU_DESCRIPTOR_HANDLE dsvDescriptorHandle =
+			device.dsvHeap.getCPUHandle(light.dsvDescriptorIndex);
 		d3dFrameFinishCL->OMSetRenderTargets(0, nullptr, FALSE, &dsvDescriptorHandle);
-		d3dFrameFinishCL->ClearDepthStencilView(dsvDescriptorHandle,
-			D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+		d3dFrameFinishCL->ClearDepthStencilView(dsvDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 		d3dFrameFinishCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, light.shadowMapDim, light.shadowMapDim));
 		d3dFrameFinishCL->RSSetScissorRects(1, &D3D12Rect(0, 0, light.shadowMapDim, light.shadowMapDim));
 
 		d3dFrameFinishCL->SetGraphicsRootConstantBufferView(4, shadowTransformConstantsAddress);
-
-		d3dFrameFinishCL->SetPipelineState(d3dShadowPassPSO);
 
 		scene.populateCommandListForShadowPass(d3dFrameFinishCL, d3dGBufferPassICS);
 	}
@@ -640,6 +723,8 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 					D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 				D3D12ResourceBarrier_Transition(scene.d3dShadowMapAtlas,
 					D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
+				D3D12ResourceBarrier_Transition(scene.d3dPointLightShadowMaps,
+					D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE),
 			};
 
 			d3dFrameFinishCL->ResourceBarrier(countof(d3dBarriers), d3dBarriers);
@@ -655,7 +740,7 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 		d3dFrameFinishCL->SetGraphicsRootSignature(d3dLightingPassRS);
 		d3dFrameFinishCL->SetGraphicsRootConstantBufferView(0, lightingPassConstantsAddress);
 		d3dFrameFinishCL->SetGraphicsRootDescriptorTable(1, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex));
-		d3dFrameFinishCL->SetGraphicsRootDescriptorTable(2, device.srvHeap.getGPUHandle(scene.shadowMapAtlasSRVDescriptorIndex));
+		d3dFrameFinishCL->SetGraphicsRootDescriptorTable(2, device.srvHeap.getGPUHandle(scene.srvDescriptorsBaseIndex));
 
 		d3dFrameFinishCL->SetPipelineState(d3dLightingPassPSO);
 		d3dFrameFinishCL->DrawInstanced(3, 1, 0, 0);
@@ -670,6 +755,8 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 				D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
 					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
 				D3D12ResourceBarrier_Transition(scene.d3dShadowMapAtlas,
+					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
+				D3D12ResourceBarrier_Transition(scene.d3dPointLightShadowMaps,
 					D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_DEPTH_WRITE),
 			};
 

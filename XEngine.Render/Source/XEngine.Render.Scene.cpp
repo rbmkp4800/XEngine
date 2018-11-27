@@ -96,13 +96,26 @@ void Scene::initialize(Device& device, uint32 initialTransformBufferSize)
 		&D3D12ClearValue_DepthStencil(DXGI_FORMAT_D16_UNORM, 1.0f),
 		d3dShadowMapAtlas.uuid(), d3dShadowMapAtlas.voidInitRef());
 
+	d3dDevice->CreateCommittedResource(
+		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R16_TYPELESS,
+			pointLightShadowMapDim, pointLightShadowMapDim,
+			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, 1, 6),
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&D3D12ClearValue_DepthStencil(DXGI_FORMAT_D16_UNORM, 1.0f),
+		d3dPointLightShadowMaps.uuid(), d3dPointLightShadowMaps.voidInitRef());
+
 	d3dTransformBuffer->Map(0, &D3D12Range(), to<void**>(&mappedTransformBuffer));
 	d3dCommandListArena->Map(0, &D3D12Range(), to<void**>(&mappedCommandListArena));
 
-	shadowMapAtlasSRVDescriptorIndex = device.srvHeap.allocate(1);
+	srvDescriptorsBaseIndex = device.srvHeap.allocate(2);
+
 	d3dDevice->CreateShaderResourceView(d3dShadowMapAtlas,
 		&D3D12ShaderResourceViewDesc_Texture2D(DXGI_FORMAT_R16_UNORM),
-		device.srvHeap.getCPUHandle(shadowMapAtlasSRVDescriptorIndex));
+		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 0));
+	d3dDevice->CreateShaderResourceView(d3dPointLightShadowMaps,
+		&D3D12ShaderResourceViewDesc_Texture2DArray(DXGI_FORMAT_R16_UNORM, 0, 6),
+		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 1));
 }
 
 void Scene::destroy()
@@ -239,19 +252,39 @@ uint8 Scene::createDirectionalLight(const DirectionalLightDesc& desc)
 	const uint8 result = directionalLightCount;
 	directionalLightCount++;
 
-	directionalLights[result].desc = desc;
-	directionalLights[result].shadowVolumeOrigin = VectorMath::Normalize(desc.direction) * -20.0f;
-	directionalLights[result].shadowVolumeSize = { 40.0f, 40.0f, 40.0f };
-	directionalLights[result].shadowMapDim = shadowMapDim;
+	DirectionalLight &light = directionalLights[result];
+	light.desc = desc;
+	light.shadowVolumeOrigin = VectorMath::Normalize(desc.direction) * -20.0f;
+	light.shadowVolumeSize = { 40.0f, 40.0f, 40.0f };
+	light.shadowMapDim = shadowMapDim;
+	light.dsvDescriptorIndex = device->dsvHeap.allocate(1);
 
-	const uint16 dsvDescriptorIndex = device->dsvHeap.allocate(1);
 	device->d3dDevice->CreateDepthStencilView(d3dShadowMapAtlas,
 		&D3D12DepthStencilViewDesc_Texture2D(DXGI_FORMAT_D16_UNORM),
-		device->dsvHeap.getCPUHandle(dsvDescriptorIndex));
+		device->dsvHeap.getCPUHandle(light.dsvDescriptorIndex));
 
-	directionalLights[result].dsvDescriptorIndex = dsvDescriptorIndex;
+	return result;
+}
 
-	return 0;
+uint16 Scene::createPointLight(const PointLightDesc& desc)
+{
+	// TODO: handle point lights limit
+
+	const uint16 result = pointLightCount;
+	pointLightCount++;
+
+	PointLight &light = pointLights[result];
+	light.desc = desc;
+	light.dsvDescriptorsBaseIndex = device->dsvHeap.allocate(6);
+
+	for (uint16 i = 0; i < 6; i++)
+	{
+		device->d3dDevice->CreateDepthStencilView(d3dPointLightShadowMaps,
+			&D3D12DepthStencilViewDesc_Texture2DArray(DXGI_FORMAT_D16_UNORM, 0, i, 1),
+			device->dsvHeap.getCPUHandle(light.dsvDescriptorsBaseIndex + i));
+	}
+
+	return result;
 }
 
 void Scene::updateDirectionalLightDirection(uint8 id, float32x3 direction)
