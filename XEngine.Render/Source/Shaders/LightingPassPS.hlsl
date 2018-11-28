@@ -33,7 +33,7 @@ cbuffer Constants : register(b0)
 Texture2D<float4> albedoTexture : register(t0);
 Texture2D<float4> normalRoughnessMetalnessTexture : register(t1);
 Texture2D<float> depthTexture : register(t2);
-Texture2D<float> directionalLightShadowMap : register(t3);
+Texture2DArray<float> directionalLightsShadowMaps : register(t3);
 Texture2DArray<float> pointLightsShadowMaps : register(t4);
 
 SamplerComparisonState shadowSampler : register(s0);
@@ -116,6 +116,49 @@ uint GetCubeFaceIndex(float3 v)
 	return cubeFaceIndex;
 }
 
+float SampleShadowMap(Texture2DArray<float> shadowMaps, uint shadowMapIndex,
+	float shadowMapDim, float2 shadowTexcoord, float comparisionDepth)
+{
+	// https://github.com/TheRealMJP/Shadows Optimized PCF
+	// 5x5 PCF using 9 samples
+
+    const float invShadowMapSize = rcp(shadowMapDim);
+	const float2 uv = shadowTexcoord * shadowMapDim;
+
+	const float2 alignedUV = floor(uv + float2(0.5f, 0.5f)) - float2(0.5f, 0.5f);
+	const float2 offset = uv - alignedUV;
+	const float2 alignedCenterTexcoord = alignedUV * invShadowMapSize;
+
+	const float uw0 = 4.0f - 3.0f * offset.x;
+	const float uw1 = 7.0f;
+	const float uw2 = 1.0f + 3.0f * offset.x;
+
+	const float vw0 = 4.0f - 3.0f * offset.y;
+	const float vw1 = 7.0f;
+	const float vw2 = 1.0f + 3.0f * offset.y;
+
+	const float u0 = alignedCenterTexcoord.x + invShadowMapSize * ((3.0f - 2.0f * offset.x) / uw0 - 2.0f);
+	const float u1 = alignedCenterTexcoord.x + invShadowMapSize * ((3.0f + offset.x) / uw1);
+	const float u2 = alignedCenterTexcoord.x + invShadowMapSize * (offset.x / uw2 + 2.0f);
+
+	const float v0 = alignedCenterTexcoord.y + invShadowMapSize * ((3.0f - 2.0f * offset.y) / vw0 - 2.0f);
+	const float v1 = alignedCenterTexcoord.y + invShadowMapSize * ((3.0f + offset.y) / vw1);
+	const float v2 = alignedCenterTexcoord.y + invShadowMapSize * (offset.y / vw2 + 2.0f);
+
+	float sum = 0.0f;
+	sum += uw0 * vw0 * shadowMaps.SampleCmpLevelZero(shadowSampler, float3(u0, v0, shadowMapIndex), comparisionDepth);
+	sum += uw1 * vw0 * shadowMaps.SampleCmpLevelZero(shadowSampler, float3(u1, v0, shadowMapIndex), comparisionDepth);
+	sum += uw2 * vw0 * shadowMaps.SampleCmpLevelZero(shadowSampler, float3(u2, v0, shadowMapIndex), comparisionDepth);
+	sum += uw0 * vw1 * shadowMaps.SampleCmpLevelZero(shadowSampler, float3(u0, v1, shadowMapIndex), comparisionDepth);
+	sum += uw1 * vw1 * shadowMaps.SampleCmpLevelZero(shadowSampler, float3(u1, v1, shadowMapIndex), comparisionDepth);
+	sum += uw2 * vw1 * shadowMaps.SampleCmpLevelZero(shadowSampler, float3(u2, v1, shadowMapIndex), comparisionDepth);
+	sum += uw0 * vw2 * shadowMaps.SampleCmpLevelZero(shadowSampler, float3(u0, v2, shadowMapIndex), comparisionDepth);
+	sum += uw1 * vw2 * shadowMaps.SampleCmpLevelZero(shadowSampler, float3(u1, v2, shadowMapIndex), comparisionDepth);
+	sum += uw2 * vw2 * shadowMaps.SampleCmpLevelZero(shadowSampler, float3(u2, v2, shadowMapIndex), comparisionDepth);
+
+	return sum * 1.0f / 144.0f;
+}
+
 float4 main(PSInput input) : SV_Target
 {
 	int2 texPosition = int2(input.position.xy);
@@ -156,29 +199,28 @@ float4 main(PSInput input) : SV_Target
 	[loop]
 	for (uint i = 0; i < directionalLightCount; i++)
 	{
-		float3 shadowCoord = mul(directionalLights[i].shadowTextureTransform, float4(worldSpacePosition, 1.0f)).xyz;
-		float shadow = directionalLightShadowMap.SampleCmpLevelZero(shadowSampler, shadowCoord.xy, shadowCoord.z - 0.01f);
+		const float3 shadowSpacePosition = mul(directionalLights[i].shadowTextureTransform, float4(worldSpacePosition, 1.0f)).xyz;
+		const float shadowFactor = SampleShadowMap(directionalLightsShadowMaps, 0, 2048.0f, shadowSpacePosition.xy, shadowSpacePosition.z - 0.01f);
 
 		float3 lighting = ComputeLighting(diffuseColor, specularColor,
 			directionalLights[i].color, V, directionalLights[i].viewSpaceDirection,
 			normal, NdotV, alphaRoughnessSqr, k);
 
-		sum += lighting * sqr(shadow);
+		sum += lighting * sqr(shadowFactor);
 	}
 
 	// point lights
 	[loop]
 	for (uint i = 0; i < pointLightCount; i++) 
 	{
-		float3 lightWorldSpacePosition = mul((float3x4) inverseView, float4(pointLights[i].viewSpacePosition, 1.0f));
-		float3 worldLightVector = worldSpacePosition - lightWorldSpacePosition;
-		uint cubeFaceIndex = GetCubeFaceIndex(worldLightVector);
+		const float3 lightWorldSpacePosition = mul((float3x4) inverseView, float4(pointLights[i].viewSpacePosition, 1.0f));
+		const float3 worldLightVector = worldSpacePosition - lightWorldSpacePosition;
+		const uint cubeFaceIndex = GetCubeFaceIndex(worldLightVector);
 
-		float4 shadowCoord = mul(pointLights[i].shadowTextureTransforms[cubeFaceIndex], float4(worldSpacePosition, 1.0f));
-		shadowCoord.xyz *= rcp(shadowCoord.w);
+		float4 shadowSpacePosition = mul(pointLights[i].shadowTextureTransforms[cubeFaceIndex], float4(worldSpacePosition, 1.0f));
+		shadowSpacePosition.xyz *= rcp(shadowSpacePosition.w);
 
-		float shadow = pointLightsShadowMaps.SampleCmpLevelZero(shadowSampler,
-			float3(shadowCoord.xy, cubeFaceIndex), shadowCoord.z - 0.01f / shadowCoord.w);
+		const float shadowFactor = SampleShadowMap(pointLightsShadowMaps, cubeFaceIndex, 512.0f, shadowSpacePosition.xy, shadowSpacePosition.z - 0.01f / shadowSpacePosition.w);
 
 		float3 lightVector = pointLights[i].viewSpacePosition - viewSpacePosition;
 		float invLightDistance = rcp(length(lightVector));
@@ -188,7 +230,7 @@ float4 main(PSInput input) : SV_Target
 			pointLights[i].color * sqr(invLightDistance), V, L,
 			normal, NdotV, alphaRoughnessSqr, k);
 
-		sum += lighting * sqr(shadow);
+		sum += lighting * sqr(shadowFactor);
 	}
 
 	float3 ambient = 0.03f * albedo;

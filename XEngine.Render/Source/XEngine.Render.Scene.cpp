@@ -91,7 +91,7 @@ void Scene::initialize(Device& device, uint32 initialTransformBufferSize)
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
 		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R16_TYPELESS, shadowMapDim, shadowMapDim,
-			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, 1),
+			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, 1, 1),
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,
 		&D3D12ClearValue_DepthStencil(DXGI_FORMAT_D16_UNORM, 1.0f),
 		d3dShadowMapAtlas.uuid(), d3dShadowMapAtlas.voidInitRef());
@@ -111,7 +111,7 @@ void Scene::initialize(Device& device, uint32 initialTransformBufferSize)
 	srvDescriptorsBaseIndex = device.srvHeap.allocate(2);
 
 	d3dDevice->CreateShaderResourceView(d3dShadowMapAtlas,
-		&D3D12ShaderResourceViewDesc_Texture2D(DXGI_FORMAT_R16_UNORM),
+		&D3D12ShaderResourceViewDesc_Texture2DArray(DXGI_FORMAT_R16_UNORM, 0, 1),
 		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + 0));
 	d3dDevice->CreateShaderResourceView(d3dPointLightShadowMaps,
 		&D3D12ShaderResourceViewDesc_Texture2DArray(DXGI_FORMAT_R16_UNORM, 0, 6),
