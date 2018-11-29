@@ -34,10 +34,10 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R24G8_TYPELESS, size.x, size.y,
+		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R32_TYPELESS, size.x, size.y,
 			D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL, 1),
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&D3D12ClearValue_DepthStencil(DXGI_FORMAT_D24_UNORM_S8_UINT, 1.0f),
+		&D3D12ClearValue_DepthStencil(DXGI_FORMAT_D32_FLOAT, 1.0f),
 		d3dDepthTexture.uuid(), d3dDepthTexture.voidInitRef());
 
 	d3dDevice->CreateCommittedResource(
@@ -87,7 +87,7 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 	d3dDevice->CreateShaderResourceView(d3dNormalRoughnessMetalnessTexture, nullptr,
 		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::NormalRoughnessMetalness));
 	d3dDevice->CreateShaderResourceView(d3dDepthTexture,
-		&D3D12ShaderResourceViewDesc_Texture2D(DXGI_FORMAT_R24_UNORM_X8_TYPELESS),
+		&D3D12ShaderResourceViewDesc_Texture2D(DXGI_FORMAT_R32_FLOAT),
 		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::Depth));
 
 	// NOTE: HDR and BloomA texture are used as single range in ToneMapping
@@ -124,7 +124,7 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 
 	dsvDescriptorIndex = device.dsvHeap.allocate(1);
 	d3dDevice->CreateDepthStencilView(d3dDepthTexture,
-		&D3D12DepthStencilViewDesc_Texture2D(DXGI_FORMAT_D24_UNORM_S8_UINT),
+		&D3D12DepthStencilViewDesc_Texture2D(DXGI_FORMAT_D32_FLOAT),
 		device.dsvHeap.getCPUHandle(dsvDescriptorIndex));
 }
 

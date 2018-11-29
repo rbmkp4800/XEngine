@@ -1,19 +1,16 @@
-Texture2D<float> sourceTexture : register(t0, space1);
+Texture2D<float> sourceTexture : register(t0);
+SamplerState defaultSampler : register(s0);
 
-// TODO: check gather performance
-
-float main(float4 position : SV_Position) : SV_Target
+struct PSInput
 {
-	int2 texPosition = int2(position.xy) * 2;
+	float4 position : SV_Position;
+	// TODO: remove
+	float2 ndcPosition : POSITION0;
+	float2 texcoord : TEXCOORD0;
+};
 
-	float result = 0.0f;
-	[unroll]
-	for (int i = 0; i < 2; i++)
-	{
-		[unroll]
-		for (int j = 0; j < 2; j++)
-			result = max(result, sourceTexture[texPosition + int2(j, i)]);
-	}
-
-	return result;
+float main(PSInput input) : SV_Target
+{
+	const float4 depth = sourceTexture.GatherRed(defaultSampler, input.texcoord);
+	return max(max(depth.x, depth.y), max(depth.z, depth.w));
 }

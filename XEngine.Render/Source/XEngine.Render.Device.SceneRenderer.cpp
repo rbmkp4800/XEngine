@@ -166,6 +166,34 @@ void SceneRenderer::initialize()
 			d3dGBufferPassRS.uuid(), d3dGBufferPassRS.voidInitRef());
 	}
 
+	// Depth buffer downscale RS
+	{
+		D3D12_DESCRIPTOR_RANGE ranges[] =
+		{
+			{ D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND },
+		};
+
+		D3D12_ROOT_PARAMETER rootParameters[] =
+		{
+			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
+		};
+
+		D3D12_STATIC_SAMPLER_DESC staticSamplers[] =
+		{
+			D3D12StaticSamplerDesc_Default(0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
+		};
+
+		COMPtr<ID3DBlob> d3dSignature, d3dError;
+		D3D12SerializeRootSignature(
+			&D3D12RootSignatureDesc(countof(rootParameters), rootParameters,
+				countof(staticSamplers), staticSamplers),
+			D3D_ROOT_SIGNATURE_VERSION_1, d3dSignature.initRef(), d3dError.initRef());
+
+		d3dDevice->CreateRootSignature(0,
+			d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
+			d3dDepthBufferDownscaleRS.uuid(), d3dDepthBufferDownscaleRS.voidInitRef());
+	}
+
 	// Lighting pass RS
 	{
 		D3D12_DESCRIPTOR_RANGE gBufferRanges[] =
@@ -276,7 +304,7 @@ void SceneRenderer::initialize()
 	// Depth buffer downscale PSO
 	{
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-		psoDesc.pRootSignature = d3dGBufferPassRS; // TODO: check if this should be separated.
+		psoDesc.pRootSignature = d3dDepthBufferDownscaleRS;
 		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
 		psoDesc.PS = D3D12ShaderBytecode(Shaders::DepthBufferDownscalePS.data, Shaders::DepthBufferDownscalePS.size);
 		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
@@ -592,9 +620,9 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 		d3dGBufferPassCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportHalfSizeF.x, viewportHalfSizeF.y));
 		d3dGBufferPassCL->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportHalfSize.x, viewportHalfSize.y));
 
-		// Assuming G-buffer pass RS is set
-		// TODO: check if this should use separate RS
-		d3dGBufferPassCL->SetGraphicsRootDescriptorTable(5, device.srvHeap.getGPUHandle(gBuffer.srvDescriptorsBaseIndex + 2));
+		d3dGBufferPassCL->SetGraphicsRootSignature(d3dDepthBufferDownscaleRS);
+		d3dGBufferPassCL->SetGraphicsRootDescriptorTable(0, device.srvHeap.getGPUHandle(
+			gBuffer.srvDescriptorsBaseIndex + GBuffer::SRVDescriptorIndex::Depth));
 
 		d3dGBufferPassCL->SetPipelineState(d3dDepthBufferDownscalePSO);
 		d3dGBufferPassCL->DrawInstanced(3, 1, 0, 0);
@@ -1047,11 +1075,12 @@ void SceneRenderer::updateTimings()
 			(gpuTimestamp - gpuTimerCalibrationTimespamp) * cpuClockFrequency / device.graphicsQueueClockFrequency;
 	};
 
-	timings.gpuGBufferPassStart		= gpu2cpuTimestamp(timestamps[GPUTimestampId::Start]);
-	timings.gpuGBufferPassFinish	= gpu2cpuTimestamp(timestamps[GPUTimestampId::GBufferPassFinish]);
-	timings.gpuShadowPassFinish		= gpu2cpuTimestamp(timestamps[GPUTimestampId::ShadowPassFinish]);
-	timings.gpuLightingPassFinish	= gpu2cpuTimestamp(timestamps[GPUTimestampId::LightingPassFinished]);
-	timings.gpuPostProcessFinish	= gpu2cpuTimestamp(timestamps[GPUTimestampId::PostProcessFinished]);
+	timings.gpuGBufferPassStart				= gpu2cpuTimestamp(timestamps[GPUTimestampId::Start]);
+	timings.gpuGBufferPassFinish			= gpu2cpuTimestamp(timestamps[GPUTimestampId::GBufferPassFinish]);
+	timings.gpuDepthBufferDownscaleFinish	= gpu2cpuTimestamp(timestamps[GPUTimestampId::DepthBufferDownscaleFinish]);
+	timings.gpuShadowPassFinish				= gpu2cpuTimestamp(timestamps[GPUTimestampId::ShadowPassFinish]);
+	timings.gpuLightingPassFinish			= gpu2cpuTimestamp(timestamps[GPUTimestampId::LightingPassFinished]);
+	timings.gpuPostProcessFinish			= gpu2cpuTimestamp(timestamps[GPUTimestampId::PostProcessFinished]);
 
 	d3dReadbackBuffer->Unmap(0, nullptr);
 }

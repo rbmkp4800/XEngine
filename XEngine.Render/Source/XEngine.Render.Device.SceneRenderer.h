@@ -40,6 +40,11 @@ namespace XEngine::Render
 		union
 		{
 			XLib::TimerRecord gpuGBufferPassFinish;
+			XLib::TimerRecord gpuDepthBufferDownscaleStart;
+		};
+		union
+		{
+			XLib::TimerRecord gpuDepthBufferDownscaleFinish;
 			XLib::TimerRecord gpuShadowPassStart;
 		};
 		union
@@ -67,6 +72,7 @@ namespace XEngine::Render::Device_
 		XLib::Platform::COMPtr<ID3D12GraphicsCommandList> d3dFrameFinishCL;
 
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dGBufferPassRS;
+		XLib::Platform::COMPtr<ID3D12RootSignature> d3dDepthBufferDownscaleRS;
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dLightingPassRS;
 		XLib::Platform::COMPtr<ID3D12RootSignature> d3dPostProcessRS;
 
