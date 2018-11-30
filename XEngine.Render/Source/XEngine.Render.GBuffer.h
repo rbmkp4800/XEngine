@@ -29,6 +29,7 @@ namespace XEngine::Render
 				HDR,
 				BloomA,
 				BloomB,
+				DownscaledX2Depth,
 
 				Count,
 			};
@@ -44,6 +45,7 @@ namespace XEngine::Render
 				BloomABase,
 				BloomBBase = BloomABase + BloomLevelCount,
 				DownscaledX2Depth = BloomBBase + BloomLevelCount,
+				DownscaledX4Depth,
 
 				Count,
 			};
@@ -56,8 +58,10 @@ namespace XEngine::Render
 		XLib::Platform::COMPtr<ID3D12Resource> d3dNormalRoughnessMetalnessTexture;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dDepthTexture;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dHDRTexture;
-		XLib::Platform::COMPtr<ID3D12Resource> d3dBloomTextureA, d3dBloomTextureB;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dBloomTextureA;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dBloomTextureB;
 		XLib::Platform::COMPtr<ID3D12Resource> d3dDownscaledX2DepthTexture;
+		XLib::Platform::COMPtr<ID3D12Resource> d3dDownscaledX4DepthTexture;
 
 		uint16x2 size = { 0, 0 };
 

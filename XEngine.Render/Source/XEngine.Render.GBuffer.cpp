@@ -72,10 +72,17 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 
 	d3dDevice->CreateCommittedResource(
 		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R32_FLOAT, size.x / 2, size.y / 2,
+		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R16_FLOAT, size.x / 2, size.y / 2,
 			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, 1),
 		D3D12_RESOURCE_STATE_RENDER_TARGET, nullptr,
 		d3dDownscaledX2DepthTexture.uuid(), d3dDownscaledX2DepthTexture.voidInitRef());
+
+	d3dDevice->CreateCommittedResource(
+		&D3D12HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+		&D3D12ResourceDesc_Texture2D(DXGI_FORMAT_R16_FLOAT, size.x / 4, size.y / 4,
+			D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET, 1),
+		D3D12_RESOURCE_STATE_RENDER_TARGET, nullptr,
+		d3dDownscaledX4DepthTexture.uuid(), d3dDownscaledX4DepthTexture.voidInitRef());
 
 	// Create SRV descriptors ===============================================================//
 
@@ -98,6 +105,9 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 	d3dDevice->CreateShaderResourceView(d3dBloomTextureB, nullptr,
 		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::BloomB));
 
+	d3dDevice->CreateShaderResourceView(d3dDownscaledX2DepthTexture, nullptr,
+		device.srvHeap.getCPUHandle(srvDescriptorsBaseIndex + SRVDescriptorIndex::DownscaledX2Depth));
+
 	// Create RTV descriptors ===============================================================//
 
 	rtvDescriptorsBaseIndex = device.rtvHeap.allocate(RTVDescriptorIndex::Count);
@@ -119,6 +129,8 @@ void GBuffer::initialize(Device& device, uint16x2 size)
 
 	d3dDevice->CreateRenderTargetView(d3dDownscaledX2DepthTexture, nullptr,
 		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::DownscaledX2Depth));
+	d3dDevice->CreateRenderTargetView(d3dDownscaledX4DepthTexture, nullptr,
+		device.rtvHeap.getCPUHandle(rtvDescriptorsBaseIndex + RTVDescriptorIndex::DownscaledX4Depth));
 
 	// Create DSV descriptors ===============================================================//
 

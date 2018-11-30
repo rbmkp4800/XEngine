@@ -56,8 +56,7 @@ namespace
 	struct LightingPassConstants
 	{
 		Matrix4x4 inverseView;
-		float32 ndcToViewDepthConversionA;
-		float32 ndcToViewDepthConversionB;
+		float32x2 depthDeprojectionCoefs;
 		float32 aspect;
 		float32 halfFOVTan;
 
@@ -176,6 +175,7 @@ void SceneRenderer::initialize()
 		D3D12_ROOT_PARAMETER rootParameters[] =
 		{
 			D3D12RootParameter_Table(countof(ranges), ranges, D3D12_SHADER_VISIBILITY_PIXEL),
+			D3D12RootParameter_Constants(2, 0, 0, D3D12_SHADER_VISIBILITY_PIXEL),
 		};
 
 		D3D12_STATIC_SAMPLER_DESC staticSamplers[] =
@@ -191,7 +191,7 @@ void SceneRenderer::initialize()
 
 		d3dDevice->CreateRootSignature(0,
 			d3dSignature->GetBufferPointer(), d3dSignature->GetBufferSize(),
-			d3dDepthBufferDownscaleRS.uuid(), d3dDepthBufferDownscaleRS.voidInitRef());
+			d3dDepthDownscaleRS.uuid(), d3dDepthDownscaleRS.voidInitRef());
 	}
 
 	// Lighting pass RS
@@ -301,12 +301,12 @@ void SceneRenderer::initialize()
 			d3dGBufferPassRS, d3dGBufferPassICS.uuid(), d3dGBufferPassICS.voidInitRef());
 	}
 
-	// Depth buffer downscale PSO
+	// Depth buffer downscale PSOs
 	{
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
-		psoDesc.pRootSignature = d3dDepthBufferDownscaleRS;
+		psoDesc.pRootSignature = d3dDepthDownscaleRS;
 		psoDesc.VS = D3D12ShaderBytecode(Shaders::ScreenQuadVS.data, Shaders::ScreenQuadVS.size);
-		psoDesc.PS = D3D12ShaderBytecode(Shaders::DepthBufferDownscalePS.data, Shaders::DepthBufferDownscalePS.size);
+		//     .PS customized
 		psoDesc.BlendState = D3D12BlendDesc_NoBlend();
 		psoDesc.SampleMask = UINT_MAX;
 		psoDesc.RasterizerState = D3D12RasterizerDesc_Default();
@@ -314,12 +314,15 @@ void SceneRenderer::initialize()
 		psoDesc.InputLayout = D3D12InputLayoutDesc();
 		psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		psoDesc.NumRenderTargets = 1;
-		psoDesc.RTVFormats[0] = DXGI_FORMAT_R32_FLOAT;
+		psoDesc.RTVFormats[0] = DXGI_FORMAT_R16_FLOAT;
 		psoDesc.SampleDesc.Count = 1;
 		psoDesc.SampleDesc.Quality = 0;
 
-		d3dDevice->CreateGraphicsPipelineState(&psoDesc,
-			d3dDepthBufferDownscalePSO.uuid(), d3dDepthBufferDownscalePSO.voidInitRef());
+		psoDesc.PS = D3D12ShaderBytecode(Shaders::DepthDeprojectAndDownscalePS.data, Shaders::DepthDeprojectAndDownscalePS.size);
+		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dDepthDeprojectAndDownscalePSO.uuid(), d3dDepthDeprojectAndDownscalePSO.voidInitRef());
+
+		psoDesc.PS = D3D12ShaderBytecode(Shaders::DepthDownscalePS.data, Shaders::DepthDownscalePS.size);
+		d3dDevice->CreateGraphicsPipelineState(&psoDesc, d3dDepthDownscalePSO.uuid(), d3dDepthDownscalePSO.voidInitRef());
 	}
 
 	// Shadow pass PSO
@@ -489,9 +492,13 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 	device.d3dGraphicsQueue->GetClockCalibration(&gpuTimerCalibrationTimespamp, &cpuTimerCalibrationTimespamp);
 
 	const uint16x2 viewportSize = viewport.getSize();
-	const uint16x2 viewportHalfSize = viewportSize / 2;
 	const float32x2 viewportSizeF = float32x2(viewportSize);
-	const float32x2 viewportHalfSizeF = float32x2(viewportHalfSize);
+
+	const float32 invCameraClipPlanesDelta = 1.0f / (camera.zFar - camera.zNear);
+	const float32x2 depthDeprojectionCoefs(
+		(camera.zFar * camera.zNear) * invCameraClipPlanesDelta,
+		camera.zFar * invCameraClipPlanesDelta);
+
 
 	// TODO: refactor
 
@@ -521,10 +528,8 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 		mappedCameraTransformConstants->viewProjection = viewProjection;
 		mappedCameraTransformConstants->view = view;
 
-		float32 invCameraClipPlanesDelta = 1.0f / (camera.zFar - camera.zNear);
 		mappedLightingPassConstants->inverseView.setInverse(view);
-		mappedLightingPassConstants->ndcToViewDepthConversionA = (camera.zFar * camera.zNear) * invCameraClipPlanesDelta;
-		mappedLightingPassConstants->ndcToViewDepthConversionB = camera.zFar * invCameraClipPlanesDelta;
+		mappedLightingPassConstants->depthDeprojectionCoefs = depthDeprojectionCoefs;
 		mappedLightingPassConstants->aspect = aspect;
 		mappedLightingPassConstants->halfFOVTan = Math::Tan(camera.fov * 0.5f);
 
@@ -609,6 +614,8 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 
 	// Depth buffer downscale and readback ==================================================//
 	{
+		// First pass: deproject and downscale x2
+
 		d3dGBufferPassCL->ResourceBarrier(1,
 			&D3D12ResourceBarrier_Transition(gBuffer.d3dDepthTexture,
 				D3D12_RESOURCE_STATE_DEPTH_WRITE, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
@@ -617,30 +624,60 @@ void SceneRenderer::render(Scene& scene, const Camera& camera, GBuffer& gBuffer,
 			gBuffer.rtvDescriptorsBaseIndex + GBuffer::RTVDescriptorIndex::DownscaledX2Depth);
 		d3dGBufferPassCL->OMSetRenderTargets(1, &rtvDescriptorsHandle, FALSE, nullptr);
 
+		const uint16x2 viewportHalfSize = viewportSize / 2;
+		const float32x2 viewportHalfSizeF = float32x2(viewportHalfSize);
 		d3dGBufferPassCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportHalfSizeF.x, viewportHalfSizeF.y));
 		d3dGBufferPassCL->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportHalfSize.x, viewportHalfSize.y));
 
-		d3dGBufferPassCL->SetGraphicsRootSignature(d3dDepthBufferDownscaleRS);
+		d3dGBufferPassCL->SetGraphicsRootSignature(d3dDepthDownscaleRS);
 		d3dGBufferPassCL->SetGraphicsRootDescriptorTable(0, device.srvHeap.getGPUHandle(
 			gBuffer.srvDescriptorsBaseIndex + GBuffer::SRVDescriptorIndex::Depth));
+		d3dGBufferPassCL->SetGraphicsRoot32BitConstants(1, 2, &depthDeprojectionCoefs, 0);
 
-		d3dGBufferPassCL->SetPipelineState(d3dDepthBufferDownscalePSO);
+		d3dGBufferPassCL->SetPipelineState(d3dDepthDeprojectAndDownscalePSO);
 		d3dGBufferPassCL->DrawInstanced(3, 1, 0, 0);
 
+		// Second pass: downscale previous target x2
+
 		d3dGBufferPassCL->ResourceBarrier(1,
 			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownscaledX2DepthTexture,
+				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+		rtvDescriptorsHandle = device.rtvHeap.getCPUHandle(
+			gBuffer.rtvDescriptorsBaseIndex + GBuffer::RTVDescriptorIndex::DownscaledX4Depth);
+		d3dGBufferPassCL->OMSetRenderTargets(1, &rtvDescriptorsHandle, FALSE, nullptr);
+
+		const uint16x2 viewportQuarterSize = viewportHalfSize / 2;
+		const float32x2 viewportQuarterSizeF = float32x2(viewportQuarterSize);
+		d3dGBufferPassCL->RSSetViewports(1, &D3D12ViewPort(0.0f, 0.0f, viewportQuarterSizeF.x, viewportQuarterSizeF.y));
+		d3dGBufferPassCL->RSSetScissorRects(1, &D3D12Rect(0, 0, viewportQuarterSize.x, viewportQuarterSize.y));
+
+		d3dGBufferPassCL->SetGraphicsRootDescriptorTable(0, device.srvHeap.getGPUHandle(
+			gBuffer.srvDescriptorsBaseIndex + GBuffer::SRVDescriptorIndex::DownscaledX2Depth));
+
+		d3dGBufferPassCL->SetPipelineState(d3dDepthDownscalePSO);
+		d3dGBufferPassCL->DrawInstanced(3, 1, 0, 0);
+
+		// Copy result to host
+
+		// TODO: refactor. Use single call. Use split barrier for d3dDownscaledX2DepthTexture
+		d3dGBufferPassCL->ResourceBarrier(1,
+			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownscaledX2DepthTexture,
+				D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
+		d3dGBufferPassCL->ResourceBarrier(1,
+			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownscaledX4DepthTexture,
 				D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE));
 
-		uint16 readbackRowPitch = alignup(viewportHalfSize.x * 4, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+		uint16 readbackRowPitch = alignup(viewportQuarterSize.x * 2, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
 		d3dGBufferPassCL->CopyTextureRegion(
 			&D3D12TextureCopyLocation_PlacedFootprint(d3dReadbackBuffer, 0,
-				DXGI_FORMAT_R32_FLOAT, viewportHalfSize.x, viewportHalfSize.y, 1, readbackRowPitch),
+				DXGI_FORMAT_R16_FLOAT, viewportQuarterSize.x, viewportQuarterSize.y, 1, readbackRowPitch),
 			0, 0, 0,
-			&D3D12TextureCopyLocation_Subresource(gBuffer.d3dDownscaledX2DepthTexture, 0),
-			&D3D12Box(0, viewportHalfSize.x, 0, viewportHalfSize.y));
+			&D3D12TextureCopyLocation_Subresource(gBuffer.d3dDownscaledX4DepthTexture, 0),
+			&D3D12Box(0, viewportQuarterSize.x, 0, viewportQuarterSize.y));
 
 		d3dGBufferPassCL->ResourceBarrier(1,
-			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownscaledX2DepthTexture,
+			&D3D12ResourceBarrier_Transition(gBuffer.d3dDownscaledX4DepthTexture,
 				D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET));
 	}
 

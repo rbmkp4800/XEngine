@@ -132,7 +132,6 @@
     <FxCompile Include="Source\Shaders\UIColorAlphaTexturePS.hlsl" />
     <FxCompile Include="Source\Shaders\DebugWhitePS.hlsl" />
     <FxCompile Include="Source\Shaders\SceneGeometryPositionOnlyVS.hlsl" />
-    <FxCompile Include="Source\Shaders\DepthBufferDownscalePS.hlsl" />
     <FxCompile Include="Source\Shaders\Effect_NormalVS.hlsl" />
     <FxCompile Include="Source\Shaders\Effect_PerMaterialAlbedoRoughtnessMetalnessPS.hlsl" />
     <FxCompile Include="Source\Shaders\Effect_NormalTexcoordVS.hlsl" />
@@ -146,6 +145,8 @@
     <FxCompile Include="Source\Shaders\BloomBlurVerticalAndAccumulatePS.hlsl" />
     <FxCompile Include="Source\Shaders\BloomDownscalePS.hlsl" />
     <FxCompile Include="Source\Shaders\BloomFilterAndDownscalePS.hlsl" />
+    <FxCompile Include="Source\Shaders\DepthDownscalePS.hlsl" />
+    <FxCompile Include="Source\Shaders\DepthDeprojectAndDownscalePS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Source\Shaders\BloomBlur.hlsli" />
