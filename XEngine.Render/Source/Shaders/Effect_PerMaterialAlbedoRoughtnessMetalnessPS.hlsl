@@ -1,3 +1,5 @@
+#include "GBufferNormal.hlsli"
+
 struct Constants
 {
 	uint materialIndex;
@@ -35,7 +37,7 @@ PSOutput main(PSInput input)
 
 	PSOutput output;
 	output.albedo = float4(materialsTable.items[materialIndex].albedo, 1.0f);
-	output.normalRoughnessMetalness.xy = normalize(input.normal).xy;
+	output.normalRoughnessMetalness.xy = EncodeNormal(normalize(input.normal));
 	output.normalRoughnessMetalness.zw = float2(materialsTable.items[materialIndex].roughtnessMetalness);
 	return output;
 }

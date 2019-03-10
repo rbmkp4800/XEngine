@@ -150,5 +150,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Source\Shaders\BloomBlur.hlsli" />
+    <None Include="Source\Shaders\GBufferNormal.hlsli" />
   </ItemGroup>
 </Project>

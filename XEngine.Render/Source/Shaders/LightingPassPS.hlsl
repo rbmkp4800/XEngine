@@ -1,6 +1,8 @@
 // NOTE: view-world space logic is completely broken
 // TODO: fix that
 
+#include "GBufferNormal.hlsli"
+
 struct DirectionalLight
 {
 	float4x4 shadowTextureTransform;
@@ -174,8 +176,7 @@ float4 main(PSInput input) : SV_Target
 
 	float3 albedo = pow(albedoTexture[texPosition].xyz, 2.2f);
 	float4 normalRoughnessMetalness = normalRoughnessMetalnessTexture[texPosition];
-	float3 normal = float3(normalRoughnessMetalness.xy, 0.0f);
-	normal.z = -sqrt(saturate(1.0f - sqr(normal.x) - sqr(normal.y)));
+	float3 normal = DecodeNormal(normalRoughnessMetalness.xy);
 	float roughness = normalRoughnessMetalness.z;
 	float metalness = normalRoughnessMetalness.w;
 
