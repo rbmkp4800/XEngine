@@ -46,7 +46,7 @@ namespace XEngine
 		{
 			setCameraForward(camera);
 
-			float32x2 xyPlaneRight = XLib::VectorMath::PolarCoords_xReference(angles.x + XLib::Math::PiF32 / 2.0f);
+			float32x2 xyPlaneRight = XLib::VectorMath::PolarCoords_xReference(angles.x + XLib::Math::Pi<float> / 2.0f);
 			float32x3 absoluteTranslation = camera.forward * translation.z;
 			absoluteTranslation.xy += xyPlaneRight * translation.x;
 			absoluteTranslation.z += translation.y;
